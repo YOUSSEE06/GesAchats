@@ -49,35 +49,43 @@ public partial class App : Application
         };
 
         try
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
-            Configuration = builder.Build();
-
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-
-            ServiceProvider = serviceCollection.BuildServiceProvider();
-
-            // Initialisation de la base de données (Seed) de manière asynchrone sans bloquer l'UI
-            using (var scope = ServiceProvider.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<GesAchatsDbContext>();
-                await DbInitializer.SeedDataAsync(context);
-            }
+                var builder = new ConfigurationBuilder()
+                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-            // Démarrage de l'interface utilisateur
-            var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
-            loginWindow.Show();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}", 
-                "Erreur de Démarrage", MessageBoxButton.OK, MessageBoxImage.Error);
-            Shutdown();
-        }
+                Configuration = builder.Build();
+
+                var serviceCollection = new ServiceCollection();
+                ConfigureServices(serviceCollection);
+
+                ServiceProvider = serviceCollection.BuildServiceProvider();
+
+                // Initialisation de la base de données (Seed) de manière asynchrone sans bloquer l'UI
+                try
+                {
+                    using (var scope = ServiceProvider.CreateScope())
+                    {
+                        var context = scope.ServiceProvider.GetRequiredService<GesAchatsDbContext>();
+                        await DbInitializer.SeedDataAsync(context);
+                    }
+                }
+                catch (Exception dbEx)
+                {
+                    MessageBox.Show($"Avertissement : Impossible d'initialiser la base de données.\n\nErreur : {dbEx.Message}", 
+                        "Avertissement Base de Données", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // Démarrage de l'interface utilisateur
+                var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
+                loginWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}", 
+                    "Erreur de Démarrage", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
     }
 
     private void ConfigureServices(IServiceCollection services)
