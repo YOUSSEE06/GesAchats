@@ -135,6 +135,10 @@ public partial class App : Application
         services.AddTransient<PurchaseHistoryViewModel>();
         services.AddTransient<ProductStatsViewModel>();
 
+        // ViewModels - Focus Admin
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminShellViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminDashboardViewModel>();
+
         // ViewModels - Focus Comptable
         services.AddTransient<ComptableShellViewModel>();
         services.AddTransient<ComptableDashboardViewModel>();
@@ -169,6 +173,12 @@ public partial class App : Application
          services.AddTransient<OrderTrackingPage>();
          services.AddTransient<PurchaseHistoryPage>();
          services.AddTransient<ProductStatsPage>();
+
+         // Views - Focus Admin
+         services.AddTransient<GesAchats.WPF.Views.Admin.AdminShell>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.Dashboard.AdminDashboardPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.Employees.EmployeeManagementPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.Orders.OrderManagementPage>();
 
          // Views - Focus Comptable
          services.AddTransient<GesAchats.WPF.Views.Comptable.ComptableShell>();

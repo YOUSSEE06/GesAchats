@@ -2,6 +2,7 @@ using System.Windows;
 using GesAchats.Core.Entities;
 using GesAchats.WPF.Views.Magasinier;
 using GesAchats.WPF.Views.Acheteur;
+using GesAchats.WPF.Views.Admin;
 using GesAchats.WPF.Views.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +18,10 @@ public static class NavigationRouter
         // On utilise le code du rôle pour le switch
         switch (user.Role?.Code?.ToUpper())
         {
+            case "ADMIN":
+                shellWindow = serviceProvider.GetRequiredService<AdminShell>();
+                break;
+            
             case "MAGASINIER":
                 shellWindow = serviceProvider.GetRequiredService<MagasinierShell>();
                 break;
@@ -32,9 +37,6 @@ public static class NavigationRouter
             case "COMPTABLE":
                 shellWindow = serviceProvider.GetRequiredService<GesAchats.WPF.Views.Comptable.ComptableShell>();
                 break;
-            
-            // Les autres rôles seront ajoutés ici plus tard
-            // case "ADMIN": ...
             
             default:
                 MessageBox.Show($"Accès non configuré pour le rôle : {user.Role?.Label ?? "Inconnu"}", 
