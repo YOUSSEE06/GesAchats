@@ -1,0 +1,67 @@
+<Window x:Class="GesAchats.WPF.Views.Magasinier.NeedsHistory.NeedsStatisticsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Statistiques des Besoins" Height="650" Width="600"
+        WindowStartupLocation="CenterOwner" Background="#F4F6F7">
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Statistiques - Historique des Besoins" FontSize="22" FontWeight="Bold" Margin="0,0,0,25"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Résumé Global -->
+                <GroupBox Header="RÉSUMÉ GLOBAL" Margin="0,0,0,20" Padding="15">
+                    <UniformGrid Columns="2">
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="Total listes de besoins:" Foreground="#566573"/>
+                            <TextBlock Text="{Binding TotalNeeds}" FontSize="24" FontWeight="Bold" Foreground="#1B2631"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Complétées:" Foreground="#566573"/>
+                            <TextBlock Text="{Binding CompletedPercentage}" FontSize="20" FontWeight="Bold" Foreground="#4CAF50"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="En cours:" Foreground="#566573"/>
+                            <TextBlock Text="{Binding InProgressPercentage}" FontSize="20" FontWeight="Bold" Foreground="#FFC107"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="En attente:" Foreground="#566573"/>
+                            <TextBlock Text="{Binding PendingPercentage}" FontSize="20" FontWeight="Bold" Foreground="#9E9E9E"/>
+                        </StackPanel>
+                    </UniformGrid>
+                </GroupBox>
+
+                <!-- Articles les plus demandés -->
+                <GroupBox Header="ARTICLES LES PLUS DEMANDÉS" Margin="0,0,0,20" Padding="15">
+                    <ItemsControl ItemsSource="{Binding TopProducts}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Label}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Value}" FontWeight="Bold"/>
+                                        <TextBlock Text=" fois" Foreground="#566573"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Button Grid.Row="2" Content="Fermer" Click="Close_Click" HorizontalAlignment="Right" Padding="25,10" Background="#1B2631" Foreground="White" BorderThickness="0"/>
+    </Grid>
+</Window>

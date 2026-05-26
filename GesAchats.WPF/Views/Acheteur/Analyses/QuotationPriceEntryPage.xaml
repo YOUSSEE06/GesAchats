@@ -1,0 +1,150 @@
+<Page x:Class="GesAchats.WPF.Views.Acheteur.Analyses.QuotationPriceEntryPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Analyses"
+      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+      mc:Ignorable="d" 
+      d:DesignHeight="700" d:DesignWidth="1000"
+      Title="Saisie des Prix Fournisseurs">
+
+    <Page.Resources>
+        <conv:MultiplicationConverter x:Key="MultiplicationConverter"/>
+    </Page.Resources>
+
+    <Grid Background="#F5F5F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#x1f4b5;" FontSize="24" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Saisie des Prix Fournisseurs" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Selection Section -->
+            <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="1. SÉLECTIONNER UN DEVIS" FontSize="14" FontWeight="Bold" Foreground="#2196F3" Margin="0,0,0,15"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding SentQuotations}" 
+                                  SelectedItem="{Binding SelectedQuotation}"
+                                  Padding="10">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding ReferenceNumber}" FontWeight="Bold"/>
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding Supplier.CompanyName}" Foreground="#666"/>
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding Date, StringFormat=dd/MM/yyyy}" Foreground="#666"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Articles Section -->
+            <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="2. ARTICLES DU DEVIS" FontSize="14" FontWeight="Bold" Foreground="#2196F3" Margin="0,0,0,15"/>
+                    
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding QuotationDetails}" 
+                              AutoGenerateColumns="False" 
+                              CanUserAddRows="False"
+                              Background="Transparent" 
+                              BorderThickness="0"
+                              RowHeaderWidth="0"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#F0F0F0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Produit" Binding="{Binding Product.Designation}" Width="2*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Quantité" Binding="{Binding Quantity}" Width="*" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Unité" Binding="{Binding Product.Unit}" Width="*" IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Prix Unitaire HT" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding UnitPriceHT, StringFormat={}{0:N2}}" Margin="5"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding UnitPriceHT, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True}" Padding="5" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Total HT" Width="1.5*" IsReadOnly="True">
+                                <DataGridTextColumn.Binding>
+                                    <MultiBinding Converter="{StaticResource MultiplicationConverter}" StringFormat="{}{0:N2}">
+                                        <Binding Path="UnitPriceHT"/>
+                                        <Binding Path="Quantity"/>
+                                    </MultiBinding>
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Actions -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button Command="{Binding SavePricesCommand}" 
+                        Content="&#x1f4be; Enregistrer les Prix" 
+                        Padding="30,12" 
+                        Background="#4CAF50" 
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        BorderThickness="0"/>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="2" Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="10" Foreground="#2196F3"/>
+                <TextBlock Text="Traitement en cours..." Foreground="White" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

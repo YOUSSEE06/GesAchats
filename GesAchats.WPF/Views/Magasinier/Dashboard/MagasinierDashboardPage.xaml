@@ -1,0 +1,110 @@
+<Page x:Class="GesAchats.WPF.Views.Magasinier.Dashboard.MagasinierDashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      Title="Dashboard Magasinier">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- KPI Cards -->
+        <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,20">
+            <!-- Stock Total -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="📦 Stock Total" Foreground="{StaticResource SecondaryBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TotalStockUnits}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="Unités en stock" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Articles en Rupture -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="⚠️ Ruptures" Foreground="{StaticResource DangerBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding RuptureCount}" Foreground="{StaticResource DangerBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="Articles à 0" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Sous Minimum -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="🟡 Sous Minimum" Foreground="{StaticResource WarningBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding LowStockCount}" Foreground="{StaticResource WarningBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="Articles à commander" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Demandes en attente -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="⏳ Demandes" Foreground="{StaticResource PrimaryBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding PendingNeedsCount}" Foreground="{StaticResource PrimaryBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="En attente de traitement" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Livraisons de la semaine -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="📥 Réceptions" Foreground="{StaticResource SuccessBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding DeliveryCountThisWeek}" Foreground="{StaticResource SuccessBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="BL reçus cette semaine" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Nouveaux Produits -->
+            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="✨ Nouveaux" Foreground="{StaticResource NewProductBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding NewProductsCount}" Foreground="{StaticResource NewProductBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
+                    <TextBlock Text="Articles ajoutés récem." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- Alertes Section -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="20" Margin="10">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+            </Border.Effect>
+            <DockPanel>
+                <TextBlock Text="ALERTES RÉCENTES" DockPanel.Dock="Top" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                <ItemsControl ItemsSource="{Binding Alerts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="10,15">
+                                <TextBlock Text="{Binding}" FontSize="14" VerticalAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Page>

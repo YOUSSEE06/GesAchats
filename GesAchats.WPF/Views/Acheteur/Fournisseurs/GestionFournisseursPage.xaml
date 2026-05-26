@@ -1,0 +1,125 @@
+<Page x:Class="GesAchats.WPF.Views.Acheteur.Fournisseurs.GestionFournisseursPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Fournisseurs"
+      mc:Ignorable="d" 
+      d:DesignHeight="700" d:DesignWidth="1000"
+      Title="Gestion des Fournisseurs">
+
+    <Grid Background="#F5F5F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#x1f3e2; Annuaire des Fournisseurs" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding NewCommand}" Content="+ Nouveau" Padding="15,8" Background="#2196F3" Foreground="White" BorderThickness="0" Margin="0,0,10,0"/>
+                    <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Suppliers List -->
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="10" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,10,0">
+                <DataGrid ItemsSource="{Binding Suppliers}" 
+                          SelectedItem="{Binding SelectedSupplier}"
+                          AutoGenerateColumns="False" 
+                          IsReadOnly="True" 
+                          Background="Transparent" 
+                          BorderThickness="0"
+                          RowHeight="50">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Société" Binding="{Binding CompanyName}" Width="*"/>
+                        <DataGridTextColumn Header="Contact" Binding="{Binding ContactName}" Width="*"/>
+                        <DataGridTextColumn Header="Ville" Binding="{Binding City}" Width="Auto"/>
+                        <DataGridTemplateColumn Header="Note" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Rating}" FontWeight="Bold" Foreground="#FFC107"/>
+                                        <TextBlock Text=" &#x2605;" Foreground="#FFC107"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridCheckBoxColumn Header="Actif" Binding="{Binding IsActive}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Form Panel -->
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="DÉTAILS FOURNISSEUR" FontSize="14" FontWeight="Bold" Foreground="#666" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="Nom de la société *" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding EditingSupplier.CompanyName, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Nom du contact" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding EditingSupplier.ContactName}" Padding="10" Margin="0,0,0,15"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                <TextBlock Text="Email" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding EditingSupplier.Email}" Padding="10" Margin="0,0,0,15"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                <TextBlock Text="Téléphone" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding EditingSupplier.Phone}" Padding="10" Margin="0,0,0,15"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Adresse" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding EditingSupplier.Address}" Padding="10" Margin="0,0,0,15" Height="60" AcceptsReturn="True"/>
+
+                        <TextBlock Text="Ville" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding EditingSupplier.City}" Padding="10" Margin="0,0,0,15"/>
+
+                        <CheckBox IsChecked="{Binding EditingSupplier.IsActive}" Content="Fournisseur actif" Margin="0,10,0,20"/>
+
+                        <Button Command="{Binding SaveCommand}" 
+                                Content="&#x1f4be; Enregistrer" 
+                                Padding="20,12" 
+                                Background="#4CAF50" 
+                                Foreground="White" 
+                                FontWeight="Bold" 
+                                BorderThickness="0"
+                                HorizontalAlignment="Stretch"/>
+                        
+                        <Button Command="{Binding NewCommand}" 
+                                Content="Annuler" 
+                                Margin="0,10,0,0"
+                                Padding="10,5" 
+                                Background="Transparent" 
+                                Foreground="Gray" 
+                                BorderThickness="0"
+                                HorizontalAlignment="Center"
+                                Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

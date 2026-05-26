@@ -1,0 +1,94 @@
+<Window x:Class="GesAchats.WPF.Views.Acheteur.AcheteurShell"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="GesAchats - Responsable Achat" Height="750" Width="1300"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../Resources/Magasinier/MagasinierStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="#1B2631">
+            <DockPanel>
+                <!-- Logo -->
+                <StackPanel DockPanel.Dock="Top" Margin="20,30">
+                    <TextBlock Text="ACHATS" Foreground="#1ABC9C" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="GesAchats" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <Separator Margin="0,20,0,0" Background="#2C3E50"/>
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel DockPanel.Dock="Top" Margin="10,0">
+                    <Button Content="&#x1f3e0; Tableau de bord" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
+                    
+                    <TextBlock Text="DEMANDES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
+                    <Button Content="&#x1f4cb; Besoins Magasin" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Besoins"/>
+                    <Button Content="&#x1f4dd; Gestion des Devis" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Devis"/>
+                    
+                    <TextBlock Text="ANALYSES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
+                    <Button Content="&#x1f4b5; Saisie Prix Fournisseurs" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="SaisiePrix"/>
+                    <Button Content="&#x1f4ca; Analyse Comparative" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Analyses"/>
+                    <Button Content="&#x1f4c8; Historique Prix" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Historique"/>
+                    <Button Content="&#x1f3e2; Fournisseurs" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Fournisseurs"/>
+
+                    <TextBlock Text="COMMANDES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
+                    <Button Content="&#x1f4e6; Bons de Commande" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Commandes"/>
+                    <Button Content="&#x1f6e2; Suivi Commandes" Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" CommandParameter="Suivi"/>
+                </StackPanel>
+
+                <!-- User & Logout -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="10,20">
+                    <Separator Margin="0,0,0,15" Background="#2C3E50"/>
+                    <TextBlock Text="{Binding UserName}" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <Button Content="&#x1f6aa; Déconnexion" Style="{StaticResource LogoutButtonStyle}"
+                            Command="{Binding LogoutCommand}"/>
+                </StackPanel>
+
+                <Grid/>
+            </DockPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <Grid Grid.Column="1" Background="{StaticResource BackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top Bar -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" Direction="-90" ShadowDepth="1" Opacity="0.1"/>
+                </Border.Effect>
+                <Grid Margin="20,0">
+                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" Foreground="#1B2631"/>
+                </Grid>
+            </Border>
+
+            <Frame x:Name="MainFrame" Grid.Row="1" NavigationUIVisibility="Hidden"/>
+        </Grid>
+    </Grid>
+</Window>

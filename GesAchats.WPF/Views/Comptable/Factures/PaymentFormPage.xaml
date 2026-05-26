@@ -1,0 +1,130 @@
+<Page x:Class="GesAchats.WPF.Views.Comptable.Factures.PaymentFormPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Factures"
+      xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
+      mc:Ignorable="d" 
+      d:DesignHeight="700" d:DesignWidth="1000"
+      Title="PaymentFormPage">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:EqualityConverter x:Key="EqualityConverter"/>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Background="#F5F6F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,15">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="⬅" Command="{Binding CancelCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
+                <TextBlock Text="Enregistrer un Règlement" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="20">
+                <!-- Facture Info -->
+                <GroupBox Header="FACTURE ASSOCIÉE" Style="{StaticResource MaterialDesignCardGroupBox}" Margin="0,0,0,20">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Facture N°" Foreground="#757575" FontSize="12"/>
+                            <TextBlock Text="{Binding Invoice.InvoiceNumber}" FontWeight="SemiBold" FontSize="16"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Fournisseur" Foreground="#757575" FontSize="12"/>
+                            <TextBlock Text="{Binding Invoice.Supplier.Name}" FontWeight="SemiBold" FontSize="16"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Total TTC" Foreground="#757575" FontSize="12"/>
+                            <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} €}" FontWeight="Bold" FontSize="18" Foreground="#2196F3"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Règlement Info -->
+                <GroupBox Header="DÉTAILS DU RÈGLEMENT" Style="{StaticResource MaterialDesignCardGroupBox}" Margin="0,0,0,20">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="15"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="Mode de paiement" Style="{StaticResource LabelStyle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,5">
+                                <RadioButton Content="Virement" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Virement}" Margin="0,0,15,0"/>
+                                <RadioButton Content="Chèque" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Chèque}" Margin="0,0,15,0"/>
+                                <RadioButton Content="Espèces" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Espèces}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="Montant réglé" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Payment.AmountPaid, StringFormat={}{0:N2}}" FontWeight="Bold" FontSize="16"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <TextBlock Text="Date de paiement" Style="{StaticResource LabelStyle}"/>
+                            <DatePicker SelectedDate="{Binding Payment.PaymentDate}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <TextBlock Text="Référence (N° chèque/virement)" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Payment.ReferenceNumber}"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Preuve Section -->
+                <GroupBox Header="PREUVE DE PAIEMENT" Style="{StaticResource MaterialDesignCardGroupBox}">
+                    <StackPanel Margin="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding SelectedFilePath}" IsReadOnly="True" />
+                            <Button Grid.Column="1" Content="Parcourir" Command="{Binding BrowseCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="10,0,0,0"/>
+                        </Grid>
+                        
+                        <TextBlock Text="Formats acceptés : PDF, JPG, PNG (max 10 Mo)" FontSize="11" Foreground="#757575" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="20,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annuler" Command="{Binding CancelCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+                <Button Content="💾 Enregistrer le règlement" Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2196F3" Foreground="White" Width="200"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

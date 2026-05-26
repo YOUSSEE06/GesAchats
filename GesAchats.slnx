@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GesAchats.Core\GesAchats.Core.csproj" />
+  <Project Path="GesAchats.Data\GesAchats.Data.csproj" />
+  <Project Path="GesAchats.Tests\GesAchats.Tests.csproj" />
+  <Project Path="GesAchats.WPF\GesAchats.WPF.csproj" />
+</Solution>

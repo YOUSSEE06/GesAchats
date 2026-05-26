@@ -1,0 +1,100 @@
+<Window x:Class="GesAchats.WPF.Views.Acheteur.Besoins.ArticleDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Détails de la Demande" Height="550" Width="650"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent">
+
+    <Border Background="White" CornerRadius="15" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="15" Direction="-90" RenderingBias="Quality" ShadowDepth="2" Opacity="0.2"/>
+        </Border.Effect>
+        
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#2196F3" CornerRadius="15,15,0,0" Padding="20,15">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#x1f4cb;" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Détails de la Demande" Foreground="White" FontSize="14" Opacity="0.8"/>
+                        <TextBlock x:Name="TxtRequestNumber" Text="N° DEMANDE" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- General Info -->
+            <Border Grid.Row="1" Background="#F8F9FA" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1" Padding="25,15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Demandeur" Foreground="Gray" FontSize="11"/>
+                        <TextBlock x:Name="TxtRequester" Text="Nom Prénom" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Date" Foreground="Gray" FontSize="11"/>
+                        <TextBlock x:Name="TxtDate" Text="01/01/2026" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Statut" Foreground="Gray" FontSize="11"/>
+                        <TextBlock x:Name="TxtStatus" Text="En attente" FontWeight="SemiBold" Foreground="#2196F3"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Product List -->
+            <Grid Grid.Row="2" Margin="25,15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <TextBlock Grid.Row="0" Text="ARTICLES DEMANDÉS" FontWeight="Bold" FontSize="12" Foreground="#555555" Margin="0,0,0,10"/>
+                
+                <DataGrid Grid.Row="1" x:Name="DgArticles" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                          Background="White" BorderThickness="1" BorderBrush="#EEEEEE"
+                          HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Désignation" Binding="{Binding Product.Designation}" Width="*"/>
+                        <DataGridTextColumn Header="Quantité" Binding="{Binding Quantity}" Width="100"/>
+                        <DataGridTextColumn Header="Unité" Binding="{Binding Product.Unit}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <!-- Footer -->
+            <Border Grid.Row="3" Background="#F5F5F5" CornerRadius="0,0,15,15" Padding="20,15">
+                <DockPanel>
+                    <TextBlock x:Name="TxtDescription" Text="Description..." Foreground="Gray" FontStyle="Italic" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="400"/>
+                    <Button Content="Fermer" Click="Close_Click" 
+                            Padding="30,8" Background="#2196F3" Foreground="White" 
+                            FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Right">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="5"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

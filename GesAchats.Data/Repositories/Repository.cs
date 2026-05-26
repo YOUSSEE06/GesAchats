@@ -1,0 +1,53 @@
+using System.Linq.Expressions;
+using GesAchats.Data.Context;
+using GesAchats.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace GesAchats.Data.Repositories;
+
+/// <summary>
+/// Implémentation générique du pattern Repository utilisant EF Core
+/// </summary>
+/// <typeparam name="TEntity">Le type de l'entité</typeparam>
+public class Repository<TEntity> : GesAchats.Core.Interfaces.IRepository<TEntity> where TEntity : class
+{
+    protected readonly GesAchatsDbContext _context;
+    protected readonly DbSet<TEntity> _dbSet;
+
+    public Repository(GesAchatsDbContext context)
+    {
+        _context = context;
+        _dbSet = context.Set<TEntity>();
+    }
+
+    public async Task<TEntity?> GetByIdAsync(int id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
+
+    public async Task<IEnumerable<TEntity>> GetAllAsync()
+    {
+        return await _dbSet.ToListAsync();
+    }
+
+    public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await _dbSet.Where(predicate).ToListAsync();
+    }
+
+    public async Task AddAsync(TEntity entity)
+    {
+        await _dbSet.AddAsync(entity);
+    }
+
+    public void Update(TEntity entity)
+    {
+        _dbSet.Attach(entity);
+        _context.Entry(entity).State = EntityState.Modified;
+    }
+
+    public void Remove(TEntity entity)
+    {
+        _dbSet.Remove(entity);
+    }
+}

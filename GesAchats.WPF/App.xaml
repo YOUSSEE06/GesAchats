@@ -1,0 +1,22 @@
+<Application x:Class="GesAchats.WPF.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shared="clr-namespace:GesAchats.WPF.Resources.Shared"
+             xmlns:conv="clr-namespace:GesAchats.WPF.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Shared/Colors.xaml"/>
+                <ResourceDictionary Source="Resources/Shared/Fonts.xaml"/>
+                <ResourceDictionary Source="Resources/Shared/CommonStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Converters globaux -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <shared:EnhancedBooleanToVisibilityConverter x:Key="EnhancedBooleanToVisibilityConverter"/>
+            <shared:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <conv:BooleanInverterConverter x:Key="BooleanInverterConverter"/>
+            <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

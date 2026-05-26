@@ -1,0 +1,98 @@
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using GesAchats.Core.Entities;
+using GesAchats.Core.Interfaces;
+using GesAchats.WPF.Services;
+using GesAchats.WPF.ViewModels.Base;
+
+using GesAchats.WPF.Views.Acheteur.Besoins;
+
+namespace GesAchats.WPF.ViewModels.Acheteur;
+
+public class ReceivedNeedItemViewModel : BaseViewModel
+{
+    public Need Need { get; }
+    
+    public ReceivedNeedItemViewModel(Need need)
+    {
+        Need = need;
+    }
+
+    public int ArticleCount => Need.Details?.Count ?? 0;
+    public string Summary => Need.Details != null && Need.Details.Any() 
+        ? string.Join(", ", Need.Details.Take(3).Select(d => d.Product?.Designation ?? "Inconnu")) + (Need.Details.Count > 3 ? "..." : "")
+        : "Aucun article";
+
+    public string StatusColor => Need.Status switch
+    {
+        NeedStatus.TransmittedToPurchasing => "#2196F3",
+        NeedStatus.InPurchase => "#FFC107",
+        NeedStatus.Validated => "#4CAF50",
+        _ => "#9E9E9E"
+    };
+}
+
+public class ReceivedNeedsViewModel : BaseViewModel
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly INavigationService _navigationService;
+
+    public ObservableCollection<ReceivedNeedItemViewModel> Needs { get; } = new ObservableCollection<ReceivedNeedItemViewModel>();
+
+    public ICommand RefreshCommand { get; }
+    public ICommand ViewDetailsCommand { get; }
+    public ICommand CreateQuoteCommand { get; }
+
+    public ReceivedNeedsViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, INavigationService navigationService)
+    {
+        _unitOfWork = unitOfWork;
+        _serviceProvider = serviceProvider;
+        _navigationService = navigationService;
+        Title = "Besoins Reçus";
+
+        RefreshCommand = new RelayCommand(async _ => await LoadData());
+        ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as ReceivedNeedItemViewModel));
+        CreateQuoteCommand = new RelayCommand(p => ExecuteCreateQuote(p as ReceivedNeedItemViewModel));
+
+        _ = LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsBusy = true;
+        try
+        {
+            var needs = await _unitOfWork.Needs.GetPendingNeedsWithProductsAsync();
+            Needs.Clear();
+            if (needs != null)
+            {
+                foreach (var n in needs)
+                {
+                    Needs.Add(new ReceivedNeedItemViewModel(n));
+                }
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void ExecuteViewDetails(ReceivedNeedItemViewModel? item)
+    {
+        if (item == null) return;
+        
+        var detailWindow = new ArticleDetailWindow(item.Need);
+        detailWindow.Owner = System.Windows.Application.Current.MainWindow;
+        detailWindow.ShowDialog();
+    }
+
+    private void ExecuteCreateQuote(ReceivedNeedItemViewModel? item)
+    {
+        if (item == null) return;
+        
+        // Navigation vers la page de gestion des devis avec le besoin sélectionné
+        _navigationService.NavigateTo("Devis", item.Need);
+    }
+}

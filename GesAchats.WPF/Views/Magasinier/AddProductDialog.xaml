@@ -1,0 +1,46 @@
+<Window x:Class="GesAchats.WPF.Views.Magasinier.AddProductDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}" Height="550" Width="450"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource BackgroundBrush}">
+    
+    <Border Margin="20" Background="White" CornerRadius="8" Padding="20">
+        <StackPanel>
+            <TextBlock Text="AJOUTER UN PRODUIT" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource PrimaryBrush}"/>
+
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="Désignation *" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding Designation, UpdateSourceTrigger=PropertyChanged}" Padding="8"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="Unité *" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <ComboBox ItemsSource="{Binding Units}" SelectedItem="{Binding Unit}" Padding="8"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="Stock Initial" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding InitialStock, Mode=OneWay}" IsReadOnly="True" Padding="8" Background="#F0F0F0"/>
+                <TextBlock Text="ℹ️ Sera 0 jusqu'à la première livraison" FontSize="10" Foreground="Gray" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,0,0,25">
+                <TextBlock Text="Seuil Minimum *" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding MinimumStock, UpdateSourceTrigger=PropertyChanged}" Padding="8"/>
+            </StackPanel>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}" 
+                       FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+
+            <UniformGrid Columns="2" VerticalAlignment="Bottom" Margin="0,10,0,0">
+                <Button Content="Annuler" Command="{Binding CancelCommand}" 
+                        IsCancel="True"
+                        Margin="0,0,5,0" Padding="12" Background="#F5F5F5" BorderThickness="1" BorderBrush="#DDD"/>
+                <Button Content="✓ Confirmer l'Ajout" Command="{Binding SaveCommand}" 
+                        IsDefault="True"
+                        Margin="5,0,0,0" Padding="12" Background="{StaticResource SuccessBrush}" Foreground="White" FontWeight="Bold"/>
+            </UniformGrid>
+        </StackPanel>
+    </Border>
+</Window>

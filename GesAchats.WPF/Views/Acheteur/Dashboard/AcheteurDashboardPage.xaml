@@ -1,0 +1,8 @@
+<Page x:Class="GesAchats.WPF.Views.Acheteur.Dashboard.AcheteurDashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="AcheteurDashboardPage">
+    <Grid Background="White">
+        <TextBlock Text="Tableau de Bord Acheteur" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</Page>

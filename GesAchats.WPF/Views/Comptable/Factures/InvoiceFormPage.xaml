@@ -1,0 +1,194 @@
+<Page x:Class="GesAchats.WPF.Views.Comptable.Factures.InvoiceFormPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Factures"
+      mc:Ignorable="d" 
+      d:DesignHeight="800" d:DesignWidth="1000"
+      Title="Nouvelle Facture">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Background="#F5F6F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,15">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="⬅" Command="{Binding CancelCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
+                <TextBlock Text="Saisie d'une Facture Fournisseur" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="40,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Association Documents Section -->
+                    <GroupBox Header="ASSOCIATION DOCUMENTS" Margin="0,0,0,20" Style="{StaticResource MaterialDesignCardGroupBox}">
+                        <Grid Margin="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="15"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Bon de Livraison *" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding DeliveryNotes}" 
+                                          DisplayMemberPath="DeliveryNumber" 
+                                          SelectedItem="{Binding SelectedDeliveryNote}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Bon de Commande" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding SelectedPurchaseOrder.OrderNumber, Mode=OneWay}" IsReadOnly="True" Background="#F0F0F0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                                <TextBlock Text="Fournisseur" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding SelectedSupplier.CompanyName, Mode=OneWay}" IsReadOnly="True" Background="#F0F0F0"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Informations Facture Section -->
+                    <GroupBox Grid.Column="2" Header="INFORMATIONS FACTURE" Margin="0,0,0,20" Style="{StaticResource MaterialDesignCardGroupBox}">
+                        <Grid Margin="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="15"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="N° Facture Fournisseur *" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding Invoice.ExternalInvoiceNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Date de Facture *" Style="{StaticResource LabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding Invoice.InvoiceDate}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                                <TextBlock Text="Justificatif (PDF/Image) *" Style="{StaticResource LabelStyle}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding AttachedFileName, Mode=OneWay}" IsReadOnly="True" Background="#F0F0F0" Margin="0,0,10,0"/>
+                                    <Button Grid.Column="1" Content="Parcourir..." Command="{Binding UploadFileCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+
+                <!-- Articles Table Section -->
+                <GroupBox Header="ARTICLES FACTURÉS" Margin="0,0,0,20" Style="{StaticResource MaterialDesignCardGroupBox}">
+                    <DataGrid ItemsSource="{Binding InvoiceDetails}" 
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True" 
+                              Background="White"
+                              BorderThickness="1"
+                              BorderBrush="#E0E0E0"
+                              MinHeight="200"
+                              MaxHeight="400">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Produit" Binding="{Binding Product.Designation}" Width="*" />
+                            <DataGridTextColumn Header="Quantité" Binding="{Binding Quantity, StringFormat={}{0:N2}}" Width="100" />
+                            <DataGridTextColumn Header="P.U. HT" Binding="{Binding UnitPriceHT, StringFormat={}{0:N2} MAD}" Width="150" />
+                            <DataGridTextColumn Header="Total HT" Binding="{Binding TotalHT, StringFormat={}{0:N2} MAD}" Width="150">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right" />
+                                        <Setter Property="Margin" Value="0,0,10,0" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+
+                <!-- Summary Section -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="350"/>
+                    </Grid.ColumnDefinitions>
+
+                    <GroupBox Grid.Column="1" Header="RÉCAPITULATIF FINANCIER" Style="{StaticResource MaterialDesignCardGroupBox}">
+                        <StackPanel Margin="10">
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock Text="Taux TVA" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding TaxRate, StringFormat={}{0:N2}}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" %" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Separator Margin="0,10"/>
+
+                            <Grid Margin="0,0,0,5">
+                                <TextBlock Text="Sous-total HT" Foreground="#757575"/>
+                                <TextBlock Text="{Binding SousTotalHT, StringFormat={}{0:N2} MAD}" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,5">
+                                <TextBlock Text="Montant TVA" Foreground="#757575"/>
+                                <TextBlock Text="{Binding MontantTVA, StringFormat={}{0:N2} MAD}" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                            </Grid>
+
+                            <Separator Margin="0,10"/>
+
+                            <Grid>
+                                <TextBlock Text="TOTAL TTC" FontWeight="Bold" FontSize="18" Foreground="{StaticResource PrimaryBrush}"/>
+                                <TextBlock Text="{Binding TotalTTC, StringFormat={}{0:N2} MAD}" 
+                                           HorizontalAlignment="Right" 
+                                           FontWeight="Bold" 
+                                           FontSize="22" 
+                                           Foreground="{StaticResource SecondaryBrush}"/>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="20,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annuler" Command="{Binding CancelCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
+                <Button Content="💾 Enregistrer la Facture" Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#4CAF50" Foreground="White" Width="200"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

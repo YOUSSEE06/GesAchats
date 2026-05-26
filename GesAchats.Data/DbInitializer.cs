@@ -1,0 +1,531 @@
+using GesAchats.Core.Entities;
+using GesAchats.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using GesAchats.Data.Context;
+
+namespace GesAchats.Data;
+
+public static class DbInitializer
+{
+    public static async Task SeedDataAsync(GesAchatsDbContext context)
+    {
+        // 1. Initialisation de la base (crée la base si elle n'existe pas)
+        await context.Database.EnsureCreatedAsync();
+
+        // 1.1 Migration manuelle du schéma (FullName, etc.)
+        await context.Database.ExecuteSqlRawAsync(@"
+            -- Roles update
+             ALTER TABLE ""Roles"" ADD COLUMN IF NOT EXISTS ""Code"" VARCHAR(50);
+             ALTER TABLE ""Roles"" ADD COLUMN IF NOT EXISTS ""Label"" VARCHAR(100);
+             
+             -- On ne met à jour Code et Label que s'ils sont vides
+             -- On utilise une constante par défaut si 'Name' n'existe pas
+             DO $$ 
+             BEGIN 
+                 IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Roles' AND column_name='Name') THEN
+                     UPDATE ""Roles"" SET ""Code"" = UPPER(""Name"") WHERE ""Code"" IS NULL;
+                     UPDATE ""Roles"" SET ""Label"" = ""Name"" WHERE ""Label"" IS NULL;
+                 END IF;
+             END $$;
+            
+            -- Users update
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""FullName"" VARCHAR(100);
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""UpdatedAt"" TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""LastLoginAt"" TIMESTAMP;
+
+            -- Needs update
+            ALTER TABLE ""Needs"" ADD COLUMN IF NOT EXISTS ""Reason"" INTEGER DEFAULT 0;
+            ALTER TABLE ""Needs"" ADD COLUMN IF NOT EXISTS ""Priority"" INTEGER DEFAULT 1;
+            ALTER TABLE ""Needs"" ADD COLUMN IF NOT EXISTS ""DesiredUrgencyDate"" TIMESTAMP;
+            ALTER TABLE ""Needs"" ADD COLUMN IF NOT EXISTS ""RequiredDelayDays"" INTEGER DEFAULT 0;
+            ALTER TABLE ""Needs"" ADD COLUMN IF NOT EXISTS ""History"" TEXT;
+
+            DO $$ 
+            BEGIN 
+                -- Needs table creation (Updated for History)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Needs') THEN
+                    CREATE TABLE ""Needs"" (
+                        ""Id"" SERIAL PRIMARY KEY,
+                        ""NumeroBesoin"" VARCHAR(50) UNIQUE NOT NULL,
+                        ""Description"" TEXT NOT NULL,
+                        ""Status"" INTEGER DEFAULT 0,
+                        ""Reason"" INTEGER DEFAULT 0,
+                        ""Priority"" INTEGER DEFAULT 1,
+                        ""DesiredUrgencyDate"" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        ""RequiredDelayDays"" INTEGER DEFAULT 7,
+                        ""Justification"" TEXT,
+                        ""Notes"" TEXT,
+                        ""RequestedById"" INTEGER REFERENCES ""Users""(""Id""),
+                        ""RequestedAt"" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        ""DateTransmission"" TIMESTAMP,
+                        ""DateCompletion"" TIMESTAMP,
+                        ""ValidatedById"" INTEGER REFERENCES ""Users""(""Id""),
+                        ""CreatedAt"" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        ""UpdatedAt"" TIMESTAMP,
+                        ""IsDeleted"" BOOLEAN DEFAULT FALSE,
+                        ""History"" TEXT,
+                        ""ProductId"" INTEGER REFERENCES ""Products""(""Id""),
+                        ""Quantity"" DECIMAL(18,2),
+                        ""Unit"" VARCHAR(20)
+                    );
+                END IF;
+
+                -- NeedDetails table for many-to-many relationship
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'NeedDetails') THEN
+                    CREATE TABLE ""NeedDetails"" (
+                        ""Id"" SERIAL PRIMARY KEY,
+                        ""NeedId"" INTEGER REFERENCES ""Needs""(""Id"") ON DELETE CASCADE,
+                        ""ProductId"" INTEGER REFERENCES ""Products""(""Id""),
+                        ""Quantity"" DECIMAL(18,2) NOT NULL,
+                        ""UnitPriceHT"" DECIMAL(18,2),
+                        ""IsNewProduct"" BOOLEAN DEFAULT FALSE
+                    );
+                END IF;
+
+                -- Ensure NumeroBesoin column exists if Needs table was old
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='NumeroBesoin') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""NumeroBesoin"" VARCHAR(50);
+                    UPDATE ""Needs"" SET ""NumeroBesoin"" = 'BES-' || LPAD(""Id""::text, 3, '0');
+                    ALTER TABLE ""Needs"" ALTER COLUMN ""NumeroBesoin"" SET NOT NULL;
+                    ALTER TABLE ""Needs"" ADD CONSTRAINT ""UQ_Needs_NumeroBesoin"" UNIQUE (""NumeroBesoin"");
+                END IF;
+
+                -- Fix Status column type if it's still VARCHAR
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Status' AND data_type='character varying') THEN
+                    ALTER TABLE ""Needs"" ALTER COLUMN ""Status"" TYPE INTEGER USING (0);
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Reason') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""Reason"" INTEGER DEFAULT 0;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Priority') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""Priority"" INTEGER DEFAULT 1;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='DesiredUrgencyDate') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""DesiredUrgencyDate"" TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='RequiredDelayDays') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""RequiredDelayDays"" INTEGER DEFAULT 7;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Notes') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""Notes"" TEXT;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='ProductId') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""ProductId"" INTEGER REFERENCES ""Products""(""Id"");
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Quantity') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""Quantity"" DECIMAL(18,2);
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='Unit') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""Unit"" VARCHAR(20);
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='DateTransmission') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""DateTransmission"" TIMESTAMP;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='DateCompletion') THEN
+                    ALTER TABLE ""Needs"" ADD COLUMN ""DateCompletion"" TIMESTAMP;
+                END IF;
+            END $$;
+        ");
+
+        try 
+        {
+            // 2. Ajouter les rôles si inexistants
+            if (!await context.Roles.AnyAsync())
+            {
+                var roles = new List<Role>
+                {
+                    new Role { Code = "ADMIN", Label = "Administrateur", Description = "Accès complet au système" },
+                    new Role { Code = "ACHETEUR", Label = "Acheteur", Description = "Gestion des commandes et fournisseurs" },
+                    new Role { Code = "MAGASINIER", Label = "Magasinier", Description = "Gestion des stocks et réceptions" },
+                    new Role { Code = "COMPTABLE", Label = "Comptable", Description = "Gestion des factures et paiements" }
+                };
+                await context.Roles.AddRangeAsync(roles);
+                await context.SaveChangesAsync();
+            }
+
+            // 3. Ajouter l'utilisateur admin si inexistant
+            if (!await context.Users.AnyAsync(u => u.Login == "admin"))
+            {
+                var adminRole = await context.Roles.FirstAsync(r => r.Code == "ADMIN");
+                var adminUser = new User
+                {
+                    Login = "admin",
+                    FullName = "Administrateur Système",
+                    Email = "admin@gesachats.com",
+                    PasswordHash = "1234",
+                    RoleId = adminRole.Id,
+                    IsActive = true
+                };
+                await context.Users.AddAsync(adminUser);
+                await context.SaveChangesAsync();
+            }
+
+            // 4. Ajouter des utilisateurs de test pour chaque rôle
+            var rolesMap = await context.Roles.ToDictionaryAsync(r => r.Code);
+
+            if (!await context.Users.AnyAsync(u => u.Login == "magasinier"))
+            {
+                await context.Users.AddAsync(new User
+                {
+                    Login = "magasinier",
+                    FullName = "Jean Stock",
+                    Email = "magasinier@gesachats.com",
+                    PasswordHash = "1234",
+                    RoleId = rolesMap["MAGASINIER"].Id,
+                    IsActive = true
+                });
+            }
+
+            if (!await context.Users.AnyAsync(u => u.Login == "acheteur"))
+            {
+                await context.Users.AddAsync(new User
+                {
+                    Login = "acheteur",
+                    FullName = "Alice Achats",
+                    Email = "acheteur@gesachats.com",
+                    PasswordHash = "1234",
+                    RoleId = rolesMap["ACHETEUR"].Id,
+                    IsActive = true
+                });
+            }
+
+            if (!await context.Users.AnyAsync(u => u.Login == "comptable"))
+            {
+                await context.Users.AddAsync(new User
+                {
+                    Login = "comptable",
+                    FullName = "Marc Chiffre",
+                    Email = "comptable@gesachats.com",
+                    PasswordHash = "1234",
+                    RoleId = rolesMap["COMPTABLE"].Id,
+                    IsActive = true
+                });
+            }
+            else
+            {
+                // Force update password to 1234 for test users if they already exist
+                var usersToUpdate = await context.Users.Where(u => u.Login == "comptable" || u.Login == "acheteur" || u.Login == "magasinier" || u.Login == "admin").ToListAsync();
+                foreach(var u in usersToUpdate) u.PasswordHash = "1234";
+            }
+
+            await context.SaveChangesAsync();
+
+            // 5. Articles de test (Ciment, Graviers, etc.)
+            if (!await context.Products.AnyAsync())
+            {
+                var products = new List<Product>
+                {
+                    new Product { Designation = "Ciment 35kg", CurrentStock = 10, MinimumStock = 50, Unit = "sac", Category = "Gros Oeuvre" },
+                    new Product { Designation = "Graviers 40mm", CurrentStock = 0, MinimumStock = 20, Unit = "m3", Category = "Granulats" },
+                    new Product { Designation = "Sable fin", CurrentStock = 100, MinimumStock = 30, Unit = "m3", Category = "Granulats" },
+                    new Product { Designation = "Acier HA8", CurrentStock = 5, MinimumStock = 100, Unit = "barre", Category = "Ferraillage" },
+                    new Product { Designation = "Tuiles", CurrentStock = 200, MinimumStock = 100, Unit = "pcs", Category = "Couverture" }
+                };
+                await context.Products.AddRangeAsync(products);
+                await context.SaveChangesAsync();
+            }
+
+            // 6. Besoins de test
+            if (!await context.Needs.AnyAsync())
+            {
+                var magasinier = await context.Users.FirstAsync(u => u.Login == "magasinier");
+                var ciment = await context.Products.FirstAsync(p => p.Designation == "Ciment 35kg");
+                var graviers = await context.Products.FirstAsync(p => p.Designation == "Graviers 40mm");
+                var acier = await context.Products.FirstAsync(p => p.Designation == "Acier HA8");
+
+                var needs = new List<Need>
+                {
+                    new Need { NumeroBesoin = "#BES-001", Unit = "sac", Description = "Réappro Ciment", ProductId = ciment.Id, Quantity = 100, Status = NeedStatus.Draft, RequestedById = magasinier.Id, Reason = NeedReason.RegularRestock, Priority = NeedPriority.Normal },
+                    new Need { NumeroBesoin = "#BES-002", Unit = "barre", Description = "Besoin urgent Acier", ProductId = acier.Id, Quantity = 500, Status = NeedStatus.Draft, RequestedById = magasinier.Id, Reason = NeedReason.Urgency, Priority = NeedPriority.High, DesiredUrgencyDate = DateTime.UtcNow.AddDays(2) },
+                    new Need { NumeroBesoin = "#BES-003", Unit = "m3", Description = "Rupture Graviers", ProductId = graviers.Id, Quantity = 20, Status = NeedStatus.TransmittedToPurchasing, RequestedById = magasinier.Id, Reason = NeedReason.Stockout, Priority = NeedPriority.High, DateTransmission = DateTime.UtcNow },
+                    new Need { NumeroBesoin = "#BES-004", Unit = "pcs", Description = "Besoin Tuiles", ProductId = (await context.Products.FirstAsync(p => p.Designation == "Tuiles")).Id, Quantity = 300, Status = NeedStatus.TransmittedToPurchasing, RequestedById = magasinier.Id, Reason = NeedReason.RegularRestock, Priority = NeedPriority.Low, DateTransmission = DateTime.UtcNow }
+                };
+                await context.Needs.AddRangeAsync(needs);
+                await context.SaveChangesAsync();
+            }
+
+            // 7. Fournisseurs et Devis de test
+            if (!await context.Suppliers.AnyAsync())
+            {
+                var suppliers = new List<Supplier>
+                {
+                    new Supplier { CompanyName = "Société Matériaux SA", Email = "contact@societemat.com", City = "Casablanca", IsActive = true, Rating = 4.5m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Cimenterie du Nord", Email = "sales@cimentnord.com", City = "Tanger", IsActive = true, Rating = 4.0m, AverageDeliveryDelay = 5 },
+                    new Supplier { CompanyName = "Aciers Modernes", Email = "info@aciersmod.com", City = "Rabat", IsActive = true, Rating = 3.5m, AverageDeliveryDelay = 2 }
+                };
+                await context.Suppliers.AddRangeAsync(suppliers);
+                await context.SaveChangesAsync();
+            }
+
+            // 8. Commandes de test
+            if (!await context.PurchaseOrders.AnyAsync())
+            {
+                var acheteur = await context.Users.FirstAsync(u => u.Login == "acheteur");
+                var supplier1 = await context.Suppliers.FirstAsync(s => s.CompanyName == "Société Matériaux SA");
+                var supplier2 = await context.Suppliers.FirstAsync(s => s.CompanyName == "Cimenterie du Nord");
+
+                var ciment = await context.Products.FirstAsync(p => p.Designation == "Ciment 35kg");
+                var graviers = await context.Products.FirstAsync(p => p.Designation == "Graviers 40mm");
+                var acier = await context.Products.FirstAsync(p => p.Designation == "Acier HA8");
+
+                // Récupérer un besoin existant pour lier les devis
+                var firstNeed = await context.Needs.FirstOrDefaultAsync() ?? new Need { Id = 1 };
+
+                // Devis pour simulation
+                var devis1 = new Quotation 
+                { 
+                    ReferenceNumber = "DEV-SIM-001", 
+                    SupplierId = supplier1.Id, 
+                    NeedId = firstNeed.Id, 
+                    Status = "Sent", 
+                    TotalAmountHT = 1200, 
+                    TotalAmountTTC = 1440,
+                    CreatedById = acheteur.Id // Ajout de l'ID utilisateur
+                };
+                devis1.Details.Add(new QuotationDetail { ProductId = graviers.Id, Quantity = 20, UnitPriceHT = 60, UnitPriceTTC = 72 });
+                
+                var devis2 = new Quotation 
+                { 
+                    ReferenceNumber = "DEV-SIM-002", 
+                    SupplierId = supplier2.Id, 
+                    NeedId = firstNeed.Id, 
+                    Status = "Sent", 
+                    TotalAmountHT = 1300, 
+                    TotalAmountTTC = 1560,
+                    CreatedById = acheteur.Id // Ajout de l'ID utilisateur
+                };
+                devis2.Details.Add(new QuotationDetail { ProductId = graviers.Id, Quantity = 20, UnitPriceHT = 65, UnitPriceTTC = 78 });
+
+                await context.Quotations.AddRangeAsync(devis1, devis2);
+                await context.SaveChangesAsync();
+
+                var order1 = new PurchaseOrder 
+                { 
+                    OrderNumber = "BC-2026-0001", 
+                    OrderDate = DateTime.UtcNow.AddDays(-5), 
+                    SupplierId = supplier1.Id, 
+                    Status = "Issued",
+                    ExpectedDeliveryDate = DateTime.UtcNow.AddDays(2),
+                    CreatedById = acheteur.Id,
+                    TotalAmountHT = 850,
+                    TotalAmountTTC = 1020,
+                    TotalVAT = 170,
+                    PaymentConditions = "Net 30"
+                };
+
+                order1.Details.Add(new PurchaseOrderDetail { ProductId = ciment.Id, Quantity = 100, UnitPriceHT = 8.5m, UnitPriceTTC = 10.2m });
+
+                var order2 = new PurchaseOrder 
+                { 
+                    OrderNumber = "BC-2026-0002", 
+                    OrderDate = DateTime.UtcNow.AddDays(-2), 
+                    SupplierId = supplier1.Id, 
+                    Status = "Issued",
+                    ExpectedDeliveryDate = DateTime.UtcNow.AddDays(1),
+                    CreatedById = acheteur.Id,
+                    TotalAmountHT = 2250,
+                    TotalAmountTTC = 2700,
+                    TotalVAT = 450,
+                    PaymentConditions = "Net 30"
+                };
+
+                order2.Details.Add(new PurchaseOrderDetail { ProductId = acier.Id, Quantity = 500, UnitPriceHT = 4.5m, UnitPriceTTC = 5.4m });
+
+                await context.PurchaseOrders.AddRangeAsync(order1, order2);
+            }
+
+            await context.SaveChangesAsync();
+
+            // 5. Insertion des données pour l'historique des prix (5 achats par produit)
+            if (await context.Set<PurchaseOrderDetail>().CountAsync() < 10)
+            {
+                // Nettoyage pour éviter les doublons partiels
+                context.Set<PurchaseOrderDetail>().RemoveRange(context.Set<PurchaseOrderDetail>());
+                context.PurchaseOrders.RemoveRange(context.PurchaseOrders);
+                context.Set<QuotationDetail>().RemoveRange(context.Set<QuotationDetail>());
+                context.Quotations.RemoveRange(context.Quotations);
+                await context.SaveChangesAsync();
+
+                var suppliers = await context.Suppliers.ToListAsync();
+                var products = await context.Products.ToListAsync();
+                var random = new Random();
+
+                foreach (var product in products)
+                {
+                    decimal basePrice = product.Designation switch
+                    {
+                        "Ciment 35kg" => 8.00m,
+                        "Graviers 40mm" => 25.00m,
+                        "Sable fin" => 45.00m,
+                        "Acier HA8" => 5.00m,
+                        "Tuiles" => 120.00m,
+                        _ => 10.00m
+                    };
+
+                    for (int i = 1; i <= 5; i++)
+                    {
+                        var supplier = suppliers[random.Next(suppliers.Count)];
+                        // Variation de prix de +/- 10%
+                        decimal priceVariation = (decimal)(random.NextDouble() * 0.2 - 0.1);
+                        decimal unitPrice = Math.Round(basePrice * (1 + priceVariation), 2);
+                        int quantity = random.Next(10, 100);
+                        DateTime date = DateTime.UtcNow.AddDays(-random.Next(1, 180));
+
+                        var q = new Quotation 
+                        { 
+                            ReferenceNumber = $"DEV-{product.Id}-{i}", 
+                            SupplierId = supplier.Id, 
+                            TotalAmountHT = unitPrice * quantity, 
+                            Status = "Validated", 
+                            Date = date.AddDays(-1), 
+                            CreatedById = 1 
+                        };
+                        await context.Quotations.AddAsync(q);
+                        await context.SaveChangesAsync();
+
+                        var qd = new QuotationDetail 
+                        { 
+                            QuotationId = q.Id, 
+                            ProductId = product.Id, 
+                            Quantity = quantity, 
+                            UnitPriceHT = unitPrice 
+                        };
+                        await context.Set<QuotationDetail>().AddAsync(qd);
+
+                        var bc = new PurchaseOrder 
+                        { 
+                            OrderNumber = $"BC-{product.Id}-{i}", 
+                            SupplierId = supplier.Id, 
+                            QuotationId = q.Id, 
+                            TotalAmountHT = unitPrice * quantity, 
+                            Status = "Issued", 
+                            OrderDate = date, 
+                            CreatedById = 1 
+                        };
+                        await context.PurchaseOrders.AddAsync(bc);
+                        await context.SaveChangesAsync();
+
+                        var bcd = new PurchaseOrderDetail 
+                        { 
+                            PurchaseOrderId = bc.Id, 
+                            ProductId = product.Id, 
+                            Quantity = quantity, 
+                            UnitPriceHT = unitPrice 
+                        };
+                        await context.Set<PurchaseOrderDetail>().AddAsync(bcd);
+                    }
+                }
+                await context.SaveChangesAsync();
+            }
+
+            // 6. Insertion d'un historique complet de besoins pour le Magasinier
+            // On régénère si on n'a pas de détails (le cas du screenshot de l'utilisateur)
+            if (!await context.Set<NeedDetail>().AnyAsync())
+            { 
+                var magasinier = await context.Users.FirstOrDefaultAsync(u => u.Login == "magasinier");
+                var products = await context.Products.ToListAsync();
+                var random = new Random();
+
+                // Nettoyage des anciens besoins vides
+                var oldNeeds = await context.Needs.ToListAsync();
+                context.Needs.RemoveRange(oldNeeds);
+                await context.SaveChangesAsync();
+
+                if (magasinier != null && products.Any())
+                { 
+                    // Création de 15 listes de besoins avec différents statuts
+                    for (int i = 1; i <= 15; i++)
+                    {
+                        var status = (NeedStatus)random.Next(0, 6);
+                        var need = new Need
+                        {
+                            NumeroBesoin = $"BES-2024-{i:D3}",
+                            Description = $"Demande de réapprovisionnement #{i} - {DateTime.Now:MM/yyyy}",
+                            Status = status,
+                            RequestedById = magasinier.Id,
+                            RequestedAt = DateTime.UtcNow.AddDays(-i * 3),
+                            DateTransmission = status >= NeedStatus.TransmittedToPurchasing ? DateTime.UtcNow.AddDays(-i * 3).AddHours(random.Next(1, 5)) : null,
+                            UpdatedAt = DateTime.UtcNow.AddDays(-i * 3)
+                        };
+                        await context.Needs.AddAsync(need);
+                        await context.SaveChangesAsync();
+
+                        // Ajouter 3 à 7 articles par besoin pour un rendu dense
+                        int articleCount = random.Next(3, 8);
+                        var selectedProducts = products.OrderBy(x => random.Next()).Take(articleCount).ToList();
+
+                        foreach (var prod in selectedProducts)
+                        {
+                            await context.Set<NeedDetail>().AddAsync(new NeedDetail
+                            {
+                                NeedId = need.Id,
+                                ProductId = prod.Id,
+                                Quantity = random.Next(10, 100),
+                                IsNewProduct = random.Next(0, 10) > 8
+                            });
+                        }
+                    }
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // 7. Initialisation des tables Bons de Livraison (BL)
+            await context.Database.ExecuteSqlRawAsync(@"
+                DO $$ 
+                BEGIN 
+                    -- Table bons_livraison
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
+                        CREATE TABLE bons_livraison (
+                            id SERIAL PRIMARY KEY,
+                            numero_bl VARCHAR(50) NOT NULL UNIQUE,
+                            date_reception TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                            fournisseur_id INTEGER NOT NULL REFERENCES ""Suppliers""(""Id""),
+                            bc_id INTEGER NOT NULL REFERENCES ""PurchaseOrders""(""Id"") ON DELETE RESTRICT,
+                            fichier_pdf TEXT,
+                            observations TEXT,
+                            ""Status"" VARCHAR(50) DEFAULT 'Pending',
+                            ""ReceivedQuantity"" DECIMAL(18,2) DEFAULT 0,
+                            ""CompliantQuantity"" DECIMAL(18,2) DEFAULT 0,
+                            ""DefectiveQuantity"" DECIMAL(18,2) DEFAULT 0,
+                            ""ReceivedById"" INTEGER REFERENCES ""Users""(""Id""),
+                            ""CreatedAt"" TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            ""UpdatedAt"" TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    END IF;
+
+                    -- Table bl_details
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bl_details') THEN
+                        CREATE TABLE bl_details (
+                            id SERIAL PRIMARY KEY,
+                            bl_id INTEGER NOT NULL REFERENCES bons_livraison(id) ON DELETE CASCADE,
+                            produit_id INTEGER NOT NULL REFERENCES ""Products""(""Id""),
+                            quantite_commandee DECIMAL(18,2) NOT NULL,
+                            quantite_livree DECIMAL(18,2) NOT NULL,
+                            prix_ht DECIMAL(18,2) NOT NULL,
+                            prix_ttc DECIMAL(18,2) NOT NULL,
+                            total DECIMAL(18,2) NOT NULL,
+                            valide BOOLEAN NOT NULL DEFAULT FALSE
+                        );
+                    END IF;
+                END $$;
+            ");
+        }
+        catch (Exception ex)
+        {
+            var message = $"Erreur lors de l'initialisation de la base de données : {ex.Message}";
+            if (ex.InnerException != null) message += $"\n\nInner Exception : {ex.InnerException.Message}";
+            
+            throw new Exception(message + "\n\nSi vous avez récemment mis à jour l'application, vous pouvez essayer de supprimer la base de données PostgreSQL pour qu'elle soit recréée proprement.", ex);
+        }
+    }
+}
