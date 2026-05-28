@@ -3,72 +3,37 @@ using System.Windows.Input;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Views.Acheteur.Fournisseurs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Acheteur;
 
 public class SupplierManagementViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IServiceProvider _serviceProvider;
     private Supplier? _selectedSupplier;
-    private Supplier _editingSupplier = new();
-    private bool _isEditMode;
 
     public ObservableCollection<Supplier> Suppliers { get; } = new();
 
     public Supplier? SelectedSupplier
     {
         get => _selectedSupplier;
-        set
-        {
-            if (SetProperty(ref _selectedSupplier, value))
-            {
-                if (value != null)
-                {
-                    EditingSupplier = new Supplier
-                    {
-                        Id = value.Id,
-                        CompanyName = value.CompanyName,
-                        ContactName = value.ContactName,
-                        Email = value.Email,
-                        Phone = value.Phone,
-                        Address = value.Address,
-                        City = value.City,
-                        Rating = value.Rating,
-                        IsActive = value.IsActive
-                    };
-                    IsEditMode = true;
-                }
-                else
-                {
-                    ResetForm();
-                }
-            }
-        }
+        set => SetProperty(ref _selectedSupplier, value);
     }
 
-    public Supplier EditingSupplier
-    {
-        get => _editingSupplier;
-        set => SetProperty(ref _editingSupplier, value);
-    }
-
-    public bool IsEditMode
-    {
-        get => _isEditMode;
-        set => SetProperty(ref _isEditMode, value);
-    }
-
-    public ICommand SaveCommand { get; }
-    public ICommand NewCommand { get; }
+    public ICommand AddSupplierCommand { get; }
+    public ICommand EditSupplierCommand { get; }
     public ICommand RefreshCommand { get; }
 
-    public SupplierManagementViewModel(IUnitOfWork unitOfWork)
+    public SupplierManagementViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
         _unitOfWork = unitOfWork;
+        _serviceProvider = serviceProvider;
         Title = "Gestion des Fournisseurs";
 
-        SaveCommand = new RelayCommand(async _ => await ExecuteSave(), _ => !string.IsNullOrEmpty(EditingSupplier.CompanyName));
-        NewCommand = new RelayCommand(_ => ResetForm());
+        AddSupplierCommand = new RelayCommand(async _ => await OpenAddSupplierDialog());
+        EditSupplierCommand = new RelayCommand(async _ => await OpenEditSupplierDialog(), _ => SelectedSupplier != null);
         RefreshCommand = new RelayCommand(async _ => await LoadSuppliers());
 
         _ = LoadSuppliers();
@@ -92,39 +57,34 @@ public class SupplierManagementViewModel : BaseViewModel
         }
     }
 
-    private async Task ExecuteSave()
+    private async Task OpenAddSupplierDialog()
     {
-        IsBusy = true;
-        try
+        var viewModel = ActivatorUtilities.CreateInstance<SupplierDialogViewModel>(_serviceProvider);
+        var dialog = new SupplierDialog(viewModel)
         {
-            if (IsEditMode)
-            {
-                _unitOfWork.Suppliers.Update(EditingSupplier);
-            }
-            else
-            {
-                await _unitOfWork.Suppliers.AddAsync(EditingSupplier);
-            }
+            Owner = System.Windows.Application.Current.MainWindow
+        };
 
-            await _unitOfWork.CompleteAsync();
+        if (dialog.ShowDialog() == true)
+        {
             await LoadSuppliers();
-            ResetForm();
-            System.Windows.MessageBox.Show("Fournisseur enregistré avec succès.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show($"Erreur : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-        }
-        finally
-        {
-            IsBusy = false;
         }
     }
 
-    private void ResetForm()
+    private async Task OpenEditSupplierDialog()
     {
-        EditingSupplier = new Supplier { IsActive = true };
-        SelectedSupplier = null;
-        IsEditMode = false;
+        if (SelectedSupplier == null) return;
+
+        var viewModel = ActivatorUtilities.CreateInstance<SupplierDialogViewModel>(_serviceProvider, SelectedSupplier);
+        var dialog = new SupplierDialog(viewModel)
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            await LoadSuppliers();
+            SelectedSupplier = null;
+        }
     }
 }

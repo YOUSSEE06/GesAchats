@@ -17,6 +17,7 @@
             <shared:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <conv:BooleanInverterConverter x:Key="BooleanInverterConverter"/>
             <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+            <conv:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

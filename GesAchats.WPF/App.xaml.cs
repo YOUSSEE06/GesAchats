@@ -127,6 +127,7 @@ public partial class App : Application
         services.AddTransient<ReceivedNeedsViewModel>();
         services.AddTransient<QuotesManagementViewModel>();
         services.AddTransient<SupplierManagementViewModel>();
+        services.AddTransient<SupplierDialogViewModel>();
         services.AddTransient<QuotationPriceEntryViewModel>();
         services.AddTransient<AdvancedComparativeAnalysisViewModel>();
         services.AddTransient<ComparativeAnalysisViewModel>();

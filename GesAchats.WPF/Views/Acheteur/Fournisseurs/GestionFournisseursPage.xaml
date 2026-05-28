@@ -23,102 +23,107 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="&#x1f3e2; Annuaire des Fournisseurs" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Command="{Binding NewCommand}" Content="+ Nouveau" Padding="15,8" Background="#2196F3" Foreground="White" BorderThickness="0" Margin="0,0,10,0"/>
-                    <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
+                    <Button Command="{Binding AddSupplierCommand}" Content="+ Ajouter un fournisseur" Padding="20,10" Background="#2196F3" Foreground="White" BorderThickness="0" Margin="0,0,10,0" FontSize="14" FontWeight="SemiBold" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.9"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Opacity" Value="0.8"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="20,10" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3" FontSize="14" FontWeight="SemiBold" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#BBDEFB"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Content -->
         <Grid Grid.Row="1" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="400"/>
-            </Grid.ColumnDefinitions>
-
             <!-- Suppliers List -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="10" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,10,0">
-                <DataGrid ItemsSource="{Binding Suppliers}" 
+            <Border Background="White" CornerRadius="12" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
+                <DataGrid x:Name="SuppliersDataGrid"
+                          ItemsSource="{Binding Suppliers}" 
                           SelectedItem="{Binding SelectedSupplier}"
                           AutoGenerateColumns="False" 
                           IsReadOnly="True" 
                           Background="Transparent" 
                           BorderThickness="0"
-                          RowHeight="50">
+                          RowHeight="55"
+                          GridLinesVisibility="None"
+                          HeadersVisibility="Column"
+                          MouseDoubleClick="SuppliersDataGrid_MouseDoubleClick">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#FAFAFA"/>
+                            <Setter Property="Foreground" Value="#424242"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="10"/>
+                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                    <Setter Property="Foreground" Value="#1976D2"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Padding" Value="10"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        </Style>
+                    </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Société" Binding="{Binding CompanyName}" Width="*"/>
                         <DataGridTextColumn Header="Contact" Binding="{Binding ContactName}" Width="*"/>
+                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+                        <DataGridTextColumn Header="Téléphone" Binding="{Binding Phone}" Width="Auto"/>
                         <DataGridTextColumn Header="Ville" Binding="{Binding City}" Width="Auto"/>
-                        <DataGridTemplateColumn Header="Note" Width="Auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding Rating}" FontWeight="Bold" Foreground="#FFC107"/>
-                                        <TextBlock Text=" &#x2605;" Foreground="#FFC107"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridCheckBoxColumn Header="Actif" Binding="{Binding IsActive}" Width="Auto"/>
                     </DataGrid.Columns>
                 </DataGrid>
-            </Border>
-
-            <!-- Form Panel -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="DÉTAILS FOURNISSEUR" FontSize="14" FontWeight="Bold" Foreground="#666" Margin="0,0,0,20"/>
-
-                        <TextBlock Text="Nom de la société *" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding EditingSupplier.CompanyName, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,0,0,15"/>
-
-                        <TextBlock Text="Nom du contact" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding EditingSupplier.ContactName}" Padding="10" Margin="0,0,0,15"/>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                <TextBlock Text="Email" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding EditingSupplier.Email}" Padding="10" Margin="0,0,0,15"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                <TextBlock Text="Téléphone" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding EditingSupplier.Phone}" Padding="10" Margin="0,0,0,15"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <TextBlock Text="Adresse" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding EditingSupplier.Address}" Padding="10" Margin="0,0,0,15" Height="60" AcceptsReturn="True"/>
-
-                        <TextBlock Text="Ville" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox Text="{Binding EditingSupplier.City}" Padding="10" Margin="0,0,0,15"/>
-
-                        <CheckBox IsChecked="{Binding EditingSupplier.IsActive}" Content="Fournisseur actif" Margin="0,10,0,20"/>
-
-                        <Button Command="{Binding SaveCommand}" 
-                                Content="&#x1f4be; Enregistrer" 
-                                Padding="20,12" 
-                                Background="#4CAF50" 
-                                Foreground="White" 
-                                FontWeight="Bold" 
-                                BorderThickness="0"
-                                HorizontalAlignment="Stretch"/>
-                        
-                        <Button Command="{Binding NewCommand}" 
-                                Content="Annuler" 
-                                Margin="0,10,0,0"
-                                Padding="10,5" 
-                                Background="Transparent" 
-                                Foreground="Gray" 
-                                BorderThickness="0"
-                                HorizontalAlignment="Center"
-                                Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </StackPanel>
-                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
