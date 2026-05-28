@@ -454,7 +454,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             AvailableQuotations.Clear();
             if (quotes != null)
             {
-                foreach (var q in quotes.Where(x => x.Status == "Received" || x.Status == "Accepted"))
+                foreach (var q in quotes.Where(x => x.Status == QuotationStatus.Validated))
                 {
                     AvailableQuotations.Add(q);
                 }
@@ -508,7 +508,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             AvailableQuotations.Clear();
             if (quotes != null)
             {
-                foreach (var q in quotes.Where(x => x.Status == "Received" || x.Status == "Accepted"))
+                foreach (var q in quotes.Where(x => x.Status == QuotationStatus.Validated))
                 {
                     AvailableQuotations.Add(q);
                 }
@@ -532,7 +532,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             
             if (allQuotes != null)
             {
-                foreach (var q in allQuotes.Where(x => x.Status == "Received" || x.Status == "Accepted" || x.Status == "Sent"))
+                foreach (var q in allQuotes.Where(x => x.Status == QuotationStatus.Validated))
                 {
                     if (currentQuotation?.Id != q.Id)
                     {

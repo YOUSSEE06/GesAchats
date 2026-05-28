@@ -67,7 +67,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private bool _isCreateDialogOpen;
     private string _filterReference = string.Empty;
     private int? _filterSupplierId;
-    private string _filterStatus = "Tous";
+    private string _filterStatus = QuotationStatus.Validated;
 
     public ObservableCollection<Need> PendingNeeds { get; } = new ObservableCollection<Need>();
     public ObservableCollection<ArticleSelectionViewModel> ArticlesToQuote { get; } = new ObservableCollection<ArticleSelectionViewModel>();
