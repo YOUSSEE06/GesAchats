@@ -181,6 +181,7 @@ public class GesAchatsDbContext : DbContext
         modelBuilder.Entity<Payment>().Property(p => p.PaymentDate).HasColumnName("date_paiement").IsRequired();
         modelBuilder.Entity<Payment>().Property(p => p.AmountPaid).HasColumnName("montant").HasPrecision(18, 2);
         modelBuilder.Entity<Payment>().Property(p => p.PaymentMethod).HasColumnName("mode_paiement").HasMaxLength(50);
+        modelBuilder.Entity<Payment>().Property(p => p.Status).HasColumnName("statut").HasMaxLength(50);
         modelBuilder.Entity<Payment>().Property(p => p.ReferenceNumber).HasColumnName("reference").HasMaxLength(255);
         modelBuilder.Entity<Payment>().Property(p => p.BankName).HasColumnName("banque").HasMaxLength(100);
         modelBuilder.Entity<Payment>().Property(p => p.ProofFilePath).HasColumnName("fichier_preuve");

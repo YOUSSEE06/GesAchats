@@ -1,0 +1,244 @@
+<Window x:Class="GesAchats.WPF.Views.Comptable.Factures.InvoicePaymentDetailsPopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Factures"
+        xmlns:vm="clr-namespace:GesAchats.WPF.ViewModels.Comptable"
+        xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+        mc:Ignorable="d"
+        Title="Détails Facture et Règlements" Height="800" Width="1000"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F6F7">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <DropShadowEffect x:Key="CardShadow" BlurRadius="15" ShadowDepth="0" Opacity="0.1"/>
+            <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" CornerRadius="12" Padding="25" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
+            <StackPanel>
+                <TextBlock Text="📄 Informations Facture" FontSize="22" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,0,0,20"/>
+                
+                <!-- Row 1: Invoice Number, Supplier, Date -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔢" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Numéro Facture" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Invoice.InvoiceNumber}" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="20,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🏢" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Fournisseur" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Invoice.Supplier.CompanyName}" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📅" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Date" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Invoice.InvoiceDate, StringFormat='dd/MM/yyyy'}" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Row 2: HT, TVA, TTC -->
+                <Grid Margin="0,25,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Padding="18" Background="#F0F4F8" CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💶" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Montant HT" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Invoice.AmountHT, StringFormat='{}{0:N2} MAD'}" FontSize="20" FontWeight="Bold" Foreground="#1A3A52" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="18" Background="#FFF3E0" CornerRadius="8" Margin="15,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="TVA" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Invoice.TaxAmount, StringFormat='{}{0:N2} MAD'}" FontSize="20" FontWeight="Bold" Foreground="#FF9800" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Padding="18" Background="#E8F5E9" CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💳" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Montant TTC" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat='{}{0:N2} MAD'}" FontSize="20" FontWeight="Bold" Foreground="#4CAF50" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Row 3: Total Payments, Balance, Status -->
+                <Grid Margin="0,25,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Padding="18" Background="#F0F4F8" CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✅" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Total Règlements" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding TotalPayments, StringFormat='{}{0:N2} MAD'}" FontSize="20" FontWeight="Bold" Foreground="#2196F3" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="18" Background="#FFF3E0" CornerRadius="8" Margin="15,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📉" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Solde" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Balance, StringFormat='{}{0:N2} MAD'}" FontSize="20" FontWeight="Bold" Foreground="#FF9800" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Padding="18" Background="#E8F5E9" CornerRadius="8">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🎯" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="Statut" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <Border Background="{Binding StatusColor}" CornerRadius="20" Padding="12,5" HorizontalAlignment="Left" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding StatusCalculated}" FontSize="14" FontWeight="Bold" Foreground="White"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Payments Table -->
+        <Border Grid.Row="1" Background="White" CornerRadius="12" Margin="0,25,0,0" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Padding="20,15" Background="#FAFAFA" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0">
+                    <TextBlock Text="📋 Règlements Associés" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52"/>
+                </Border>
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Payments}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="15"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0" Background="Transparent" HeadersVisibility="Column">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#FAFAFA"/>
+                            <Setter Property="Foreground" Value="#616161"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontSize" Value="13"/>
+                            <Setter Property="Padding" Value="10,12"/>
+                            <Setter Property="BorderBrush" Value="#F0F0F0"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Padding" Value="10,12"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date Règlement" Binding="{Binding PaymentDate, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                        <DataGridTextColumn Header="Montant" Binding="{Binding AmountPaid, StringFormat='{}{0:N2} MAD'}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Mode de paiement" Binding="{Binding PaymentMethod}" Width="*"/>
+                        <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="2*"/>
+                        <DataGridTemplateColumn Header="Justificatif" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="📄 Voir" Command="{Binding DataContext.ViewProofCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding ProofFilePath}" Padding="10,5" 
+                                            Visibility="{Binding ProofFilePath, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Margin="0,25,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Fermer" Command="{Binding CloseCommand}" Padding="25,12" FontSize="15" FontWeight="SemiBold" Foreground="#1A3A52" Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="#F0F0F0" CornerRadius="8" Padding="{TemplateBinding Padding}" BorderBrush="#E0E0E0" BorderThickness="1">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="#E0E0E0" CornerRadius="8" Padding="{TemplateBinding Padding}" BorderBrush="#D0D0D0" BorderThickness="1">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

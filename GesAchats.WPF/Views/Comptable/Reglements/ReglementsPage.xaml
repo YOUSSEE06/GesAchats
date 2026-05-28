@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Reglements"
+      xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Suivi des Règlements">
@@ -13,6 +14,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -69,18 +71,33 @@
                 <Border Padding="15,10" Background="#FAFAFA" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
                     <Grid>
                         <TextBlock Text="HISTORIQUE DES RÈGLEMENTS" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <Button Content="📊 Export Excel" Command="{Binding ExportExcelCommand}" HorizontalAlignment="Right" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="🔄 Actualiser" Command="{Binding LoadPaymentsCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4" Margin="0,0,10,0"/>
+                            <Button Content="➕ Nouveau Règlement" Command="{Binding AddPaymentCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Padding="15,8" Margin="0,0,10,0" Background="#1A3A52" Foreground="White"/>
+                            <Button Content="📊 Export Excel" Command="{Binding ExportExcelCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding Payments}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Date" Binding="{Binding PaymentDate, StringFormat=dd/MM/yyyy}" Width="100"/>
-                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.Name}" Width="*"/>
-                        <DataGridTextColumn Header="Facture" Binding="{Binding Invoice.InvoiceNumber}" Width="120"/>
-                        <DataGridTextColumn Header="Montant" Binding="{Binding AmountPaid, StringFormat={}{0:N2} €}" Width="100"/>
-                        <DataGridTextColumn Header="Mode" Binding="{Binding PaymentMethod}" Width="100"/>
+                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
+                        <DataGridTextColumn Header="Numéro de facture" Binding="{Binding Invoice.InvoiceNumber}" Width="150"/>
+                        <DataGridTextColumn Header="Montant" Binding="{Binding AmountPaid, StringFormat={}{0:N2} MAD}" Width="120"/>
+                        <DataGridTextColumn Header="Mode" Binding="{Binding PaymentMethod}" Width="120"/>
                         <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="150"/>
+                        <DataGridTemplateColumn Header="Justificatif" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="📄" 
+                                            Command="{Binding DataContext.ViewProofCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                            CommandParameter="{Binding}" 
+                                            Visibility="{Binding ProofFilePath, Converter={StaticResource StringToVisibilityConverter}}"
+                                            Padding="8,4"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

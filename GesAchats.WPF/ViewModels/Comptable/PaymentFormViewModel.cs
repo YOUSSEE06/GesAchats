@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.IO;
+using System.Linq;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
@@ -15,12 +17,30 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
     private readonly IFileStorageService _fileStorageService;
     private readonly IPdfGeneratorService _pdfGeneratorService;
 
-    private int _invoiceId;
-    private Invoice? _invoice;
-    public Invoice? Invoice
+    private ObservableCollection<InvoiceWithPaymentsViewModel> _invoices = new();
+    public ObservableCollection<InvoiceWithPaymentsViewModel> Invoices
     {
-        get => _invoice;
-        set => SetProperty(ref _invoice, value);
+        get => _invoices;
+        set => SetProperty(ref _invoices, value);
+    }
+
+    private InvoiceWithPaymentsViewModel? _selectedInvoice;
+    public InvoiceWithPaymentsViewModel? SelectedInvoice
+    {
+        get => _selectedInvoice;
+        set
+        {
+            if (SetProperty(ref _selectedInvoice, value))
+            {
+                if (value != null)
+                {
+                    Payment.InvoiceId = value.Invoice.Id;
+                    Payment.SupplierId = value.Invoice.SupplierId;
+                    Payment.AmountPaid = value.Balance; // Default to remaining balance
+                    OnPropertyChanged(nameof(Payment));
+                }
+            }
+        }
     }
 
     private Payment _payment = new() { PaymentDate = DateTime.Now };
@@ -51,31 +71,47 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
 
         BrowseCommand = new RelayCommand(_ => BrowseFile());
         SaveCommand = new RelayCommand(async _ => await SaveAsync(), _ => CanSave());
-        CancelCommand = new RelayCommand(_ => _navigationService.NavigateTo("Factures"));
+        CancelCommand = new RelayCommand(_ => _navigationService.NavigateTo("Reglements"));
+
+        _ = LoadInvoicesAsync();
     }
 
     public async void OnNavigatedTo(object parameter)
     {
         if (parameter is int id)
         {
-            _invoiceId = id;
-            await LoadInvoiceAsync();
+            await LoadInvoicesAsync();
+            SelectedInvoice = Invoices.FirstOrDefault(i => i.Invoice.Id == id);
+        }
+        else
+        {
+            await LoadInvoicesAsync();
         }
     }
 
-    private async Task LoadInvoiceAsync()
+    private async Task LoadInvoicesAsync()
     {
         IsBusy = true;
         try
         {
-            Invoice = await _unitOfWork.Invoices.GetByIdAsync(_invoiceId);
-            if (Invoice != null)
+            var invoices = await _unitOfWork.Invoices.GetAllIncludingAsync(i => i.Supplier);
+            var payments = await _unitOfWork.Payments.GetAllAsync();
+            
+            var invoiceViewModels = new List<InvoiceWithPaymentsViewModel>();
+            foreach (var invoice in invoices)
             {
-                Payment.InvoiceId = Invoice.Id;
-                Payment.SupplierId = Invoice.SupplierId;
-                Payment.AmountPaid = Invoice.AmountTTC;
-                OnPropertyChanged(nameof(Payment));
+                var vm = new InvoiceWithPaymentsViewModel(invoice);
+                var invoicePayments = payments.Where(p => p.InvoiceId == invoice.Id);
+                foreach (var payment in invoicePayments)
+                {
+                    vm.Payments.Add(payment);
+                }
+                invoiceViewModels.Add(vm);
             }
+            
+            // Keep only invoices that are not fully paid
+            Invoices = new ObservableCollection<InvoiceWithPaymentsViewModel>(
+                invoiceViewModels.Where(i => i.StatusCalculated != "Payée").OrderByDescending(i => i.Invoice.InvoiceDate));
         }
         finally
         {
@@ -98,9 +134,9 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
 
     private bool CanSave()
     {
-        return Payment.AmountPaid > 0 && 
-               Invoice != null && 
-               Payment.AmountPaid <= Invoice.AmountTTC &&
+        return SelectedInvoice != null &&
+               Payment.AmountPaid > 0 && 
+               Payment.AmountPaid <= SelectedInvoice.Balance &&
                !string.IsNullOrEmpty(Payment.PaymentMethod);
     }
 
@@ -120,14 +156,35 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
             Payment.CreatedAt = DateTime.UtcNow;
             Payment.UpdatedAt = DateTime.UtcNow;
             Payment.CreatedById = 1; // TODO: Get from current user session
+            Payment.Status = "Validé"; // Add default status
+            
+            // Clear navigation properties to avoid EF tracking issues
+            Payment.Invoice = null;
+            Payment.Supplier = null;
+            Payment.CreatedBy = null;
 
             await _unitOfWork.Payments.AddAsync(Payment);
 
-            // Mettre à jour le statut de la facture
-            if (Invoice != null)
+            // Mettre à jour le statut de la facture si nécessaire
+            if (SelectedInvoice != null)
             {
-                Invoice.Status = "Payée";
-                _unitOfWork.Invoices.Update(Invoice);
+                // Calculate total payments including this new one
+                var totalPayments = SelectedInvoice.TotalPayments + Payment.AmountPaid;
+                
+                // Get the tracked entity from DB to update
+                var invoiceToUpdate = await _unitOfWork.Invoices.GetByIdAsync(SelectedInvoice.Invoice.Id);
+                if (invoiceToUpdate != null)
+                {
+                    if (totalPayments >= SelectedInvoice.Invoice.AmountTTC)
+                    {
+                        invoiceToUpdate.Status = "Payée";
+                    }
+                    else
+                    {
+                        invoiceToUpdate.Status = "Partiellement payée";
+                    }
+                    _unitOfWork.Invoices.Update(invoiceToUpdate);
+                }
             }
 
             await _unitOfWork.CompleteAsync();
@@ -137,7 +194,11 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
             Payment.ReceiptFilePath = await _fileStorageService.SavePaymentReceiptAsync(Payment.SupplierId, Payment.InvoiceId, receiptPath);
             await _unitOfWork.CompleteAsync();
 
-            _navigationService.NavigateTo("Factures");
+            _navigationService.NavigateTo("Reglements");
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Erreur lors de la sauvegarde:\n{ex.Message}\n\nInner Exception:\n{ex.InnerException?.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
         finally
         {

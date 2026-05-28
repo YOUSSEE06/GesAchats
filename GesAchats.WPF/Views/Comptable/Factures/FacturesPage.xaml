@@ -113,18 +113,23 @@
                           Background="Transparent" BorderThickness="0" RowHeight="45"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="N° Facture" Binding="{Binding InvoiceNumber}" Width="110"/>
-                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
+                        <DataGridTextColumn Header="N° Facture" Binding="{Binding Invoice.InvoiceNumber}" Width="110"/>
+                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Invoice.Supplier.CompanyName}" Width="*"/>
                         
                         <DataGridTemplateColumn Header="BC" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Margin="5,0" Visibility="{Binding PurchaseOrderId, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock x:Name="BcTextBlock" Margin="5,0">
                                         <Hyperlink Command="{Binding DataContext.ViewBCCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                   CommandParameter="{Binding PurchaseOrderId}">
-                                            <Run Text="{Binding PurchaseOrder.OrderNumber}"/>
+                                                   CommandParameter="{Binding Invoice.PurchaseOrderId}">
+                                            <Run Text="{Binding Invoice.PurchaseOrder.OrderNumber, TargetNullValue=''}"/>
                                         </Hyperlink>
                                     </TextBlock>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Invoice.PurchaseOrderId}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" TargetName="BcTextBlock"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -132,12 +137,17 @@
                         <DataGridTemplateColumn Header="BL" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Margin="5,0" Visibility="{Binding DeliveryNoteId, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock x:Name="BlTextBlock" Margin="5,0">
                                         <Hyperlink Command="{Binding DataContext.ViewBLCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                   CommandParameter="{Binding DeliveryNoteId}">
-                                            <Run Text="{Binding DeliveryNote.DeliveryNumber}"/>
+                                                   CommandParameter="{Binding Invoice.DeliveryNoteId}">
+                                            <Run Text="{Binding Invoice.DeliveryNote.DeliveryNumber, TargetNullValue=''}"/>
                                         </Hyperlink>
                                     </TextBlock>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Invoice.DeliveryNoteId}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" TargetName="BlTextBlock"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -147,15 +157,15 @@
                                 <DataTemplate>
                                     <Button Content="📎" Style="{StaticResource MaterialDesignFlatButton}" 
                                             Command="{Binding DataContext.ViewFileCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding FilePath}"
-                                            Visibility="{Binding FilePath, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                            CommandParameter="{Binding Invoice.FilePath}"
+                                            Visibility="{Binding Invoice.FilePath, Converter={StaticResource StringToVisibilityConverter}}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="Date" Binding="{Binding InvoiceDate, StringFormat=dd/MM/yyyy}" Width="100"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Invoice.InvoiceDate, StringFormat=dd/MM/yyyy}" Width="100"/>
                         
-                        <DataGridTextColumn Header="TTC" Binding="{Binding AmountTTC, StringFormat={}{0:N2} MAD}" Width="120">
+                        <DataGridTextColumn Header="TTC" Binding="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}" Width="120">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -168,8 +178,8 @@
                         <DataGridTemplateColumn Header="Statut" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" CornerRadius="12" Padding="8,2" HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding Status}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                    <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="8,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding StatusCalculated}" Foreground="White" FontSize="11" FontWeight="Medium"/>
                                     </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -183,7 +193,7 @@
                                                 Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                                         <Button Content="Payer" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#2196F3"
                                                 Command="{Binding DataContext.RegisterPaymentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                Visibility="{Binding Status, Converter={StaticResource StatusVisibilityConverter}, ConverterParameter='!Payée'}"/>
+                                                Visibility="{Binding StatusCalculated, Converter={StaticResource StatusVisibilityConverter}, ConverterParameter='!Payée'}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

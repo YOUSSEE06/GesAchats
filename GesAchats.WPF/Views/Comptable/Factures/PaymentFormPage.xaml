@@ -37,28 +37,64 @@
             <StackPanel Margin="20">
                 <!-- Facture Info -->
                 <GroupBox Header="FACTURE ASSOCIÉE" Style="{StaticResource MaterialDesignCardGroupBox}" Margin="0,0,0,20">
-                    <Grid Margin="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Sélectionner une facture" Foreground="#757575" FontSize="12"/>
+                        <ComboBox ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice}" Margin="0,5">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Invoice.InvoiceNumber}"/>
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding Invoice.Supplier.CompanyName}"/>
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}"/>
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding StatusCalculated}" FontWeight="SemiBold" Foreground="{Binding StatusColor}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Facture N°" Foreground="#757575" FontSize="12"/>
-                            <TextBlock Text="{Binding Invoice.InvoiceNumber}" FontWeight="SemiBold" FontSize="16"/>
-                        </StackPanel>
+                        <Grid Margin="0,15,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Facture N°" Foreground="#757575" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedInvoice.Invoice.InvoiceNumber}" FontWeight="SemiBold" FontSize="16"/>
+                            </StackPanel>
 
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Fournisseur" Foreground="#757575" FontSize="12"/>
-                            <TextBlock Text="{Binding Invoice.Supplier.Name}" FontWeight="SemiBold" FontSize="16"/>
-                        </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Fournisseur" Foreground="#757575" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedInvoice.Invoice.Supplier.CompanyName}" FontWeight="SemiBold" FontSize="16"/>
+                            </StackPanel>
 
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Total TTC" Foreground="#757575" FontSize="12"/>
-                            <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}" FontWeight="Bold" FontSize="18" Foreground="#2196F3"/>
-                        </StackPanel>
-                    </Grid>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Total TTC" Foreground="#757575" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedInvoice.Invoice.AmountTTC, StringFormat={}{0:N2} MAD}" FontWeight="Bold" FontSize="18" Foreground="#2196F3"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <Grid Margin="0,15,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Déjà réglé" Foreground="#757575" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedInvoice.TotalPayments, StringFormat={}{0:N2} MAD}" FontWeight="SemiBold" FontSize="16" Foreground="#4CAF50"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Reste à régler" Foreground="#757575" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedInvoice.Balance, StringFormat={}{0:N2} MAD}" FontWeight="Bold" FontSize="18" Foreground="#FF9800"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
                 </GroupBox>
 
                 <!-- Règlement Info -->

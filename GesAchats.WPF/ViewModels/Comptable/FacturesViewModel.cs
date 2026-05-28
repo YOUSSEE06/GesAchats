@@ -4,6 +4,8 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
 using GesAchats.WPF.Services;
+using Microsoft.Extensions.DependencyInjection;
+using GesAchats.WPF.Views.Comptable.Factures;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -11,10 +13,11 @@ public class FacturesViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
+    private readonly IServiceProvider _serviceProvider;
 
-    private ObservableCollection<Invoice> _allFactures = new();
-    private ObservableCollection<Invoice> _factures = new();
-    public ObservableCollection<Invoice> Factures
+    private ObservableCollection<InvoiceWithPaymentsViewModel> _allFactures = new();
+    private ObservableCollection<InvoiceWithPaymentsViewModel> _factures = new();
+    public ObservableCollection<InvoiceWithPaymentsViewModel> Factures
     {
         get => _factures;
         set => SetProperty(ref _factures, value);
@@ -104,8 +107,8 @@ public class FacturesViewModel : BaseViewModel
         set => SetProperty(ref _paymentRate, value);
     }
 
-    private Invoice? _selectedFacture;
-    public Invoice? SelectedFacture
+    private InvoiceWithPaymentsViewModel? _selectedFacture;
+    public InvoiceWithPaymentsViewModel? SelectedFacture
     {
         get => _selectedFacture;
         set => SetProperty(ref _selectedFacture, value);
@@ -120,10 +123,11 @@ public class FacturesViewModel : BaseViewModel
     public ICommand ViewBLCommand { get; }
     public ICommand ViewFileCommand { get; }
 
-    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService)
+    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
+        _serviceProvider = serviceProvider;
         Title = "Factures Fournisseurs";
 
         LoadFacturesCommand = new RelayCommand(async _ => await LoadFacturesAsync());
@@ -131,8 +135,16 @@ public class FacturesViewModel : BaseViewModel
         
         ViewDetailsCommand = new RelayCommand(_ => 
         {
-            if (SelectedFacture != null)
-                _navigationService.NavigateTo("InvoiceDetails", SelectedFacture.Id);
+            if (SelectedFacture == null)
+                return;
+            
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var vm = ActivatorUtilities.CreateInstance<FactureDetailsViewModel>(scope.ServiceProvider, SelectedFacture.Invoice.Id);
+                var win = ActivatorUtilities.CreateInstance<FactureDetailsWindow>(scope.ServiceProvider, vm);
+                win.Owner = System.Windows.Application.Current.MainWindow;
+                win.ShowDialog();
+            }
         }, _ => SelectedFacture != null);
 
         ViewBCCommand = new RelayCommand(id => 
@@ -159,13 +171,13 @@ public class FacturesViewModel : BaseViewModel
         VerifyConformityCommand = new RelayCommand(_ => 
         {
             if (SelectedFacture != null)
-                _navigationService.NavigateTo("ConformityCheck", SelectedFacture.Id);
+                _navigationService.NavigateTo("ConformityCheck", SelectedFacture.Invoice.Id);
         }, _ => SelectedFacture != null);
         
         RegisterPaymentCommand = new RelayCommand(_ => 
         {
             if (SelectedFacture != null)
-                _navigationService.NavigateTo("PaymentForm", SelectedFacture.Id);
+                _navigationService.NavigateTo("PaymentForm", SelectedFacture.Invoice.Id);
         }, _ => SelectedFacture != null);
 
         _startDate = DateTime.Today.AddMonths(-1);
@@ -182,13 +194,28 @@ public class FacturesViewModel : BaseViewModel
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
             Suppliers = new ObservableCollection<Supplier>(suppliers.OrderBy(s => s.CompanyName));
 
-            // Charger les factures avec les entités liées (Supplier, PurchaseOrder, DeliveryNote)
+            // Charger les factures avec les entités liées
             var factures = await _unitOfWork.Invoices.GetAllIncludingAsync(
                 f => f.Supplier,
                 f => f.PurchaseOrder,
                 f => f.DeliveryNote
             );
-            _allFactures = new ObservableCollection<Invoice>(factures.OrderByDescending(f => f.InvoiceDate));
+
+            // Charger les paiements
+            var payments = await _unitOfWork.Payments.GetAllAsync();
+
+            // Créer les viewmodels avec les paiements
+            _allFactures = new ObservableCollection<InvoiceWithPaymentsViewModel>();
+            foreach (var invoice in factures.OrderByDescending(f => f.InvoiceDate))
+            {
+                var invoiceVm = new InvoiceWithPaymentsViewModel(invoice);
+                var invoicePayments = payments.Where(p => p.InvoiceId == invoice.Id);
+                foreach (var payment in invoicePayments)
+                {
+                    invoiceVm.Payments.Add(payment);
+                }
+                _allFactures.Add(invoiceVm);
+            }
             
             ApplyFilters();
         }
@@ -203,41 +230,40 @@ public class FacturesViewModel : BaseViewModel
         var filtered = _allFactures.AsEnumerable();
 
         if (SelectedSupplier != null)
-            filtered = filtered.Where(f => f.SupplierId == SelectedSupplier.Id);
+            filtered = filtered.Where(f => f.Invoice.SupplierId == SelectedSupplier.Id);
 
         if (!string.IsNullOrEmpty(SelectedStatus) && SelectedStatus != "Tous")
-            filtered = filtered.Where(f => f.Status == SelectedStatus);
+            filtered = filtered.Where(f => f.StatusCalculated == SelectedStatus);
 
         if (StartDate.HasValue)
-            filtered = filtered.Where(f => f.InvoiceDate.Date >= StartDate.Value.Date);
+            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date >= StartDate.Value.Date);
 
         if (EndDate.HasValue)
-            filtered = filtered.Where(f => f.InvoiceDate.Date <= EndDate.Value.Date);
+            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date <= EndDate.Value.Date);
 
         if (!string.IsNullOrEmpty(SearchText))
         {
             string search = SearchText.ToLower();
             filtered = filtered.Where(f => 
-                f.InvoiceNumber.ToLower().Contains(search) ||
-                f.Supplier.CompanyName.ToLower().Contains(search) ||
-                (f.PurchaseOrder != null && f.PurchaseOrder.OrderNumber.ToLower().Contains(search)) ||
-                (f.DeliveryNote != null && f.DeliveryNote.DeliveryNumber.ToLower().Contains(search))
+                f.Invoice.InvoiceNumber.ToLower().Contains(search) ||
+                f.Invoice.Supplier.CompanyName.ToLower().Contains(search) ||
+                (f.Invoice.PurchaseOrder != null && f.Invoice.PurchaseOrder.OrderNumber.ToLower().Contains(search)) ||
+                (f.Invoice.DeliveryNote != null && f.Invoice.DeliveryNote.DeliveryNumber.ToLower().Contains(search))
             );
         }
 
-        Factures = new ObservableCollection<Invoice>(filtered);
+        Factures = new ObservableCollection<InvoiceWithPaymentsViewModel>(filtered);
         CalculateStats();
     }
 
     private void CalculateStats()
     {
-        TotalAmount = Factures.Sum(f => f.AmountTTC);
+        TotalAmount = Factures.Sum(f => f.Invoice.AmountTTC);
         
-        // On suppose que PendingAmount est la somme de ce qui reste à payer
-        // Pour simplifier ici, on prend le montant des factures non payées
-        PendingAmount = Factures.Where(f => f.Status != "Payée").Sum(f => f.AmountTTC);
+        // Calculer le solde total
+        PendingAmount = Factures.Sum(f => f.Balance);
         
-        decimal totalPaid = Factures.Sum(f => f.AmountTTC) - PendingAmount;
+        decimal totalPaid = Factures.Sum(f => f.TotalPayments);
         PaymentRate = TotalAmount > 0 ? (double)(totalPaid / TotalAmount * 100) : 0;
     }
 }

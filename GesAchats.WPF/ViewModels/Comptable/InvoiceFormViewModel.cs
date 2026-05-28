@@ -123,8 +123,13 @@ public class InvoiceFormViewModel : BaseViewModel
         try
         {
             var deliveryNotes = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
-            // On affiche tous les BL reçus pour qu'ils puissent être facturés
-            DeliveryNotes = new ObservableCollection<DeliveryNote>(deliveryNotes);
+            var invoices = await _unitOfWork.Invoices.GetAllAsync();
+            
+            // On affiche seulement les BL qui ne sont pas déjà liés à une facture
+            var usedDeliveryNoteIds = invoices.Where(i => i.DeliveryNoteId.HasValue).Select(i => i.DeliveryNoteId!.Value).ToList();
+            var availableDeliveryNotes = deliveryNotes.Where(dn => !usedDeliveryNoteIds.Contains(dn.Id)).ToList();
+            
+            DeliveryNotes = new ObservableCollection<DeliveryNote>(availableDeliveryNotes);
         }
         finally
         {

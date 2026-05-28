@@ -236,6 +236,9 @@ public partial class App : Application
         services.AddTransient<ConformityCheckViewModel>();
         services.AddTransient<PaymentFormViewModel>();
         services.AddTransient<PaymentHistoryViewModel>();
+        services.AddTransient<FactureDetailsViewModel>();
+        services.AddTransient<InvoicePaymentTrackingViewModel>();
+        services.AddTransient<InvoicePaymentDetailsPopupViewModel>();
 
         // Views - Focus Magasinier
         services.AddTransient<LoginWindow>();
@@ -278,5 +281,8 @@ public partial class App : Application
          services.AddTransient<GesAchats.WPF.Views.Comptable.Factures.ConformityCheckPage>();
          services.AddTransient<GesAchats.WPF.Views.Comptable.Factures.PaymentFormPage>();
           services.AddTransient<GesAchats.WPF.Views.Comptable.Reglements.ReglementsPage>();
+          services.AddTransient<GesAchats.WPF.Views.Comptable.Factures.FactureDetailsWindow>();
+          services.AddTransient<GesAchats.WPF.Views.Comptable.Factures.InvoicePaymentTrackingPage>();
+          services.AddTransient<GesAchats.WPF.Views.Comptable.Factures.InvoicePaymentDetailsPopup>();
       }
 }

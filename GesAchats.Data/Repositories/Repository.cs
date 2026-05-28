@@ -32,7 +32,16 @@ public class Repository<TEntity> : GesAchats.Core.Interfaces.IRepository<TEntity
 
     public async Task<IEnumerable<TEntity>> GetAllIncludingAsync(params Expression<Func<TEntity, object?>>[] includeProperties)
     {
+        return await GetAllIncludingAsync(false, includeProperties);
+    }
+
+    public async Task<IEnumerable<TEntity>> GetAllIncludingAsync(bool noTracking, params Expression<Func<TEntity, object?>>[] includeProperties)
+    {
         IQueryable<TEntity> query = _dbSet;
+        if (noTracking)
+        {
+            query = query.AsNoTracking();
+        }
         foreach (var includeProperty in includeProperties)
         {
             query = query.Include(includeProperty);
