@@ -6,6 +6,7 @@ namespace GesAchats.Core.Services;
 public interface IStockService
 {
     Task<IEnumerable<Product>> GetAllProductsAsync();
+    Task<IEnumerable<Product>> GetAllProductsWithMagasinAsync();
     Task<IEnumerable<Product>> GetLowStockProductsAsync();
     Task<IEnumerable<Product>> GetRuptureProductsAsync();
     Task<IEnumerable<Product>> GetNewProductsAsync();
@@ -24,6 +25,11 @@ public class StockService : IStockService
     public async Task<IEnumerable<Product>> GetAllProductsAsync()
     {
         return await _unitOfWork.Products.GetAllAsync();
+    }
+
+    public async Task<IEnumerable<Product>> GetAllProductsWithMagasinAsync()
+    {
+        return await _unitOfWork.Products.GetAllIncludingAsync(p => p.Magasin);
     }
 
     public async Task<IEnumerable<Product>> GetLowStockProductsAsync()

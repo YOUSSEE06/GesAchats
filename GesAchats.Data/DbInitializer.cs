@@ -227,18 +227,45 @@ public static class DbInitializer
 
             await context.SaveChangesAsync();
 
+            // 4.5 Ajouter des magasins
+            if (!await context.Magasins.AnyAsync())
+            {
+                var magasins = new List<Magasin>
+                {
+                    new Magasin { Nom = "Magasin Principal", IsActive = true },
+                    new Magasin { Nom = "Magasin Annex", IsActive = true },
+                    new Magasin { Nom = "Magasin Sud", IsActive = true }
+                };
+                await context.Magasins.AddRangeAsync(magasins);
+                await context.SaveChangesAsync();
+            }
+
             // 5. Articles de test (Ciment, Graviers, etc.)
             if (!await context.Products.AnyAsync())
             {
+                var magasinPrincipal = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Principal");
+                var magasinAnnex = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Annex");
+                
                 var products = new List<Product>
                 {
-                    new Product { Designation = "Ciment 35kg", CurrentStock = 10, MinimumStock = 50, Unit = "sac", Category = "Gros Oeuvre" },
-                    new Product { Designation = "Graviers 40mm", CurrentStock = 0, MinimumStock = 20, Unit = "m3", Category = "Granulats" },
-                    new Product { Designation = "Sable fin", CurrentStock = 100, MinimumStock = 30, Unit = "m3", Category = "Granulats" },
-                    new Product { Designation = "Acier HA8", CurrentStock = 5, MinimumStock = 100, Unit = "barre", Category = "Ferraillage" },
-                    new Product { Designation = "Tuiles", CurrentStock = 200, MinimumStock = 100, Unit = "pcs", Category = "Couverture" }
+                    new Product { Designation = "Ciment 35kg", CurrentStock = 10, MinimumStock = 50, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Graviers 40mm", CurrentStock = 0, MinimumStock = 20, Unit = "m3", Category = "Granulats", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Sable fin", CurrentStock = 100, MinimumStock = 30, Unit = "m3", Category = "Granulats", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Acier HA8", CurrentStock = 5, MinimumStock = 100, Unit = "barre", Category = "Ferraillage", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Tuiles", CurrentStock = 200, MinimumStock = 100, Unit = "pcs", Category = "Couverture", MagasinId = magasinPrincipal.Id }
                 };
                 await context.Products.AddRangeAsync(products);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                // Si des produits existent déjà, leur assigner un magasin par défaut
+                var magasinPrincipal = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Principal");
+                var productsWithoutMagasin = await context.Products.Where(p => p.MagasinId == null).ToListAsync();
+                foreach (var product in productsWithoutMagasin)
+                {
+                    product.MagasinId = magasinPrincipal.Id;
+                }
                 await context.SaveChangesAsync();
             }
 

@@ -30,6 +30,16 @@ public class Repository<TEntity> : GesAchats.Core.Interfaces.IRepository<TEntity
         return await _dbSet.ToListAsync();
     }
 
+    public async Task<IEnumerable<TEntity>> GetAllIncludingAsync(params Expression<Func<TEntity, object?>>[] includeProperties)
+    {
+        IQueryable<TEntity> query = _dbSet;
+        foreach (var includeProperty in includeProperties)
+        {
+            query = query.Include(includeProperty);
+        }
+        return await query.ToListAsync();
+    }
+
     public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
     {
         return await _dbSet.Where(predicate).ToListAsync();
