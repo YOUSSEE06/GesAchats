@@ -166,7 +166,7 @@
         <Setter Property="CaretBrush" Value="Black"/>
     </Style>
 
-    <!-- Modern ComboBox Style -->
+    <!-- Modern ComboBox Styles -->
     <Style x:Key="ModernComboBox" TargetType="ComboBox">
         <Setter Property="Background" Value="White"/>
         <Setter Property="BorderBrush" Value="#E0E0E0"/>
