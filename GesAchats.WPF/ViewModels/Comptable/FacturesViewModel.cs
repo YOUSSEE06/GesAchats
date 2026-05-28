@@ -12,7 +12,7 @@ public class FacturesViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
 
-()    private ObservableCollection<Invoice> _allFactures = new();
+    private ObservableCollection<Invoice> _allFactures = new();
     private ObservableCollection<Invoice> _factures = new();
     public ObservableCollection<Invoice> Factures
     {
@@ -182,7 +182,12 @@ public class FacturesViewModel : BaseViewModel
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
             Suppliers = new ObservableCollection<Supplier>(suppliers.OrderBy(s => s.CompanyName));
 
-            var factures = await _unitOfWork.Invoices.GetAllAsync();
+            // Charger les factures avec les entités liées (Supplier, PurchaseOrder, DeliveryNote)
+            var factures = await _unitOfWork.Invoices.GetAllIncludingAsync(
+                f => f.Supplier,
+                f => f.PurchaseOrder,
+                f => f.DeliveryNote
+            );
             _allFactures = new ObservableCollection<Invoice>(factures.OrderByDescending(f => f.InvoiceDate));
             
             ApplyFilters();

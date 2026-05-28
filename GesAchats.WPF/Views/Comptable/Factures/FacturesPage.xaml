@@ -17,6 +17,7 @@
             <converters:ConformityToVisibilityConverter x:Key="ConformityToVisibilityConverter"/>
             <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
             <converters:StatusVisibilityConverter x:Key="StatusVisibilityConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Page.Resources>
@@ -118,7 +119,7 @@
                         <DataGridTemplateColumn Header="BC" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Margin="5,0">
+                                    <TextBlock Margin="5,0" Visibility="{Binding PurchaseOrderId, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Hyperlink Command="{Binding DataContext.ViewBCCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                    CommandParameter="{Binding PurchaseOrderId}">
                                             <Run Text="{Binding PurchaseOrder.OrderNumber}"/>
@@ -131,7 +132,7 @@
                         <DataGridTemplateColumn Header="BL" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Margin="5,0">
+                                    <TextBlock Margin="5,0" Visibility="{Binding DeliveryNoteId, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Hyperlink Command="{Binding DataContext.ViewBLCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                    CommandParameter="{Binding DeliveryNoteId}">
                                             <Run Text="{Binding DeliveryNote.DeliveryNumber}"/>
@@ -147,7 +148,7 @@
                                     <Button Content="📎" Style="{StaticResource MaterialDesignFlatButton}" 
                                             Command="{Binding DataContext.ViewFileCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding FilePath}"
-                                            Visibility="{Binding FilePath, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            Visibility="{Binding FilePath, Converter={StaticResource StringToVisibilityConverter}}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
