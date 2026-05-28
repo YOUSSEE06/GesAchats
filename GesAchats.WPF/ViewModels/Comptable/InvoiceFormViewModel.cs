@@ -13,6 +13,7 @@ public class InvoiceFormViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
+    private readonly IUserSession _userSession;
 
     private Invoice _invoice = new() { InvoiceDate = DateTime.Now, DueDate = DateTime.Now.AddMonths(1) };
     public Invoice Invoice
@@ -49,12 +50,12 @@ public class InvoiceFormViewModel : BaseViewModel
                     Invoice.PurchaseOrderId = value.PurchaseOrderId;
                     Invoice.SupplierId = value.SupplierId;
                     
-                    // TVA automatically retrieved from PurchaseOrder
-                    _taxRate = value.PurchaseOrder.TotalAmountHT > 0 
+                    // TVA automatiquement récupérée du BC
+                    _taxRate = value.PurchaseOrder?.TotalAmountHT > 0 
                         ? (value.PurchaseOrder.TotalVAT / value.PurchaseOrder.TotalAmountHT) * 100 
                         : 20.00m;
                     
-                    // Auto-fill line items from DeliveryNote
+                    // Auto-remplissage des lignes depuis le BL
                     LoadLineItemsFromDeliveryNote(value);
                     
                     OnPropertyChanged(nameof(SelectedPurchaseOrder));
@@ -102,10 +103,11 @@ public class InvoiceFormViewModel : BaseViewModel
     public ICommand CancelCommand { get; }
     public ICommand UploadFileCommand { get; }
 
-    public InvoiceFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService)
+    public InvoiceFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IUserSession userSession)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
+        _userSession = userSession;
         Title = "Nouvelle Facture";
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync(), _ => CanSave());
@@ -121,6 +123,7 @@ public class InvoiceFormViewModel : BaseViewModel
         try
         {
             var deliveryNotes = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
+            // On affiche tous les BL reçus pour qu'ils puissent être facturés
             DeliveryNotes = new ObservableCollection<DeliveryNote>(deliveryNotes);
         }
         finally
@@ -195,6 +198,8 @@ public class InvoiceFormViewModel : BaseViewModel
 
     private async Task SaveAsync()
     {
+        if (!CanSave()) return;
+
         IsBusy = true;
         try
         {
@@ -204,6 +209,7 @@ public class InvoiceFormViewModel : BaseViewModel
             Invoice.Status = "EnAttente";
             Invoice.ConformityStatus = "NonVerifiee";
             Invoice.TaxRate = TaxRate;
+            Invoice.CreatedById = _userSession.CurrentUser?.Id ?? 1; // Fallback to 1 for testing if session is empty
 
             Invoice.Details.Clear();
             foreach (var detail in InvoiceDetails)
@@ -219,6 +225,7 @@ public class InvoiceFormViewModel : BaseViewModel
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error saving invoice: {ex.Message}");
+            System.Windows.MessageBox.Show($"Erreur lors de l'enregistrement : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
         finally
         {

@@ -28,6 +28,27 @@ public class StatusToColorConverter : IValueConverter
     }
 }
 
+public class StatusVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string status = value?.ToString() ?? "";
+        string param = parameter?.ToString() ?? "";
+
+        if (param.StartsWith("!"))
+        {
+            return status != param.Substring(1) ? Visibility.Visible : Visibility.Collapsed;
+        }
+        
+        return status == param ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public class EqualityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

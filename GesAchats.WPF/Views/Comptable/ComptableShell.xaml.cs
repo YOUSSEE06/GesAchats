@@ -6,6 +6,7 @@ using GesAchats.WPF.Views.Comptable.Factures;
 using GesAchats.WPF.Views.Comptable.Reglements;
 using GesAchats.WPF.Views.Comptable.Dashboard;
 using GesAchats.WPF.Views.Auth;
+using GesAchats.WPF.Views.Acheteur.Fournisseurs;
 
 namespace GesAchats.WPF.Views.Comptable;
 
@@ -36,6 +37,7 @@ public partial class ComptableShell : Window
             "PaymentForm" => _serviceProvider.GetRequiredService<PaymentFormPage>(),
             "Reglements" => _serviceProvider.GetRequiredService<ReglementsPage>(),
             "Dashboard" => _serviceProvider.GetRequiredService<ComptableDashboardPage>(),
+            "Fournisseurs" => _serviceProvider.GetRequiredService<GestionFournisseursPage>(),
             _ => null
         };
 
@@ -52,6 +54,7 @@ public partial class ComptableShell : Window
     private void NavigateToDashboard(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Dashboard");
     private void NavigateToFactures(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Factures");
     private void NavigateToReglements(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Reglements");
+    private void NavigateToFournisseurs(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Fournisseurs");
 
     private void Logout(object sender, RoutedEventArgs e)
     {

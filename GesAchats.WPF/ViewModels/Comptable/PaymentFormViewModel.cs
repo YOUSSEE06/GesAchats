@@ -98,7 +98,10 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
 
     private bool CanSave()
     {
-        return Payment.AmountPaid > 0 && !string.IsNullOrEmpty(Payment.PaymentMethod);
+        return Payment.AmountPaid > 0 && 
+               Invoice != null && 
+               Payment.AmountPaid <= Invoice.AmountTTC &&
+               !string.IsNullOrEmpty(Payment.PaymentMethod);
     }
 
     private async Task SaveAsync()

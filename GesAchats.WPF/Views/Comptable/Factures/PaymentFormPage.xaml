@@ -56,7 +56,7 @@
 
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Total TTC" Foreground="#757575" FontSize="12"/>
-                            <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} €}" FontWeight="Bold" FontSize="18" Foreground="#2196F3"/>
+                            <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}" FontWeight="Bold" FontSize="18" Foreground="#2196F3"/>
                         </StackPanel>
                     </Grid>
                 </GroupBox>
@@ -77,11 +77,12 @@
 
                         <StackPanel Grid.Row="0" Grid.Column="0">
                             <TextBlock Text="Mode de paiement" Style="{StaticResource LabelStyle}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <WrapPanel Orientation="Horizontal" Margin="0,5">
                                 <RadioButton Content="Virement" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Virement}" Margin="0,0,15,0"/>
                                 <RadioButton Content="Chèque" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Chèque}" Margin="0,0,15,0"/>
+                                <RadioButton Content="Lettre de change" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Lettre de change}" Margin="0,0,15,0"/>
                                 <RadioButton Content="Espèces" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Espèces}"/>
-                            </StackPanel>
+                            </WrapPanel>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="2">

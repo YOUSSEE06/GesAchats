@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:ConformityToVisibilityConverter x:Key="ConformityToVisibilityConverter"/>
             <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+            <converters:StatusVisibilityConverter x:Key="StatusVisibilityConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Page.Resources>
@@ -24,65 +25,136 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,15">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🧾" FontSize="24" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="Espace Comptable - Factures Fournisseurs" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
-            </StackPanel>
-        </Border>
+        <!-- Zone des statistiques -->
+        <UniformGrid Grid.Row="0" Columns="3" Margin="20,20,20,10">
+            <!-- Montant total -->
+            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Montant total" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding TotalAmount, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#1A3A52"/>
+                </StackPanel>
+            </Border>
 
-        <!-- Toolbar & Filters -->
-        <StackPanel Grid.Row="1" Margin="20,15">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                <Button Content="➕ Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2196F3" Foreground="White" Padding="15,8" Margin="0,0,10,0"/>
-                <Button Content="🔄 Actualiser" Command="{Binding LoadFacturesCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="15,8" Margin="0,0,10,0"/>
-                <Button Content="📊 Statistiques" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="15,8"/>
-            </StackPanel>
+            <!-- En attente -->
+            <Border Background="White" CornerRadius="8" Padding="20" Margin="5,0,5,0" BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="En attente" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
+                    <TextBlock Text="{Binding PendingAmount, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#FF9800"/>
+                </StackPanel>
+            </Border>
 
-            <Border Background="White" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel Margin="0,0,20,0">
-                        <TextBlock Text="Fournisseur" FontSize="12" Foreground="#757575" Margin="0,0,0,5"/>
-                        <ComboBox Width="180" ItemsSource="{Binding Suppliers}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSupplier}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,20,0">
-                        <TextBlock Text="Statut" FontSize="12" Foreground="#757575" Margin="0,0,0,5"/>
-                        <ComboBox Width="150" SelectedItem="{Binding SelectedStatus}">
-                            <ComboBoxItem Content="Tous"/>
-                            <ComboBoxItem Content="En attente"/>
-                            <ComboBoxItem Content="Vérifiée"/>
-                            <ComboBoxItem Content="Payée"/>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel>
-                        <TextBlock Text="Période" FontSize="12" Foreground="#757575" Margin="0,0,0,5"/>
-                        <StackPanel Orientation="Horizontal">
-                            <DatePicker Width="120" SelectedDate="{Binding StartDate}"/>
-                            <TextBlock Text=" au " VerticalAlignment="Center" Margin="5,0"/>
-                            <DatePicker Width="120" SelectedDate="{Binding EndDate}"/>
-                        </StackPanel>
+            <!-- Taux de paiement -->
+            <Border Background="White" CornerRadius="8" Padding="20" Margin="10,0,0,0" BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Taux de paiement" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <TextBlock Text="{Binding PaymentRate, StringFormat={}{0:N0}%}" FontSize="24" FontWeight="Bold" Foreground="#4CAF50"/>
+                        <ProgressBar Value="{Binding PaymentRate}" Width="100" Height="10" Margin="15,0,0,5" VerticalAlignment="Center" Foreground="#4CAF50" Background="#E8F5E9" BorderThickness="0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
-        </StackPanel>
+        </UniformGrid>
+
+        <!-- Zone des filtres et boutons d'action -->
+        <Grid Grid.Row="1" Margin="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Filtres -->
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Fournisseur" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox Width="160" ItemsSource="{Binding Suppliers}" DisplayMemberPath="CompanyName" SelectedItem="{Binding SelectedSupplier}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Statut" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox Width="140" SelectedValue="{Binding SelectedStatus}" SelectedValuePath="Content">
+                            <ComboBoxItem Content="Tous"/>
+                            <ComboBoxItem Content="En attente"/>
+                            <ComboBoxItem Content="Partiellement payée"/>
+                            <ComboBoxItem Content="Payée"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Période" Style="{StaticResource LabelStyle}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <DatePicker Width="110" SelectedDate="{Binding StartDate}"/>
+                            <TextBlock Text="au" VerticalAlignment="Center" Margin="5,0"/>
+                            <DatePicker Width="110" SelectedDate="{Binding EndDate}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Recherche" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Boutons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="15,0,0,0">
+                <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,10,0"/>
+                <Button Content="Actualiser" Command="{Binding LoadFacturesCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+            </StackPanel>
+        </Grid>
 
         <!-- DataGrid -->
-        <Border Grid.Row="2" Background="White" Margin="20,0,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="3" Background="White" Margin="20,10,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
             <Grid>
                 <DataGrid ItemsSource="{Binding Factures}" SelectedItem="{Binding SelectedFacture}" 
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           Background="Transparent" BorderThickness="0" RowHeight="45"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="N° Facture" Binding="{Binding InvoiceNumber}" Width="120"/>
-                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.Name}" Width="*"/>
+                        <DataGridTextColumn Header="N° Facture" Binding="{Binding InvoiceNumber}" Width="110"/>
+                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
+                        
+                        <DataGridTemplateColumn Header="BC" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Margin="5,0">
+                                        <Hyperlink Command="{Binding DataContext.ViewBCCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                   CommandParameter="{Binding PurchaseOrderId}">
+                                            <Run Text="{Binding PurchaseOrder.OrderNumber}"/>
+                                        </Hyperlink>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="BL" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Margin="5,0">
+                                        <Hyperlink Command="{Binding DataContext.ViewBLCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                   CommandParameter="{Binding DeliveryNoteId}">
+                                            <Run Text="{Binding DeliveryNote.DeliveryNumber}"/>
+                                        </Hyperlink>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Justificatif" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="📎" Style="{StaticResource MaterialDesignFlatButton}" 
+                                            Command="{Binding DataContext.ViewFileCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding FilePath}"
+                                            Visibility="{Binding FilePath, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
                         <DataGridTextColumn Header="Date" Binding="{Binding InvoiceDate, StringFormat=dd/MM/yyyy}" Width="100"/>
-                        <DataGridTextColumn Header="TTC" Binding="{Binding AmountTTC, StringFormat={}{0:N2} €}" Width="100">
+                        
+                        <DataGridTextColumn Header="TTC" Binding="{Binding AmountTTC, StringFormat={}{0:N2} MAD}" Width="120">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -91,19 +163,7 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Header="Conformité" Width="120">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <TextBlock Text="✅" Visibility="{Binding ConformityStatus, Converter={StaticResource ConformityToVisibilityConverter}, ConverterParameter=Conforme}"/>
-                                        <TextBlock Text="⚠️" Visibility="{Binding ConformityStatus, Converter={StaticResource ConformityToVisibilityConverter}, ConverterParameter=EcartMineur}"/>
-                                        <TextBlock Text="❌" Visibility="{Binding ConformityStatus, Converter={StaticResource ConformityToVisibilityConverter}, ConverterParameter=NonConforme}"/>
-                                        <TextBlock Text="❓" Visibility="{Binding ConformityStatus, Converter={StaticResource ConformityToVisibilityConverter}, ConverterParameter=NonVerifiee}"/>
-                                        <TextBlock Text="{Binding ConformityStatus}" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="11"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+
                         <DataGridTemplateColumn Header="Statut" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -113,29 +173,25 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Action" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="Voir" Style="{StaticResource MaterialDesignFlatButton}" 
+                                                Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                        <Button Content="Payer" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#2196F3"
+                                                Command="{Binding DataContext.RegisterPaymentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                Visibility="{Binding Status, Converter={StaticResource StatusVisibilityConverter}, ConverterParameter='!Payée'}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 
                 <ProgressBar IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
                              VerticalAlignment="Center" HorizontalAlignment="Center" Width="200"/>
-            </Grid>
-        </Border>
-
-        <!-- Footer / Actions -->
-        <Border Grid.Row="3" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="20,15">
-            <Grid>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                    <Button Content="👁️ Voir détails" Command="{Binding ViewDetailsCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
-                    <Button Content="✅ Vérifier conformité" Command="{Binding VerifyConformityCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
-                    <Button Content="💳 Enregistrer paiement" Command="{Binding RegisterPaymentCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                </StackPanel>
-                
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="Total en attente: " Foreground="#757575"/>
-                    <TextBlock Text="{Binding PendingCount}" FontWeight="Bold" Margin="0,0,15,0"/>
-                    <TextBlock Text="Montant: " Foreground="#757575"/>
-                    <TextBlock Text="{Binding TotalPendingAmount, StringFormat={}{0:N2} €}" FontWeight="Bold" Foreground="#F44336"/>
-                </StackPanel>
             </Grid>
         </Border>
     </Grid>

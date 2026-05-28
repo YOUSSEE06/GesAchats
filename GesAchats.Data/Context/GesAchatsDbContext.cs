@@ -32,7 +32,7 @@ public class GesAchatsDbContext : DbContext
         {
             // Cette configuration sera normalement faite via l'injection de dépendances dans le projet WPF
             // Mais on peut mettre une valeur par défaut pour les outils de design (migrations)
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=GesAchatsDb;Username=postgres;Password=0000");
+            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=gesachatsdb;Username=postgres;Password=medpos2025");
         }
     }
 

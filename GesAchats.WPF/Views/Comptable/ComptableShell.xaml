@@ -68,8 +68,9 @@
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Top" Margin="10,0">
-                    <Button Content="📊 Tableau de bord" Click="NavigateToDashboard" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="🧾 Factures Fournisseurs" Click="NavigateToFactures" Style="{StaticResource SidebarButtonStyle}"/>
+                    <Button Content="🧾 Factures" Click="NavigateToFactures" Style="{StaticResource SidebarButtonStyle}"/>
+                    <Button Content="🏢 Fournisseurs" Click="NavigateToFournisseurs" Style="{StaticResource SidebarButtonStyle}"/>
+                    <Button Content="📊 Suivi Comptable" Click="NavigateToDashboard" Style="{StaticResource SidebarButtonStyle}"/>
                     <Button Content="💳 Suivi Règlements" Click="NavigateToReglements" Style="{StaticResource SidebarButtonStyle}"/>
                 </StackPanel>
 
