@@ -49,15 +49,7 @@
                 <DataGridTextColumn Header="Date" Binding="{Binding Need.DateTransmission, StringFormat=d}" Width="120"/>
                 <DataGridTextColumn Header="Demandeur" Binding="{Binding Need.RequestedBy.FullName}" Width="*"/>
                 <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
-                <DataGridTemplateColumn Header="Statut" Width="120">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding Need.Status}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+
                 <DataGridTemplateColumn Header="Actions" Width="220">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
