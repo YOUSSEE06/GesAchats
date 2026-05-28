@@ -34,7 +34,7 @@ public class ArticleSelectionViewModel : BaseViewModel
         ProductId = detail.ProductId;
         ProductName = detail.Product?.Designation ?? "Produit inconnu";
         Quantity = detail.Quantity;
-        Unit = detail.Need?.Unit ?? "Unité"; // Ou detail.Product.Unit si disponible
+        Unit = detail.Need?.Unit ?? "Unité";
     }
 }
 
@@ -60,14 +60,41 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserSession _userSession;
     private readonly IPdfGeneratorService _pdfService;
+    private readonly INavigationService _navigationService;
     private Need? _selectedNeed;
     private bool _isEditMode;
     private Quotation? _editingQuotation;
+    private bool _isCreateDialogOpen;
+    private string _filterReference = string.Empty;
+    private int? _filterSupplierId;
+    private string _filterStatus = "Tous";
 
     public ObservableCollection<Need> PendingNeeds { get; } = new ObservableCollection<Need>();
     public ObservableCollection<ArticleSelectionViewModel> ArticlesToQuote { get; } = new ObservableCollection<ArticleSelectionViewModel>();
     public ObservableCollection<SupplierSelectionViewModel> AvailableSuppliers { get; } = new ObservableCollection<SupplierSelectionViewModel>();
-    public ObservableCollection<Quotation> ExistingQuotations { get; } = new ObservableCollection<Quotation>();
+    public ObservableCollection<object> FilterSuppliers { get; } = new ObservableCollection<object>();
+    private object? _selectedFilterSupplier;
+    public object? SelectedFilterSupplier
+    {
+        get => _selectedFilterSupplier;
+        set
+        {
+            if (SetProperty(ref _selectedFilterSupplier, value))
+            {
+                if (value is Supplier supplier)
+                {
+                    FilterSupplierId = supplier.Id;
+                }
+                else
+                {
+                    FilterSupplierId = null;
+                }
+                ApplyFilters();
+            }
+        }
+    }
+    public ObservableCollection<Quotation> AllQuotations { get; } = new ObservableCollection<Quotation>();
+    public ObservableCollection<Quotation> FilteredQuotations { get; } = new ObservableCollection<Quotation>();
 
     public Need? SelectedNeed
     {
@@ -87,24 +114,135 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _isEditMode, value);
     }
 
-    public ICommand RefreshCommand { get; }
-    public ICommand CreateQuotesCommand { get; }
-    public ICommand EditQuotationCommand { get; }
-    public ICommand PrintPdfCommand { get; }
-    public ICommand CancelEditCommand { get; }
+    public bool IsCreateDialogOpen
+    {
+        get => _isCreateDialogOpen;
+        set => SetProperty(ref _isCreateDialogOpen, value);
+    }
 
-    public QuotesManagementViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService)
+    public string FilterReference
+    {
+        get => _filterReference;
+        set
+        {
+            if (SetProperty(ref _filterReference, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    public int? FilterSupplierId
+    {
+        get => _filterSupplierId;
+        set
+        {
+            if (SetProperty(ref _filterSupplierId, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    public string FilterStatus
+    {
+        get => _filterStatus;
+        set
+        {
+            if (SetProperty(ref _filterStatus, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    private int _totalDevis;
+    public int TotalDevis
+    {
+        get => _totalDevis;
+        set => SetProperty(ref _totalDevis, value);
+    }
+
+    private int _devisEnvoyes;
+    public int DevisEnvoyes
+    {
+        get => _devisEnvoyes;
+        set => SetProperty(ref _devisEnvoyes, value);
+    }
+
+    private int _reponseRecue;
+    public int ReponseRecue
+    {
+        get => _reponseRecue;
+        set => SetProperty(ref _reponseRecue, value);
+    }
+
+    private int _devisAcceptes;
+    public int DevisAcceptes
+    {
+        get => _devisAcceptes;
+        set => SetProperty(ref _devisAcceptes, value);
+    }
+
+    private int _devisValides;
+    public int DevisValides
+    {
+        get => _devisValides;
+        set => SetProperty(ref _devisValides, value);
+    }
+
+    private decimal _montantTotal;
+    public decimal MontantTotal
+    {
+        get => _montantTotal;
+        set => SetProperty(ref _montantTotal, value);
+    }
+
+    private decimal _moyenneParDevis;
+    public decimal MoyenneParDevis
+    {
+        get => _moyenneParDevis;
+        set => SetProperty(ref _moyenneParDevis, value);
+    }
+
+    private string _fournisseurPlusSollicite = string.Empty;
+    public string FournisseurPlusSollicite
+    {
+        get => _fournisseurPlusSollicite;
+        set => SetProperty(ref _fournisseurPlusSollicite, value);
+    }
+
+    public ICommand RefreshCommand { get; }
+    public ICommand OpenCreateDialogCommand { get; }
+    public ICommand CloseCreateDialogCommand { get; }
+    public ICommand CreateQuotesCommand { get; }
+    public ICommand ViewQuotationCommand { get; }
+    public ICommand EditQuotationCommand { get; }
+    public ICommand DeleteQuotationCommand { get; }
+    public ICommand PrintPdfCommand { get; }
+    public ICommand ChiffrerCommand { get; }
+    public ICommand NavigateToDashboardCommand { get; }
+    public ICommand ClearFiltersCommand { get; }
+
+    public QuotesManagementViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
         _userSession = userSession;
         _pdfService = pdfService;
+        _navigationService = navigationService;
         Title = "Gestion des Devis";
 
         RefreshCommand = new RelayCommand(async _ => await LoadInitialData());
+        OpenCreateDialogCommand = new RelayCommand(_ => OpenCreateDialog());
+        CloseCreateDialogCommand = new RelayCommand(_ => CloseCreateDialog());
         CreateQuotesCommand = new RelayCommand(async _ => await ExecuteCreateQuotes(), _ => CanCreateQuotes());
-        EditQuotationCommand = new RelayCommand(async p => await ExecuteEditQuotation(p as Quotation));
+        ViewQuotationCommand = new RelayCommand(async p => await ExecuteViewQuotation(p as Quotation));
+        EditQuotationCommand = new RelayCommand(async p => await ExecuteEditQuotation(p as Quotation), p => CanEditQuotation(p as Quotation));
+        DeleteQuotationCommand = new RelayCommand(async p => await ExecuteDeleteQuotation(p as Quotation), p => CanEditQuotation(p as Quotation));
         PrintPdfCommand = new RelayCommand(async p => await ExecutePrintPdf(p as Quotation));
-        CancelEditCommand = new RelayCommand(_ => ResetForm());
+        ChiffrerCommand = new RelayCommand(p => ExecuteChiffrer(p as Quotation));
+        NavigateToDashboardCommand = new RelayCommand(_ => _navigationService.NavigateTo("Dashboard"));
+        ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
 
         _ = LoadInitialData();
     }
@@ -124,7 +262,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     {
         if (_pendingNavigationNeed == null) return;
 
-        // Si la liste est déjà chargée, on applique la sélection
         if (PendingNeeds.Any())
         {
             var existing = PendingNeeds.FirstOrDefault(n => n.Id == _pendingNavigationNeed.Id);
@@ -136,6 +273,24 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             SelectedNeed = existing;
             _pendingNavigationNeed = null;
         }
+    }
+
+    private void OpenCreateDialog()
+    {
+        ResetForm();
+        IsCreateDialogOpen = true;
+    }
+
+    private void CloseCreateDialog()
+    {
+        IsCreateDialogOpen = false;
+        ResetForm();
+    }
+
+    private async Task ExecuteViewQuotation(Quotation? quotation)
+    {
+        if (quotation == null) return;
+        System.Windows.MessageBox.Show($"Affichage des détails du devis {quotation.ReferenceNumber}", "Détails", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
     }
 
     private async Task ExecuteEditQuotation(Quotation? quotation)
@@ -151,21 +306,52 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             IsEditMode = true;
             SelectedNeed = _editingQuotation.Need;
 
-            // Sélectionner le fournisseur
             foreach (var s in AvailableSuppliers)
             {
                 s.IsSelected = s.Supplier.Id == _editingQuotation.SupplierId;
             }
 
-            // Sélectionner les articles
             foreach (var a in ArticlesToQuote)
             {
                 a.IsSelected = _editingQuotation.Details.Any(d => d.ProductId == a.ProductId);
             }
+
+            IsCreateDialogOpen = true;
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task ExecuteDeleteQuotation(Quotation? quotation)
+    {
+        if (quotation == null) return;
+
+        var result = System.Windows.MessageBox.Show(
+            $"Êtes-vous sûr de vouloir supprimer le devis {quotation.ReferenceNumber} ?",
+            "Confirmation de suppression",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (result == System.Windows.MessageBoxResult.Yes)
+        {
+            IsBusy = true;
+            try
+            {
+                _unitOfWork.Quotations.Remove(quotation);
+                await _unitOfWork.CompleteAsync();
+                await LoadInitialData();
+                System.Windows.MessageBox.Show("Le devis a été supprimé.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Erreur : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
     }
 
@@ -195,15 +381,19 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
     }
 
+    private void ExecuteChiffrer(Quotation? quotation)
+    {
+        if (quotation == null) return;
+        _navigationService.NavigateTo("SaisiePrix", quotation.Id);
+    }
+
     private async Task LoadInitialData()
     {
         IsBusy = true;
         try
         {
-            // 1. Charger les besoins en attente avec produits
             var needs = await _unitOfWork.Needs.GetPendingNeedsWithProductsAsync();
             
-            // On garde le besoin sélectionné s'il y en a un
             var currentSelectedId = SelectedNeed?.Id ?? _pendingNavigationNeed?.Id;
 
             PendingNeeds.Clear();
@@ -212,7 +402,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                 foreach (var n in needs) PendingNeeds.Add(n);
             }
 
-            // Réappliquer la sélection ou le besoin en attente
             if (currentSelectedId.HasValue)
             {
                 var toSelect = PendingNeeds.FirstOrDefault(n => n.Id == currentSelectedId.Value);
@@ -230,20 +419,90 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             
             _pendingNavigationNeed = null;
 
-            // 2. Charger les fournisseurs
             var suppliers = await _unitOfWork.Suppliers.FindAsync(s => s.IsActive);
             AvailableSuppliers.Clear();
-            foreach (var s in suppliers) AvailableSuppliers.Add(new SupplierSelectionViewModel(s));
+            FilterSuppliers.Clear();
+            FilterSuppliers.Add("Tous");
+            foreach (var s in suppliers)
+            {
+                AvailableSuppliers.Add(new SupplierSelectionViewModel(s));
+                FilterSuppliers.Add(s);
+            }
 
-            // 3. Charger les devis récents
-            var quotes = await _unitOfWork.Quotations.GetAllWithSuppliersAsync();
-            ExistingQuotations.Clear();
-            foreach (var q in quotes.Take(20)) ExistingQuotations.Add(q);
+            var quotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
+            AllQuotations.Clear();
+            foreach (var q in quotes) AllQuotations.Add(q);
+
+            SelectedFilterSupplier = "Tous";
+            CalculateStatistics();
+            ApplyFilters();
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private void CalculateStatistics()
+    {
+        TotalDevis = AllQuotations.Count;
+        DevisEnvoyes = AllQuotations.Count;
+        ReponseRecue = AllQuotations.Count(q => q.ResponseDate.HasValue);
+        DevisAcceptes = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
+        DevisValides = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
+        MontantTotal = AllQuotations.Sum(q => q.TotalAmountTTC);
+        MoyenneParDevis = TotalDevis > 0 ? MontantTotal / TotalDevis : 0;
+        
+        if (AllQuotations.Any())
+        {
+            var supplierStats = AllQuotations
+                .Where(q => q.Supplier != null)
+                .GroupBy(q => q.Supplier.CompanyName)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault();
+            
+            FournisseurPlusSollicite = supplierStats != null 
+                ? $"{supplierStats.Key} ({supplierStats.Count()} devis)" 
+                : "-";
+        }
+        else
+        {
+            FournisseurPlusSollicite = "-";
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        FilteredQuotations.Clear();
+        var filtered = AllQuotations.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(FilterReference))
+        {
+            filtered = filtered.Where(q => q.ReferenceNumber.Contains(FilterReference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (FilterSupplierId.HasValue)
+        {
+            filtered = filtered.Where(q => q.SupplierId == FilterSupplierId.Value);
+        }
+
+        if (FilterStatus != "Tous")
+        {
+            filtered = filtered.Where(q => q.Status == FilterStatus);
+        }
+
+        foreach (var q in filtered)
+        {
+            FilteredQuotations.Add(q);
+        }
+    }
+
+    private void ClearFilters()
+    {
+        FilterReference = string.Empty;
+        SelectedFilterSupplier = "Tous";
+        FilterSupplierId = null;
+        FilterStatus = "Tous";
     }
 
     private void LoadArticlesForNeed()
@@ -260,7 +519,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
         else
         {
-            // Fallback pour les anciens besoins sans Details
             ArticlesToQuote.Add(new ArticleSelectionViewModel(SelectedNeed));
         }
     }
@@ -270,6 +528,12 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         return SelectedNeed != null && 
                ArticlesToQuote.Any(a => a.IsSelected) && 
                AvailableSuppliers.Any(s => s.IsSelected);
+    }
+
+    private bool CanEditQuotation(Quotation? quotation)
+    {
+        if (quotation == null) return false;
+        return quotation.Status != QuotationStatus.Validated;
     }
 
     private async Task ExecuteCreateQuotes()
@@ -284,7 +548,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
 
             if (IsEditMode && _editingQuotation != null)
             {
-                // Mode Edition : On ne modifie qu'un seul devis
                 var supplierSelection = selectedSuppliers.FirstOrDefault();
                 if (supplierSelection == null) return;
 
@@ -292,11 +555,9 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                 _editingQuotation.NeedId = SelectedNeed!.Id;
                 _editingQuotation.UpdatedAt = DateTime.UtcNow;
 
-                // Supprimer les anciens détails
                 var oldDetails = await _unitOfWork.QuotationDetails.FindAsync(d => d.QuotationId == _editingQuotation.Id);
                 foreach (var d in oldDetails) _unitOfWork.QuotationDetails.Remove(d);
 
-                // Ajouter les nouveaux détails
                 foreach (var articleSelection in selectedArticles)
                 {
                     _editingQuotation.Details.Add(new QuotationDetail
@@ -310,7 +571,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             }
             else
             {
-                // Mode Création : On peut créer plusieurs devis (un par fournisseur)
                 foreach (var supplierSelection in selectedSuppliers)
                 {
                     var quotation = new Quotation
@@ -319,7 +579,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                         Date = DateTime.UtcNow,
                         SupplierId = supplierSelection.Supplier.Id,
                         NeedId = SelectedNeed!.Id,
-                        Status = "Sent",
+                        Status = QuotationStatus.Pending,
                         CreatedById = _userSession.CurrentUser?.Id ?? 1,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
@@ -338,7 +598,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                 }
             }
 
-            // Mettre à jour le statut du besoin
             if (SelectedNeed!.Status == NeedStatus.TransmittedToPurchasing)
             {
                 SelectedNeed.Status = NeedStatus.InPurchase;
@@ -349,7 +608,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             
             System.Windows.MessageBox.Show(IsEditMode ? "Le devis a été mis à jour." : $"{selectedSuppliers.Count} demandes de devis ont été générées.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             
-            ResetForm();
+            CloseCreateDialog();
             await LoadInitialData();
         }
         catch (Exception ex)

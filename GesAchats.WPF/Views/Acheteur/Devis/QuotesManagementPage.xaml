@@ -4,194 +4,547 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Devis"
+      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:sys="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="1000"
+      d:DesignHeight="800" d:DesignWidth="1400"
       Title="Gestion des Devis">
 
-    <Grid Background="#F5F5F5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <Grid Background="{StaticResource BackgroundBrush}" MinWidth="1200">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="&#x1f4dd; Création &amp; Gestion des Devis" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Grid.Column="1" Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
+                <!-- Header -->
+                <Border Background="White" Padding="24" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📋" FontSize="24" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Gestion des Devis" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Command="{Binding RefreshCommand}" 
+                                    Style="{StaticResource ModernPrimaryButton}" 
+                                    Background="White" 
+                                    Foreground="{StaticResource PrimaryBrush}"
+                                    BorderBrush="{StaticResource PrimaryBrush}" 
+                                    BorderThickness="1"
+                                    Margin="0,0,12,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="↻" FontSize="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Actualiser"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding NavigateToDashboardCommand}" 
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Margin="0,0,12,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Tableau de bord"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding OpenCreateDialogCommand}" 
+                                    Style="{StaticResource ModernPrimaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="+" FontSize="16" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Créer un Devis"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Statistics Cards -->
+                <Border Grid.Row="1" Padding="24,20">
+                    <UniformGrid Columns="4" Rows="2">
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#E3F2FD" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding TotalDevis}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#1565C0" Margin="0,16,0,4"/>
+                                <TextBlock Text="Total Devis" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#FFF3E0" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="📤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding DevisEnvoyes}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#F57C00" Margin="0,16,0,4"/>
+                                <TextBlock Text="Devis Envoyés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#E3F2FD" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="📥" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding ReponseRecue}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#1565C0" Margin="0,16,0,4"/>
+                                <TextBlock Text="Réponse Reçue" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="✅" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding DevisAcceptes}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
+                                <TextBlock Text="Devis Acceptés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="✓" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding DevisValides}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
+                                <TextBlock Text="Devis Validés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="💰" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding MontantTotal, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
+                                <TextBlock Text="Montant Total (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#F3E5F5" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding MoyenneParDevis, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#7B1FA2" Margin="0,16,0,4"/>
+                                <TextBlock Text="Moyenne par Devis" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="#FFF8E1" CornerRadius="10" Padding="10" Width="48" Height="48">
+                                    <TextBlock Text="🏢" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding FournisseurPlusSollicite}" Grid.Row="1" FontSize="18" FontWeight="Bold" Foreground="#F57C00" Margin="0,16,0,4" TextWrapping="Wrap"/>
+                                <TextBlock Text="Fournisseur le plus sollicité" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+                    </UniformGrid>
+                </Border>
+
+                <!-- Filter Section -->
+                <Border Grid.Row="2" Background="White" Padding="24" Margin="0,0,24,0" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="Référence Devis" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding FilterReference, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBox}"
+                                     Height="36"
+                                     Background="White"
+                                     Foreground="Black"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <TextBlock Text="Fournisseur" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding FilterSuppliers}"
+                                      SelectedItem="{Binding SelectedFilterSupplier}"
+                                      Style="{StaticResource ModernComboBox}"
+                                      Height="36">
+                                <ComboBox.Resources>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </ComboBox.Resources>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding CompanyName}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding}" Value="Tous">
+                                                            <Setter Property="Text" Value="Tous"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                            <TextBlock Text="Statut" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding}"
+                                      SelectedItem="{Binding FilterStatus}"
+                                      Style="{StaticResource ModernComboBox}"
+                                      Height="36">
+                                <ComboBox.Resources>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </ComboBox.Resources>
+                                <sys:String>Tous</sys:String>
+                                <sys:String>En attente</sys:String>
+                                <sys:String>Validé</sys:String>
+                            </ComboBox>
+                        </StackPanel>
+                        <Button Grid.Column="3" Command="{Binding ClearFiltersCommand}" 
+                                Style="{StaticResource ModernPrimaryButton}"
+                                Background="White"
+                                Foreground="#757575"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                VerticalAlignment="Bottom">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✕" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock Text="Réinitialiser"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Main Content: DataGrid -->
+                <Border Grid.Row="3" Margin="24" Padding="0">
+                    <Border Style="{StaticResource ModernCard}" Padding="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                                <TextBlock Text="Liste des devis" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </Border>
+
+                            <DataGrid Grid.Row="1" 
+                                      ItemsSource="{Binding FilteredQuotations}" 
+                                      Style="{StaticResource ModernDataGrid}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      MinWidth="1100">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="180" MinWidth="150"/>
+                                    <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="220" MinWidth="180"/>
+                                    <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='dd/MM/yyyy'}" Width="130" MinWidth="110"/>
+                                    <DataGridTextColumn Header="Montant Total (MAD)" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2}}" Width="160" MinWidth="140">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Foreground" Value="#2E7D32"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTemplateColumn Header="Statut" Width="120" MinWidth="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="10,5" CornerRadius="20" HorizontalAlignment="Left">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#EEEEEE"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="En attente">
+                                                                    <Setter Property="Background" Value="#FFF3E0"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#757575"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="En attente">
+                                                                        <Setter Property="Foreground" Value="#E65100"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Actions" Width="Auto" MinWidth="320">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Command="{Binding DataContext.ViewQuotationCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Inspecter"
+                                                            Style="{StaticResource ModernIconButton}"
+                                                            Margin="0,0,4,0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="👁" FontSize="14" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Inspecter" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.DeleteQuotationCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Supprimer"
+                                                            Margin="0,0,4,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource ModernIconButton}">
+                                                                <Setter Property="Background" Value="#F44336"/>
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🗑" FontSize="14" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Supprimer" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="PDF"
+                                                            Style="{StaticResource ModernIconButton}"
+                                                            Margin="0,0,4,0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🖨" FontSize="14" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="PDF" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.ChiffrerCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Chiffrer">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource ModernIconButton}">
+                                                                <Setter Property="Background" Value="#4CAF50"/>
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="💰" FontSize="14" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Chiffrer" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Border>
             </Grid>
-        </Border>
+        </ScrollViewer>
 
-        <!-- Content -->
-        <Grid Grid.Row="1" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.2*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- Create/Edit Dialog Popup (Outside ScrollViewer to stay fixed) -->
+        <Grid Background="#00000040" Visibility="{Binding IsCreateDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Panel.ZIndex="1000">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" MaxHeight="700" Margin="0,20,0,0" Style="{StaticResource ModernCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-            <!-- Left side: Creation Form -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="CRÉER UNE DEMANDE DE DEVIS" FontSize="14" FontWeight="Bold" Foreground="#2196F3" Margin="0,0,0,20"/>
+                    <!-- Dialog Header -->
+                    <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Créer un devis"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditMode}" Value="True">
+                                                <Setter Property="Text" Value="Modifier le devis"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <Button HorizontalAlignment="Right" 
+                                    Command="{Binding CloseCreateDialogCommand}"
+                                    Style="{StaticResource ModernIconButton}">
+                                <TextBlock Text="✕" FontSize="18"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
-                        <!-- Step 1: Need Selection -->
-                        <TextBlock Text="1. Sélectionner un besoin" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <ComboBox ItemsSource="{Binding PendingNeeds}" 
-                                  SelectedItem="{Binding SelectedNeed}"
-                                  Padding="10" Margin="0,0,0,20">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding NumeroBesoin}" FontWeight="Bold"/>
-                                        <TextBlock Text=" - "/>
-                                        <TextBlock Text="{Binding DateTransmission, StringFormat=dd/MM/yyyy}"/>
-                                        <TextBlock Text=" ("/>
-                                        <TextBlock Text="{Binding Details.Count}"/>
-                                        <TextBlock Text=" articles)"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                    <!-- Dialog Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
+                        <StackPanel>
+                            <!-- Step 1: Select Need -->
+                            <StackPanel Margin="0,0,0,24">
+                                <TextBlock Text="Étape 1 : Sélectionner un besoin" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <ComboBox ItemsSource="{Binding PendingNeeds}"
+                                          SelectedItem="{Binding SelectedNeed}"
+                                          Style="{StaticResource ModernComboBox}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding NumeroBesoin}" FontWeight="Bold"/>
+                                                <TextBlock Text=" - "/>
+                                                <TextBlock Text="{Binding DateTransmission, StringFormat=dd/MM/yyyy}"/>
+                                                <TextBlock Text=" ("/>
+                                                <TextBlock Text="{Binding Details.Count}"/>
+                                                <TextBlock Text=" articles)"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
 
-                        <!-- Step 2: Articles Selection -->
-                        <TextBlock Text="2. Articles à inclure" FontWeight="SemiBold" Margin="0,0,0,5" Visibility="{Binding ArticlesToQuote.Count, Converter={StaticResource EnhancedBooleanToVisibilityConverter}}"/>
-                        <ItemsControl ItemsSource="{Binding ArticlesToQuote}" Margin="0,0,0,20" Visibility="{Binding ArticlesToQuote.Count, Converter={StaticResource EnhancedBooleanToVisibilityConverter}}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsSelected}" Margin="0,5">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold"/>
-                                            <TextBlock Text=" ("/>
-                                            <TextBlock Text="{Binding Quantity}"/>
-                                            <TextBlock Text=" "/>
-                                            <TextBlock Text="{Binding Unit}"/>
-                                            <TextBlock Text=")"/>
-                                        </StackPanel>
-                                    </CheckBox>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Step 3: Suppliers Selection -->
-                        <TextBlock Text="3. Choisir les fournisseurs" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" MaxHeight="200" Margin="0,0,0,20">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding AvailableSuppliers}" Padding="10">
+                            <!-- Step 2: Select Articles -->
+                            <StackPanel Margin="0,0,0,24" Visibility="{Binding ArticlesToQuote.Count, Converter={StaticResource EnhancedBooleanToVisibilityConverter}}">
+                                <TextBlock Text="Articles à inclure" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding ArticlesToQuote}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsSelected}" Margin="0,5" IsEnabled="{Binding DataContext.IsEditMode, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource EnhancedBooleanToVisibilityConverter}, ConverterParameter=Inverse}">
+                                            <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource ModernCheckBox}" Margin="0,4">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Supplier.CompanyName}" FontWeight="SemiBold"/>
-                                                    <TextBlock Text=" - " Foreground="Gray"/>
-                                                    <TextBlock Text="{Binding Supplier.City}" Foreground="Gray" FontSize="11"/>
+                                                    <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold"/>
+                                                    <TextBlock Text=" ("/>
+                                                    <TextBlock Text="{Binding Quantity}"/>
+                                                    <TextBlock Text=" "/>
+                                                    <TextBlock Text="{Binding Unit}"/>
+                                                    <TextBlock Text=")"/>
                                                 </StackPanel>
                                             </CheckBox>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </ScrollViewer>
-                        </Border>
+                            </StackPanel>
 
-                        <Button Command="{Binding CreateQuotesCommand}" 
-                                Padding="20,12" 
-                                Background="#2196F3" 
-                                Foreground="White" 
-                                FontWeight="Bold" 
-                                BorderThickness="0"
-                                HorizontalAlignment="Stretch">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Content" Value="&#x2709; Créer un Devis"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEditMode}" Value="True">
-                                            <Setter Property="Content" Value="&#x1f4be; Mettre à jour le Devis"/>
-                                            <Setter Property="Background" Value="#4CAF50"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                            <!-- Step 3: Select Suppliers -->
+                            <StackPanel>
+                                <TextBlock Text="Étape 2 : Choisir un ou plusieurs fournisseurs" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" MaxHeight="200">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding AvailableSuppliers}" Padding="12">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource ModernCheckBox}" Margin="0,4">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Supplier.CompanyName}" FontWeight="SemiBold"/>
+                                                            <TextBlock Text=" - " Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                            <TextBlock Text="{Binding Supplier.City}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                                        </StackPanel>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                        <Button Command="{Binding CancelEditCommand}" 
-                                Content="Annuler la modification" 
-                                Margin="0,10,0,0"
-                                Padding="10,5" 
-                                Background="Transparent" 
-                                Foreground="Gray" 
-                                BorderThickness="0"
-                                HorizontalAlignment="Center"
-                                Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
+                    <!-- Dialog Footer -->
+                    <Border Padding="24" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-            <!-- Right side: Existing Quotes -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="10,0,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Text="DEMANDES RÉCENTES" FontSize="14" FontWeight="Bold" Foreground="#666" Margin="0,0,0,15"/>
-                    
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding ExistingQuotations}" 
-                              AutoGenerateColumns="False" 
-                              IsReadOnly="True" 
-                              Background="Transparent" 
-                              BorderThickness="0"
-                              RowHeaderWidth="0"
-                              GridLinesVisibility="None">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="*"/>
-                            <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
-                            <DataGridTemplateColumn Header="Actions" Width="Auto">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="&#x270f;" 
-                                                    Command="{Binding DataContext.EditQuotationCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="Modifier"
-                                                    Padding="5,2" Margin="0,0,5,0" Background="Transparent" BorderThickness="0"/>
-                                            <Button Content="&#x1f5a8;" 
-                                                    Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="Générer PDF"
-                                                    Padding="5,2" Background="Transparent" BorderThickness="0"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Statut" Width="Auto">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="8,4" CornerRadius="10" HorizontalAlignment="Center">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#E0E0E0"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Sent">
-                                                            <Setter Property="Background" Value="#BBDEFB"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Received">
-                                                            <Setter Property="Background" Value="#C8E6C9"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                            <Button Grid.Column="1" 
+                                    Command="{Binding CloseCreateDialogCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Background="White"
+                                    Foreground="{StaticResource TextSecondaryBrush}"
+                                    Margin="0,0,12,0">
+                                Annuler
+                            </Button>
+                            <Button Grid.Column="2" 
+                                    Command="{Binding CreateQuotesCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}">
+                                <TextBlock>
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Créer le devis"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEditMode}" Value="True">
+                                                    <Setter Property="Text" Value="Mettre à jour"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>

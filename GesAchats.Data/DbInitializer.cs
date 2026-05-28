@@ -12,6 +12,13 @@ public static class DbInitializer
         // 1. Initialisation de la base (crée la base si elle n'existe pas)
         await context.Database.EnsureCreatedAsync();
 
+        // Mettre à jour les statuts des devis
+        await context.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Quotations""
+            SET ""Status"" = 'Validé'
+            WHERE ""Status"" IN ('Validated', 'Accepted', 'accepted', 'validated', 'Valide', 'valide', 'Sent');
+        ");
+
         // 1.1 Migration manuelle du schéma (FullName, etc.)
         await context.Database.ExecuteSqlRawAsync(@"
             -- Roles update

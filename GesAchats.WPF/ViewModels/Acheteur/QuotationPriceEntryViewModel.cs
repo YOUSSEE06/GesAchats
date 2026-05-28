@@ -2,12 +2,13 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
+using GesAchats.WPF.Services;
 using GesAchats.WPF.ViewModels.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace GesAchats.WPF.ViewModels.Acheteur;
 
-public class QuotationPriceEntryViewModel : BaseViewModel
+public class QuotationPriceEntryViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private Quotation? _selectedQuotation;
@@ -41,13 +42,42 @@ public class QuotationPriceEntryViewModel : BaseViewModel
         _ = LoadQuotations();
     }
 
+    public void OnNavigatedTo(object parameter)
+    {
+        if (parameter is int quotationId)
+        {
+            _ = LoadQuotationById(quotationId);
+        }
+    }
+
+    private async Task LoadQuotationById(int quotationId)
+    {
+        IsBusy = true;
+        try
+        {
+            var quote = await _unitOfWork.Quotations.GetWithDetailsAsync(quotationId);
+            if (quote != null)
+            {
+                if (!SentQuotations.Any(q => q.Id == quote.Id))
+                {
+                    SentQuotations.Add(quote);
+                }
+                SelectedQuotation = SentQuotations.FirstOrDefault(q => q.Id == quote.Id);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private async Task LoadQuotations()
     {
         IsBusy = true;
         try
         {
-            // Charger les devis envoyés (Sent) qui n'ont pas encore été totalement complétés ou validés
-            var quotes = await _unitOfWork.Quotations.FindAsync(q => q.Status == "Sent" || q.Status == "Received");
+            var allQuotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
+            var quotes = allQuotes.Where(q => q.Status == QuotationStatus.Pending);
             SentQuotations.Clear();
             foreach (var q in quotes.OrderByDescending(x => x.Date))
             {
@@ -94,7 +124,6 @@ public class QuotationPriceEntryViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            // Calculer le total
             decimal totalHT = 0;
             foreach (var detail in QuotationDetails)
             {
@@ -103,8 +132,8 @@ public class QuotationPriceEntryViewModel : BaseViewModel
             }
 
             SelectedQuotation.TotalAmountHT = totalHT;
-            SelectedQuotation.TotalAmountTTC = totalHT * 1.2m; // Exemple TVA 20%
-            SelectedQuotation.Status = "Received";
+            SelectedQuotation.TotalAmountTTC = totalHT * 1.2m;
+            SelectedQuotation.Status = QuotationStatus.Validated;
             SelectedQuotation.UpdatedAt = DateTime.UtcNow;
             SelectedQuotation.ResponseDate = DateTime.UtcNow;
 

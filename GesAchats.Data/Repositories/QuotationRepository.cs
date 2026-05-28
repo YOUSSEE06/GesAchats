@@ -39,6 +39,15 @@ public class QuotationRepository : Repository<Quotation>, IQuotationRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Quotation>> GetAllWithAllRelatedAsync()
+    {
+        return await _dbSet
+            .Include(q => q.Supplier)
+            .Include(q => q.Need)
+            .OrderByDescending(q => q.Date)
+            .ToListAsync();
+    }
+
     public async Task<Quotation?> GetWithDetailsAsync(int id)
     {
         return await _dbSet

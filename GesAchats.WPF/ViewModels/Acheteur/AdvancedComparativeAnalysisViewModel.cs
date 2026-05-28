@@ -69,8 +69,9 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            // Charger tous les devis envoyés ou reçus
-            var quotes = await _unitOfWork.Quotations.FindAsync(q => q.Status == "Sent" || q.Status == "Received");
+            // Charger tous les devis avec leurs détails
+            var allQuotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
+            var quotes = allQuotes.Where(q => q.Status == "Pending" || q.Status == "Sent" || q.Status == "Received");
             
             AvailableQuotations.Clear();
             ComparisonData.Clear();

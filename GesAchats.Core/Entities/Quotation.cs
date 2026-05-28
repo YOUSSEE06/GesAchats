@@ -4,6 +4,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace GesAchats.Core.Entities;
 
 /// <summary>
+/// Constantes pour les statuts de devis
+/// </summary>
+public static class QuotationStatus
+{
+    public const string Pending = "En attente";
+    public const string Validated = "Validé";
+}
+
+/// <summary>
 /// Devis reçu d'un fournisseur
 /// </summary>
 public class Quotation
@@ -36,7 +45,7 @@ public class Quotation
     public string? Observations { get; set; }
 
     [MaxLength(50)]
-    public string Status { get; set; } = "Sent"; // Envoyé / Réponse reçue / Accepté / Rejeté
+    public string Status { get; set; } = QuotationStatus.Pending;
 
     public virtual ICollection<QuotationDetail> Details { get; set; } = new List<QuotationDetail>();
 
