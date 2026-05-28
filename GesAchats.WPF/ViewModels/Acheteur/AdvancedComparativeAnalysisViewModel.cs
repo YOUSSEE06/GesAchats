@@ -13,16 +13,24 @@ public class QuotationSelectionViewModel : BaseViewModel
 {
     private bool _isSelected = true;
     public Quotation Quotation { get; }
+    private readonly AdvancedComparativeAnalysisViewModel _parent;
     
     public bool IsSelected
     {
         get => _isSelected;
-        set => SetProperty(ref _isSelected, value);
+        set
+        {
+            if (SetProperty(ref _isSelected, value))
+            {
+                _parent.ExecuteComparison();
+            }
+        }
     }
 
-    public QuotationSelectionViewModel(Quotation quotation)
+    public QuotationSelectionViewModel(Quotation quotation, AdvancedComparativeAnalysisViewModel parent)
     {
         Quotation = quotation;
+        _parent = parent;
     }
 }
 
@@ -71,7 +79,7 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
         {
             // Charger tous les devis avec leurs détails
             var allQuotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
-            var quotes = allQuotes.Where(q => q.Status == "Pending" || q.Status == "Sent" || q.Status == "Received");
+            var quotes = allQuotes.Where(q => q.Status == "En attente" || q.Status == "Validé");
             
             AvailableQuotations.Clear();
             ComparisonData.Clear();
@@ -83,7 +91,7 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
                 var fullQ = await _unitOfWork.Quotations.GetWithDetailsAsync(q.Id);
                 if (fullQ != null)
                 {
-                    AvailableQuotations.Add(new QuotationSelectionViewModel(fullQ) { IsSelected = false });
+                    AvailableQuotations.Add(new QuotationSelectionViewModel(fullQ, this) { IsSelected = false });
                 }
             }
         }

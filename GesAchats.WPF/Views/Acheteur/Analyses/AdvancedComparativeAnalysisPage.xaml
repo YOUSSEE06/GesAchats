@@ -49,7 +49,7 @@
                             <ItemsControl ItemsSource="{Binding AvailableQuotations}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,8" Command="{Binding DataContext.CompareCommand, RelativeSource={RelativeSource AncestorType=Page}}">
+                                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,8">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding Quotation.Supplier.CompanyName}" FontWeight="Bold" FontSize="13"/>
                                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
