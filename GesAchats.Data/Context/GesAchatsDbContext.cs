@@ -25,6 +25,7 @@ public class GesAchatsDbContext : DbContext
     public DbSet<Need> Needs => Set<Need>();
     public DbSet<NeedDetail> NeedDetails => Set<NeedDetail>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Magasin> Magasins => Set<Magasin>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -34,6 +35,10 @@ public class GesAchatsDbContext : DbContext
             // Mais on peut mettre une valeur par défaut pour les outils de design (migrations)
             optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=gesachatsdb;Username=postgres;Password=medpos2025");
         }
+        
+        // Supprimer l'avertissement sur les modifications de modèle en attente
+        optionsBuilder.ConfigureWarnings(warnings => 
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

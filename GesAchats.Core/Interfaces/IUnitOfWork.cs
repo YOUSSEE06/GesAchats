@@ -1,3 +1,4 @@
+using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 
 namespace GesAchats.Core.Interfaces;
@@ -8,21 +9,22 @@ namespace GesAchats.Core.Interfaces;
 public interface IUnitOfWork : IDisposable
 {
     IUserRepository Users { get; }
-    IRepository<Entities.Role> Roles { get; }
-    IRepository<Entities.Supplier> Suppliers { get; }
-    IRepository<Entities.Product> Products { get; }
+    IRepository<Role> Roles { get; }
+    IRepository<Supplier> Suppliers { get; }
+    IRepository<Product> Products { get; }
+    IRepository<Magasin> Magasins { get; }
     IQuotationRepository Quotations { get; }
-    IRepository<Entities.QuotationDetail> QuotationDetails { get; }
+    IRepository<QuotationDetail> QuotationDetails { get; }
     IPurchaseOrderRepository PurchaseOrders { get; }
     IPurchaseOrderDetailRepository PurchaseOrderDetails { get; }
     IDeliveryNoteRepository DeliveryNotes { get; }
-    IRepository<Entities.DeliveryNoteDetail> DeliveryNoteDetails { get; }
-    IRepository<Entities.Invoice> Invoices { get; }
-    IRepository<Entities.InvoiceDetail> InvoiceDetails { get; }
-    IRepository<Entities.Payment> Payments { get; }
+    IRepository<DeliveryNoteDetail> DeliveryNoteDetails { get; }
+    IRepository<Invoice> Invoices { get; }
+    IRepository<InvoiceDetail> InvoiceDetails { get; }
+    IRepository<Payment> Payments { get; }
     INeedRepository Needs { get; }
-    IRepository<Entities.NeedDetail> NeedDetails { get; }
-    IRepository<Entities.AuditLog> AuditLogs { get; }
+    IRepository<NeedDetail> NeedDetails { get; }
+    IRepository<AuditLog> AuditLogs { get; }
 
     Task<int> CompleteAsync();
 }

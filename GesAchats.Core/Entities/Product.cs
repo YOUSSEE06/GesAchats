@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GesAchats.Core.Entities;
 
@@ -38,7 +39,22 @@ public class Product
 
     public string? CreatedBy { get; set; } // Nom du Magasinier si IsNew=1
 
+    public int? MagasinId { get; set; }
+
+    [ForeignKey(nameof(MagasinId))]
+    public Magasin? Magasin { get; set; }
+
     public bool IsLowStock => CurrentStock <= MinimumStock;
 
     public decimal DaysUntilStockout => DailyConsumption > 0 ? Math.Floor(CurrentStock / DailyConsumption) : 999;
+
+    public StockState Etat => CurrentStock == 0 ? StockState.OutOfStock :
+                              CurrentStock <= MinimumStock ? StockState.Alert : StockState.Ok;
+}
+
+public enum StockState
+{
+    Ok,
+    Alert,
+    OutOfStock
 }
