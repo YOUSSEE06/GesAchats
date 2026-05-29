@@ -137,6 +137,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     private string _searchSupplier = string.Empty;
     private string _searchDevisRef = string.Empty;
     private DateTime? _searchDate;
+    private string _selectedStatusFilter = "Tous";
 
     // Form properties
     private Supplier? _selectedSupplier;
@@ -233,6 +234,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     public string SearchSupplier { get => _searchSupplier; set { if (SetProperty(ref _searchSupplier, value)) FilterOrders(); } }
     public string SearchDevisRef { get => _searchDevisRef; set { if (SetProperty(ref _searchDevisRef, value)) FilterOrders(); } }
     public DateTime? SearchDate { get => _searchDate; set { if (SetProperty(ref _searchDate, value)) FilterOrders(); } }
+    public string SelectedStatusFilter { get => _selectedStatusFilter; set { if (SetProperty(ref _selectedStatusFilter, value)) FilterOrders(); } }
 
     // Form Accessors
     public Supplier? SelectedSupplier
@@ -325,6 +327,8 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     public ICommand ShowAddFormCommand { get; }
     public ICommand BackToHistoryCommand { get; }
     public ICommand InspectCommand { get; }
+    public ICommand CancelCommand { get; }
+    public ICommand ReactivateCommand { get; }
 
     public BonsCommandeViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService)
     {
@@ -339,6 +343,8 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         ShowAddFormCommand = new RelayCommand(_ => ExecuteShowAddForm());
         BackToHistoryCommand = new RelayCommand(_ => ExecuteBackToHistory());
         InspectCommand = new RelayCommand(async p => await ExecuteInspect(p as PurchaseOrder));
+        CancelCommand = new RelayCommand(async p => await ExecuteCancel(p as PurchaseOrder));
+        ReactivateCommand = new RelayCommand(async p => await ExecuteReactivate(p as PurchaseOrder));
 
         _ = LoadInitialData();
     }
@@ -366,6 +372,14 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         SelectedOrder = null;
     }
 
+    // Track if the inspected order is editable
+    private bool _isOrderEditable = true;
+    public bool IsOrderEditable
+    {
+        get => _isOrderEditable;
+        set => SetProperty(ref _isOrderEditable, value);
+    }
+
     private async Task ExecuteInspect(PurchaseOrder? order)
     {
         if (order == null) return;
@@ -380,6 +394,9 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             IsHistoryView = false;
             IsEditView = false;
             IsInspectView = true;
+            
+            // Order is only editable if status is "En attente"
+            IsOrderEditable = fullOrder.Status == PurchaseOrderStatus.Pending;
 
             // Fill "form" fields for display in inspection mode
             SelectedSupplier = Suppliers.FirstOrDefault(s => s.Id == fullOrder.SupplierId);
@@ -491,6 +508,11 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         if (SearchDate.HasValue)
         {
             filtered = filtered.Where(o => o.OrderDate.Date == SearchDate.Value.Date);
+        }
+
+        if (!string.IsNullOrWhiteSpace(SelectedStatusFilter) && SelectedStatusFilter != "Tous")
+        {
+            filtered = filtered.Where(o => o.Status == SelectedStatusFilter);
         }
 
         OrdersHistory.Clear();
@@ -673,6 +695,52 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show($"Erreur lors de la création du BC : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ExecuteCancel(PurchaseOrder? order)
+    {
+        if (order == null || order.Status != PurchaseOrderStatus.Pending) return;
+
+        IsBusy = true;
+        try
+        {
+            order.Status = PurchaseOrderStatus.Cancelled;
+            order.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.PurchaseOrders.Update(order);
+            await _unitOfWork.CompleteAsync();
+            await LoadInitialData();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Erreur lors de l'annulation : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ExecuteReactivate(PurchaseOrder? order)
+    {
+        if (order == null || order.Status != PurchaseOrderStatus.Cancelled) return;
+
+        IsBusy = true;
+        try
+        {
+            order.Status = PurchaseOrderStatus.Pending;
+            order.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.PurchaseOrders.Update(order);
+            await _unitOfWork.CompleteAsync();
+            await LoadInitialData();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Erreur lors de la réactivation : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
         finally
         {

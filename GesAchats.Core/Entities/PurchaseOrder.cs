@@ -4,6 +4,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace GesAchats.Core.Entities;
 
 /// <summary>
+/// Constantes pour les statuts de bons de commande
+/// </summary>
+public static class PurchaseOrderStatus
+{
+    public const string Pending = "En attente";
+    public const string Validated = "Validé";
+    public const string Cancelled = "Annulé";
+}
+
+/// <summary>
 /// Bon de Commande (BC)
 /// </summary>
 public class PurchaseOrder
@@ -44,7 +54,7 @@ public class PurchaseOrder
     public int? RequestedDeliveryDelay { get; set; } // en jours
 
     [MaxLength(50)]
-    public string Status { get; set; } = "Draft"; // Draft, Issued, PartiallyDelivered, Delivered, Closed
+    public string Status { get; set; } = PurchaseOrderStatus.Pending;
 
     public DateTime? ExpectedDeliveryDate { get; set; }
 

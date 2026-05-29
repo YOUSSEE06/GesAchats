@@ -49,62 +49,124 @@
                 </Grid.RowDefinitions>
 
                 <!-- Filters -->
-                <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="N° BC" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="120" Text="{Binding SearchBCNumber, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
-                        </StackPanel>
-                        
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="Fournisseur" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="150" Text="{Binding SearchSupplier, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
-                        </StackPanel>
+        <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="N° BC" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBox Width="120" Text="{Binding SearchBCNumber, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                </StackPanel>
+                
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Fournisseur" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBox Width="150" Text="{Binding SearchSupplier, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                </StackPanel>
 
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="Réf. Devis" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="120" Text="{Binding SearchDevisRef, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
-                        </StackPanel>
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Réf. Devis" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBox Width="120" Text="{Binding SearchDevisRef, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                </StackPanel>
 
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="Date" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <DatePicker SelectedDate="{Binding SearchDate}" Width="120"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Date" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <DatePicker SelectedDate="{Binding SearchDate}" Width="120"/>
+                </StackPanel>
+                
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Statut" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <ComboBox Width="120" SelectedItem="{Binding SelectedStatusFilter, UpdateSourceTrigger=PropertyChanged}">
+                        <ComboBoxItem Content="Tous"/>
+                        <ComboBoxItem Content="En attente"/>
+                        <ComboBoxItem Content="Validé"/>
+                        <ComboBoxItem Content="Annulé"/>
+                    </ComboBox>
+                </StackPanel>
+            </StackPanel>
+        </Border>
 
                 <!-- History Table -->
                 <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
                     <DataGrid ItemsSource="{Binding OrdersHistory}" AutoGenerateColumns="False" IsReadOnly="True" 
-                              Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date" Binding="{Binding OrderDate, StringFormat=d}" Width="Auto"/>
-                            <DataGridTextColumn Header="N° BC" Binding="{Binding OrderNumber}" Width="*"/>
-                            <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="1.5*"/>
-                            <DataGridTextColumn Header="Réf. Devis" Binding="{Binding Quotation.ReferenceNumber}" Width="*"/>
-                            <DataGridTextColumn Header="Total TTC" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2} MAD}" Width="Auto">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="HorizontalAlignment" Value="Right"/>
-                                        <Setter Property="Margin" Value="0,0,10,0"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTemplateColumn Header="Actions" Width="135">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="🔍 Inspecter" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                    CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#FF9800" Foreground="White" BorderThickness="0" MinWidth="65"/>
-                                            <Button Content="📄 PDF" Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                    CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#2196F3" Foreground="White" BorderThickness="0" MinWidth="55"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                      Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Date" Binding="{Binding OrderDate, StringFormat=d}" Width="Auto"/>
+                    <DataGridTextColumn Header="N° BC" Binding="{Binding OrderNumber}" Width="*"/>
+                    <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Réf. Devis" Binding="{Binding Quotation.ReferenceNumber}" Width="*"/>
+                    <DataGridTemplateColumn Header="Statut" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="12" Padding="8,2" HorizontalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="En attente">
+                                                    <Setter Property="Background" Value="#FFC107"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                    <Setter Property="Background" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Status}" Value="Annulé">
+                                                    <Setter Property="Background" Value="#F44336"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Status}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Total TTC" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2} MAD}" Width="Auto">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                <Setter Property="Margin" Value="0,0,10,0"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Actions" Width="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="🔍 Inspecter" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#FF9800" Foreground="White" BorderThickness="0" MinWidth="65"/>
+                                    <Button Content="📄 PDF" Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#2196F3" Foreground="White" BorderThickness="0" MinWidth="55"/>
+                                    
+                                    <Button Content="Annuler" Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#F44336" Foreground="White" BorderThickness="0" MinWidth="65">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="En attente">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    
+                                    <Button Content="Réactiver" Command="{Binding DataContext.ReactivateCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#4CAF50" Foreground="White" BorderThickness="0" MinWidth="65">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Annulé">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
                 </Border>
             </Grid>
 
@@ -187,61 +249,65 @@
                         </StackPanel>
 
                         <!-- Articles Grid -->
-                        <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,10">
-                            <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserAddRows="False" 
-                                      Background="Transparent" BorderThickness="0" RowHeaderWidth="0">
-                                <DataGrid.Columns>
-                                    <DataGridCheckBoxColumn Header="Incl." Binding="{Binding IsIncluded, UpdateSourceTrigger=PropertyChanged}" Width="Auto">
-                                        <DataGridCheckBoxColumn.ElementStyle>
-                                            <Style TargetType="CheckBox">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding DataContext.IsInspectView, RelativeSource={RelativeSource AncestorType=Page}}" Value="True">
-                                                        <Setter Property="IsEnabled" Value="False"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </DataGridCheckBoxColumn.ElementStyle>
-                                    </DataGridCheckBoxColumn>
-                                    <DataGridTextColumn Header="Désignation" Binding="{Binding Detail.Product.Designation}" IsReadOnly="True" Width="*"/>
-                                    <DataGridTemplateColumn Header="Qté" Width="80">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" 
-                                                         IsReadOnly="{Binding DataContext.IsInspectView, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                         Padding="2"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="PU HT" Width="100">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding UnitPriceHT, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
-                                                         IsReadOnly="{Binding DataContext.IsInspectView, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                         Padding="2" HorizontalContentAlignment="Right"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="PU TTC" Width="100">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding UnitPriceTTC, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
-                                                         IsReadOnly="{Binding DataContext.IsInspectView, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                         Padding="2" HorizontalContentAlignment="Right"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Total HT" Binding="{Binding TotalHT, StringFormat={}{0:N2} MAD}" IsReadOnly="True" Width="Auto">
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="HorizontalAlignment" Value="Right"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                                <Setter Property="Margin" Value="5,0"/>
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Border>
+                    <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,10">
+                        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserAddRows="False" 
+                                  Background="Transparent" BorderThickness="0" RowHeaderWidth="0">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Incl." Binding="{Binding IsIncluded, UpdateSourceTrigger=PropertyChanged}" Width="Auto">
+                                    <DataGridCheckBoxColumn.ElementStyle>
+                                        <Style TargetType="CheckBox">
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding DataContext.IsInspectView, RelativeSource={RelativeSource AncestorType=Page}}" Value="True"/>
+                                                        <Condition Binding="{Binding DataContext.IsOrderEditable, RelativeSource={RelativeSource AncestorType=Page}}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.ElementStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridTextColumn Header="Désignation" Binding="{Binding Detail.Product.Designation}" IsReadOnly="True" Width="*"/>
+                                <DataGridTemplateColumn Header="Qté" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" 
+                                                     IsReadOnly="{Binding DataContext.IsOrderEditable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanInverterConverter}, FallbackValue=True}"
+                                                     Padding="2"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="PU HT" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding UnitPriceHT, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
+                                                     IsReadOnly="{Binding DataContext.IsOrderEditable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanInverterConverter}, FallbackValue=True}"
+                                                     Padding="2" HorizontalContentAlignment="Right"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="PU TTC" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding UnitPriceTTC, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
+                                                     IsReadOnly="{Binding DataContext.IsOrderEditable, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanInverterConverter}, FallbackValue=True}"
+                                                     Padding="2" HorizontalContentAlignment="Right"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Total HT" Binding="{Binding TotalHT, StringFormat={}{0:N2} MAD}" IsReadOnly="True" Width="Auto">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="5,0"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
                     </DockPanel>
                 </Border>
 
@@ -279,7 +345,7 @@
                         <StackPanel>
                             <TextBlock Text="OBSERVATIONS" FontWeight="Bold" Margin="0,0,0,10" Foreground="#666"/>
                             <TextBox Text="{Binding Observations}" AcceptsReturn="True" Height="100" 
-                                     IsReadOnly="{Binding IsInspectView}"
+                                     IsReadOnly="{Binding IsOrderEditable, Converter={StaticResource BooleanInverterConverter}, FallbackValue=True}"
                                      VerticalContentAlignment="Top" Padding="10" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
