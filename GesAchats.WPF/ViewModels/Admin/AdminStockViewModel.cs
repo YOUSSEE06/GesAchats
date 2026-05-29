@@ -100,7 +100,7 @@ public class AdminStockViewModel : BaseViewModel
         _unitOfWork = unitOfWork;
         _stockService = stockService;
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
-        Title = "Tableau de bord du stock (Admin)";
+        Title = "Stock global";
         
         _ = LoadDataAsync();
     }

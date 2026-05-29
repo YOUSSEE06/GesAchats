@@ -22,40 +22,98 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="#333333">
+        <Border Grid.Column="0" Background="#1E293B">
             <DockPanel>
                 <!-- Logo/Header -->
                 <StackPanel DockPanel.Dock="Top" Margin="20,30">
-                    <TextBlock Text="ADMIN" Foreground="{StaticResource WarningBrush}" 
+                    <TextBlock Text="ESPACE" Foreground="#3B82F6" 
                                FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="GesAchats" Foreground="White" FontSize="22" 
+                    <TextBlock Text="ADMIN" Foreground="White" FontSize="24" 
                                FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <Separator Margin="0,20,0,0" Background="#444444"/>
+                    <Separator Margin="0,20,0,0" Background="#334155"/>
                 </StackPanel>
 
                 <!-- Navigation Buttons -->
                 <StackPanel DockPanel.Dock="Top" Margin="10,0">
-                    <Button Content="Tableau de bord (Stock)" 
-                            Style="{StaticResource SidebarButtonStyle}"
+                    <Button Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
-                            CommandParameter="Dashboard"/>
+                            CommandParameter="StockGlobal">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📦" Margin="0,0,10,0"/>
+                            <TextBlock Text="Stock Global"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="Gestion Employés" 
-                            Style="{StaticResource SidebarButtonStyle}"
+                    <Button Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
-                            CommandParameter="Employees"/>
+                            CommandParameter="NeedsHistory">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📝" Margin="0,0,10,0"/>
+                            <TextBlock Text="Historique Besoins"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="DeliveryNotes">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🚚" Margin="0,0,10,0"/>
+                            <TextBlock Text="Bons de Livraison"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="PriceAnalysis">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📈" Margin="0,0,10,0"/>
+                            <TextBlock Text="Prix &amp; Achats"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="Orders">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📋" Margin="0,0,10,0"/>
+                            <TextBlock Text="Gestion Bons Commande"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="Invoices">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📑" Margin="0,0,10,0"/>
+                            <TextBlock Text="Factures Fournisseurs"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="Payments">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💳" Margin="0,0,10,0"/>
+                            <TextBlock Text="Suivi Règlements"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="Gestion Commandes" 
-                            Style="{StaticResource SidebarButtonStyle}"
+                    <Button Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
-                            CommandParameter="Orders"/>
+                            CommandParameter="Employees">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="👥" Margin="0,0,10,0"/>
+                            <TextBlock Text="Gestion Employés"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- Footer (User info & Logout) -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="10,20">
-                    <Separator Margin="0,0,0,15" Background="#444444"/>
-                    <TextBlock Text="{Binding UserName}" Foreground="White" 
-                               HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <Separator Margin="0,0,0,15" Background="#334155"/>
+                    <TextBlock Text="Administrateur Système" Foreground="White" 
+                               HorizontalAlignment="Center" Margin="0,0,0,10"
+                               FontSize="12" Opacity="0.8"/>
                     <Button Content="Déconnexion" 
                             Style="{StaticResource LogoutButtonStyle}"
                             Command="{Binding LogoutCommand}"/>

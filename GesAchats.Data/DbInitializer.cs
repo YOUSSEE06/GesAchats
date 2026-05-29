@@ -49,6 +49,87 @@ public static class DbInitializer
 
             DO $$ 
             BEGIN 
+                -- 1. RENOMMAGE DES TABLES (si nécessaire)
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Invoices') AND 
+                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                    ALTER TABLE ""Invoices"" RENAME TO factures;
+                END IF;
+
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Payments') AND 
+                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reglements') THEN
+                    ALTER TABLE ""Payments"" RENAME TO reglements;
+                END IF;
+
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'DeliveryNotes') AND 
+                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
+                    ALTER TABLE ""DeliveryNotes"" RENAME TO bons_livraison;
+                END IF;
+
+                -- 2. RÉPARATION DE LA TABLE ""factures""
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                    -- Ajout de bc_id
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bc_id') THEN
+                        ALTER TABLE factures ADD COLUMN bc_id INTEGER;
+                    END IF;
+
+                    -- Ajout de bl_id
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bl_id') THEN
+                        ALTER TABLE factures ADD COLUMN bl_id INTEGER;
+                    END IF;
+
+                    -- Renommage/Ajout des autres colonnes
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='InvoiceNumber') THEN
+                        ALTER TABLE factures RENAME COLUMN ""InvoiceNumber"" TO numero_facture;
+                    END IF;
+                    
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='SupplierId') THEN
+                        ALTER TABLE factures RENAME COLUMN ""SupplierId"" TO fournisseur_id;
+                    END IF;
+
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='InvoiceDate') THEN
+                        ALTER TABLE factures RENAME COLUMN ""InvoiceDate"" TO date_facture;
+                    END IF;
+
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='AmountTTC') THEN
+                        ALTER TABLE factures RENAME COLUMN ""AmountTTC"" TO montant_ttc;
+                    END IF;
+
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='Status') THEN
+                        ALTER TABLE factures RENAME COLUMN ""Status"" TO statut;
+                    END IF;
+
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_ht') THEN
+                        ALTER TABLE factures ADD COLUMN montant_ht NUMERIC(18,2) DEFAULT 0;
+                    END IF;
+
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_tva') THEN
+                        ALTER TABLE factures ADD COLUMN montant_tva NUMERIC(18,2) DEFAULT 0;
+                    END IF;
+
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='taux_tva') THEN
+                        ALTER TABLE factures ADD COLUMN taux_tva NUMERIC(18,2) DEFAULT 20.00;
+                    END IF;
+
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='date_reception') THEN
+                        ALTER TABLE factures ADD COLUMN date_reception TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                    END IF;
+
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='cree_par') THEN
+                        ALTER TABLE factures ADD COLUMN cree_par INTEGER DEFAULT 1;
+                    END IF;
+                END IF;
+
+                -- 3. RÉPARATION DE LA TABLE ""bons_livraison""
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='bons_livraison' AND column_name='bc_id') THEN
+                        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='bons_livraison' AND column_name='PurchaseOrderId') THEN
+                            ALTER TABLE bons_livraison RENAME COLUMN ""PurchaseOrderId"" TO bc_id;
+                        ELSE
+                            ALTER TABLE bons_livraison ADD COLUMN bc_id INTEGER;
+                        END IF;
+                    END IF;
+                END IF;
+
                 -- Needs table creation (Updated for History)
                 IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Needs') THEN
                     CREATE TABLE ""Needs"" (

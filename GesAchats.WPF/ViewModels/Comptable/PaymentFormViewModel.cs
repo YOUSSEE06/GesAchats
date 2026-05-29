@@ -159,9 +159,9 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
             Payment.Status = "Validé"; // Add default status
             
             // Clear navigation properties to avoid EF tracking issues
-            Payment.Invoice = null;
-            Payment.Supplier = null;
-            Payment.CreatedBy = null;
+            Payment.Invoice = null!;
+            Payment.Supplier = null!;
+            Payment.CreatedBy = null!;
 
             await _unitOfWork.Payments.AddAsync(Payment);
 

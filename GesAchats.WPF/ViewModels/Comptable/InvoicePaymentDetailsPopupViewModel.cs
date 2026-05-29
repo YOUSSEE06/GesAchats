@@ -92,7 +92,7 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
                 PaymentNumber = $"REG-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4)}",
                 PaymentDate = NewPaymentDate,
                 AmountPaid = NewPaymentAmount,
-                PaymentMethod = NewPaymentMethod,
+                PaymentMethod = NewPaymentMethod ?? "Virement",
                 ReferenceNumber = NewPaymentReference,
                 Status = "Validé",
                 CreatedById = 1, // TODO: Get current user

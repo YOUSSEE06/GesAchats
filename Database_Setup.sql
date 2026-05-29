@@ -78,33 +78,60 @@ CREATE TABLE "PurchaseOrders" (
     "OrderDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "DeliveryNotes" (
-    "Id" SERIAL PRIMARY KEY,
-    "DeliveryNumber" VARCHAR(50) NOT NULL,
-    "PurchaseOrderId" INTEGER REFERENCES "PurchaseOrders"("Id"),
-    "SupplierId" INTEGER REFERENCES "Suppliers"("Id"),
+CREATE TABLE bons_livraison (
+    id SERIAL PRIMARY KEY,
+    numero_bl VARCHAR(50) NOT NULL UNIQUE,
+    bc_id INTEGER REFERENCES "PurchaseOrders"("Id"),
+    fournisseur_id INTEGER REFERENCES "Suppliers"("Id"),
     "ReceivedQuantity" DECIMAL(18,2),
     "CompliantQuantity" DECIMAL(18,2),
-    "Status" VARCHAR(20),
-    "ReceptionDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "Status" VARCHAR(20) DEFAULT 'Pending',
+    date_reception TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. Finance (Factures et Paiements)
-CREATE TABLE "Invoices" (
-    "Id" SERIAL PRIMARY KEY,
-    "InvoiceNumber" VARCHAR(50) NOT NULL,
-    "SupplierId" INTEGER REFERENCES "Suppliers"("Id"),
-    "AmountTTC" DECIMAL(18,2),
-    "Status" VARCHAR(20),
-    "InvoiceDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE factures (
+    id SERIAL PRIMARY KEY,
+    numero_facture VARCHAR(50) NOT NULL UNIQUE,
+    numero_facture_fournisseur VARCHAR(100),
+    date_facture TIMESTAMP NOT NULL,
+    date_reception TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fournisseur_id INT NOT NULL REFERENCES "Suppliers"("Id"),
+    bc_id INT REFERENCES "PurchaseOrders"("Id"),
+    bl_id INT,
+    montant_ht NUMERIC(18,2) NOT NULL DEFAULT 0,
+    taux_tva NUMERIC(18,2) DEFAULT 20.00,
+    montant_tva NUMERIC(18,2) NOT NULL DEFAULT 0,
+    montant_ttc NUMERIC(18,2) NOT NULL DEFAULT 0,
+    statut VARCHAR(50) DEFAULT 'EnAttente',
+    conformite VARCHAR(50) DEFAULT 'NonVerifiee',
+    justification_conformite TEXT,
+    observations TEXT,
+    fichier_pdf TEXT,
+    date_echeance TIMESTAMP,
+    cree_par INT NOT NULL REFERENCES "Users"("Id"),
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "Payments" (
-    "Id" SERIAL PRIMARY KEY,
-    "InvoiceId" INTEGER REFERENCES "Invoices"("Id"),
-    "AmountPaid" DECIMAL(18,2),
-    "PaymentDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "PaymentMethod" VARCHAR(50)
+CREATE TABLE reglements (
+    id SERIAL PRIMARY KEY,
+    numero_reglement VARCHAR(50) NOT NULL UNIQUE,
+    facture_id INT NOT NULL REFERENCES factures(id),
+    fournisseur_id INT NOT NULL REFERENCES "Suppliers"("Id"),
+    date_paiement TIMESTAMP NOT NULL,
+    montant NUMERIC(18,2) NOT NULL,
+    mode_paiement VARCHAR(50),
+    statut VARCHAR(50),
+    reference VARCHAR(255),
+    banque VARCHAR(100),
+    fichier_preuve TEXT,
+    type_fichier VARCHAR(20),
+    fichier_recu TEXT,
+    observations TEXT,
+    cree_par INT NOT NULL REFERENCES "Users"("Id"),
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 5. Seed Initial

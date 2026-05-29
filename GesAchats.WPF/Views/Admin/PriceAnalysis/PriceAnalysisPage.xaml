@@ -1,0 +1,36 @@
+<Page x:Class="GesAchats.WPF.Views.Admin.PriceAnalysis.PriceAnalysisPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      mc:Ignorable="d" 
+      d:DesignHeight="800" d:DesignWidth="1200"
+      Title="Historique des Prix et Achats">
+
+    <Grid Background="#F8FAFC">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Global Header -->
+            <RowDefinition Height="Auto"/> <!-- Page Title -->
+            <RowDefinition Height="*"/>    <!-- Main Content -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. En-tête global -->
+        <Grid Grid.Row="0" Margin="25,25,25,10">
+            <TextBlock Text="ESPACE ADMIN" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- 2. Titre de la page -->
+        <TextBlock Grid.Row="1" Text="HISTORIQUE DES PRIX ET ACHATS" FontSize="20" FontWeight="SemiBold" 
+                   Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
+
+        <!-- 3. Zone principale -->
+        <Grid Grid.Row="2" Margin="25,10,25,25">
+            <Border Style="{StaticResource ModernCard}" Padding="40">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Nouvelle version en cours" FontSize="24" FontWeight="Bold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Le contenu de cette interface sera redéfini ultérieurement." FontSize="14" Foreground="#94A3B8" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

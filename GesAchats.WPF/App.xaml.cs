@@ -95,6 +95,42 @@ public partial class App : Application
                                                WHERE table_name = 'Products' AND column_name = 'CreatedBy') THEN
                                     ALTER TABLE ""Products"" ADD COLUMN ""CreatedBy"" VARCHAR(255) NULL;
                                 END IF;
+
+                                -- RÉPARATION DU MODULE COMPTABLE (bc_id, bl_id, etc.)
+                                -- 1. Renommage des tables si nécessaire
+                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Invoices') AND 
+                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                                    ALTER TABLE ""Invoices"" RENAME TO factures;
+                                END IF;
+
+                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Payments') AND 
+                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reglements') THEN
+                                    ALTER TABLE ""Payments"" RENAME TO reglements;
+                                END IF;
+
+                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'DeliveryNotes') AND 
+                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
+                                    ALTER TABLE ""DeliveryNotes"" RENAME TO bons_livraison;
+                                END IF;
+
+                                -- 2. Ajout des colonnes à la table factures
+                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bc_id') THEN
+                                        ALTER TABLE factures ADD COLUMN bc_id INTEGER;
+                                    END IF;
+                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bl_id') THEN
+                                        ALTER TABLE factures ADD COLUMN bl_id INTEGER;
+                                    END IF;
+                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_ht') THEN
+                                        ALTER TABLE factures ADD COLUMN montant_ht NUMERIC(18,2) DEFAULT 0;
+                                    END IF;
+                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_tva') THEN
+                                        ALTER TABLE factures ADD COLUMN montant_tva NUMERIC(18,2) DEFAULT 0;
+                                    END IF;
+                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='taux_tva') THEN
+                                        ALTER TABLE factures ADD COLUMN taux_tva NUMERIC(18,2) DEFAULT 20.00;
+                                    END IF;
+                                END IF;
                             END $$;
                         ");
 
@@ -227,6 +263,10 @@ public partial class App : Application
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminShellViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminDashboardViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminStockViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminNeedsHistoryViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminDeliveryNotesViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminPriceAnalysisViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminOrdersViewModel>();
 
         // ViewModels - Focus Comptable
         services.AddTransient<ComptableShellViewModel>();
@@ -272,6 +312,9 @@ public partial class App : Application
          services.AddTransient<GesAchats.WPF.Views.Admin.Employees.EmployeeManagementPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.Orders.OrderManagementPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.Stock.AdminStockPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.PriceAnalysis.PriceAnalysisPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.NeedsHistory.AdminNeedsHistoryPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.DeliveryNotes.AdminDeliveryNotesPage>();
 
          // Views - Focus Comptable
          services.AddTransient<GesAchats.WPF.Views.Comptable.ComptableShell>();

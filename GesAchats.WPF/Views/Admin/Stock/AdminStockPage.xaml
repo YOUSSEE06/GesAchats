@@ -7,7 +7,7 @@
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
       xmlns:entities="clr-namespace:GesAchats.Core.Entities"
       mc:Ignorable="d"
-      Title="Tableau de bord du stock (Admin)">
+      Title="Stock global">
     <Page.Resources>
         <converters:StockStateToColorConverter x:Key="StockStateToColorConverter"/>
         <converters:StockStateToStringConverter x:Key="StockStateToStringConverter"/>

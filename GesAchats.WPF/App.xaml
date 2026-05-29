@@ -18,6 +18,8 @@
             <conv:BooleanInverterConverter x:Key="BooleanInverterConverter"/>
             <conv:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
             <conv:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
+            <conv:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
+            <conv:StaticValueConverter x:Key="StaticValueConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
