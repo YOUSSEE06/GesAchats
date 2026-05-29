@@ -42,24 +42,13 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         }
     }
 
-    private DateTime? _startDate;
-    public DateTime? StartDate
+    private DateTime? _selectedDate;
+    public DateTime? SelectedDate
     {
-        get => _startDate;
+        get => _selectedDate;
         set
         {
-            SetProperty(ref _startDate, value);
-            ApplyFilters();
-        }
-    }
-
-    private DateTime? _endDate;
-    public DateTime? EndDate
-    {
-        get => _endDate;
-        set
-        {
-            SetProperty(ref _endDate, value);
+            SetProperty(ref _selectedDate, value);
             ApplyFilters();
         }
     }
@@ -76,6 +65,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
 
     public ICommand LoadDataCommand { get; }
     public ICommand ViewInvoiceCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public InvoicePaymentTrackingViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider)
     {
@@ -86,6 +76,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
 
         LoadDataCommand = new RelayCommand(async _ => await LoadDataAsync());
         ViewInvoiceCommand = new RelayCommand(async param => await ViewInvoiceAsync(param as InvoiceWithPaymentsViewModel));
+        ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
 
         _ = LoadDataAsync();
     }
@@ -124,10 +115,14 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             // Load suppliers for filter
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
             Suppliers.Clear();
-            foreach (var supplier in suppliers)
+            // Add "Tous" option first
+            var tousSupplier = new Supplier { Id = 0, CompanyName = "Tous" };
+            Suppliers.Add(tousSupplier);
+            foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
             {
                 Suppliers.Add(supplier);
             }
+            SelectedSupplier = tousSupplier;
 
             ApplyFilters();
 
@@ -150,7 +145,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
     {
         var filtered = _allInvoices.AsEnumerable();
 
-        if (SelectedSupplier != null)
+        if (SelectedSupplier != null && SelectedSupplier.Id != 0)
         {
             filtered = filtered.Where(i => i.Invoice.SupplierId == SelectedSupplier.Id);
         }
@@ -160,14 +155,9 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             filtered = filtered.Where(i => i.StatusCalculated == SelectedStatus);
         }
 
-        if (StartDate.HasValue)
+        if (SelectedDate.HasValue)
         {
-            filtered = filtered.Where(i => i.Invoice.InvoiceDate >= StartDate.Value);
-        }
-
-        if (EndDate.HasValue)
-        {
-            filtered = filtered.Where(i => i.Invoice.InvoiceDate <= EndDate.Value);
+            filtered = filtered.Where(i => i.Invoice.InvoiceDate.Date == SelectedDate.Value.Date);
         }
 
         FilteredInvoices.Clear();
@@ -196,5 +186,12 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
                 await LoadDataAsync();
             }
         }
+    }
+
+    private void ResetFilters()
+    {
+        SelectedSupplier = Suppliers.FirstOrDefault();
+        SelectedStatus = "Tous";
+        SelectedDate = null;
     }
 }

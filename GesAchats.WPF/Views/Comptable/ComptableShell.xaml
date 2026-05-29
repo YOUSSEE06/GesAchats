@@ -69,7 +69,6 @@
 
                 <StackPanel DockPanel.Dock="Top" Margin="10,0">
                     <Button Content="🧾 Factures" Click="NavigateToFactures" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="🏢 Fournisseurs" Click="NavigateToFournisseurs" Style="{StaticResource SidebarButtonStyle}"/>
                     <Button Content="📊 Dashboard" Click="NavigateToDashboard" Style="{StaticResource SidebarButtonStyle}"/>
                     <Button Content="💳 Suivi Règlements" Click="NavigateToReglements" Style="{StaticResource SidebarButtonStyle}"/>
                     <Button Content="📈 Suivi Comptable" Click="NavigateToInvoicePaymentTracking" Style="{StaticResource SidebarButtonStyle}"/>

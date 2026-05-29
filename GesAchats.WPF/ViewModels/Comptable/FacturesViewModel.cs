@@ -52,24 +52,13 @@ public class FacturesViewModel : BaseViewModel
         }
     }
 
-    private DateTime? _startDate;
-    public DateTime? StartDate
+    private DateTime? _selectedDate;
+    public DateTime? SelectedDate
     {
-        get => _startDate;
+        get => _selectedDate;
         set
         {
-            if (SetProperty(ref _startDate, value))
-                ApplyFilters();
-        }
-    }
-
-    private DateTime? _endDate;
-    public DateTime? EndDate
-    {
-        get => _endDate;
-        set
-        {
-            if (SetProperty(ref _endDate, value))
+            if (SetProperty(ref _selectedDate, value))
                 ApplyFilters();
         }
     }
@@ -122,6 +111,7 @@ public class FacturesViewModel : BaseViewModel
     public ICommand ViewBCCommand { get; }
     public ICommand ViewBLCommand { get; }
     public ICommand ViewFileCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider)
     {
@@ -132,6 +122,7 @@ public class FacturesViewModel : BaseViewModel
 
         LoadFacturesCommand = new RelayCommand(async _ => await LoadFacturesAsync());
         AddFactureCommand = new RelayCommand(_ => _navigationService.NavigateTo("InvoiceForm"));
+        ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
         
         ViewDetailsCommand = new RelayCommand(_ => 
         {
@@ -180,9 +171,6 @@ public class FacturesViewModel : BaseViewModel
                 _navigationService.NavigateTo("PaymentForm", SelectedFacture.Invoice.Id);
         }, _ => SelectedFacture != null);
 
-        _startDate = DateTime.Today.AddMonths(-1);
-        _endDate = DateTime.Today;
-
         _ = LoadFacturesAsync();
     }
 
@@ -192,7 +180,16 @@ public class FacturesViewModel : BaseViewModel
         try
         {
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            Suppliers = new ObservableCollection<Supplier>(suppliers.OrderBy(s => s.CompanyName));
+            var supplierList = new ObservableCollection<Supplier>();
+            // Add "Tous" option first
+            var tousSupplier = new Supplier { Id = 0, CompanyName = "Tous" };
+            supplierList.Add(tousSupplier);
+            foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
+            {
+                supplierList.Add(supplier);
+            }
+            Suppliers = supplierList;
+            SelectedSupplier = tousSupplier;
 
             // Charger les factures avec les entités liées
             var factures = await _unitOfWork.Invoices.GetAllIncludingAsync(
@@ -229,17 +226,14 @@ public class FacturesViewModel : BaseViewModel
     {
         var filtered = _allFactures.AsEnumerable();
 
-        if (SelectedSupplier != null)
+        if (SelectedSupplier != null && SelectedSupplier.Id != 0)
             filtered = filtered.Where(f => f.Invoice.SupplierId == SelectedSupplier.Id);
 
         if (!string.IsNullOrEmpty(SelectedStatus) && SelectedStatus != "Tous")
             filtered = filtered.Where(f => f.StatusCalculated == SelectedStatus);
 
-        if (StartDate.HasValue)
-            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date >= StartDate.Value.Date);
-
-        if (EndDate.HasValue)
-            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date <= EndDate.Value.Date);
+        if (SelectedDate.HasValue)
+            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date == SelectedDate.Value.Date);
 
         if (!string.IsNullOrEmpty(SearchText))
         {
@@ -265,5 +259,13 @@ public class FacturesViewModel : BaseViewModel
         
         decimal totalPaid = Factures.Sum(f => f.TotalPayments);
         PaymentRate = TotalAmount > 0 ? (double)(totalPaid / TotalAmount * 100) : 0;
+    }
+
+    private void ResetFilters()
+    {
+        SelectedSupplier = Suppliers.FirstOrDefault();
+        SelectedStatus = "Tous";
+        SelectedDate = null;
+        SearchText = string.Empty;
     }
 }

@@ -22,6 +22,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -60,8 +61,37 @@
             </Border>
         </Grid>
 
+        <!-- Filters -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="20,15,20,0" BorderBrush="#E0E0E0" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Fournisseur" Foreground="#757575" FontSize="12"/>
+                        <ComboBox Width="160" ItemsSource="{Binding Suppliers}" DisplayMemberPath="CompanyName" SelectedItem="{Binding SelectedSupplier}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Date" Foreground="#757575" FontSize="12"/>
+                        <DatePicker Width="140" SelectedDate="{Binding SelectedDate}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="Mode de paiement" Foreground="#757575" FontSize="12"/>
+                        <ComboBox Width="140" ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Recherche" Foreground="#757575" FontSize="12"/>
+                        <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Content="🔄 Réinitialiser" Command="{Binding ResetFiltersCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4" Grid.Column="1"/>
+            </Grid>
+        </Border>
+
         <!-- History Table -->
-        <Border Grid.Row="2" Background="White" Margin="20,0,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="3" Background="White" Margin="20,15,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -72,9 +102,7 @@
                     <Grid>
                         <TextBlock Text="HISTORIQUE DES RÈGLEMENTS" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="🔄 Actualiser" Command="{Binding LoadPaymentsCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4" Margin="0,0,10,0"/>
-                            <Button Content="➕ Nouveau Règlement" Command="{Binding AddPaymentCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Padding="15,8" Margin="0,0,10,0" Background="#1A3A52" Foreground="White"/>
-                            <Button Content="📊 Export Excel" Command="{Binding ExportExcelCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4"/>
+                            <Button Content="➕ Nouveau Règlement" Command="{Binding AddPaymentCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Padding="15,8" Background="#1A3A52" Foreground="White"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -83,7 +111,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Date" Binding="{Binding PaymentDate, StringFormat=dd/MM/yyyy}" Width="100"/>
                         <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
-                        <DataGridTextColumn Header="Numéro de facture" Binding="{Binding Invoice.InvoiceNumber}" Width="150"/>
+                        <DataGridTextColumn Header="Numéro de facture" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="150"/>
                         <DataGridTextColumn Header="Montant" Binding="{Binding AmountPaid, StringFormat={}{0:N2} MAD}" Width="120"/>
                         <DataGridTextColumn Header="Mode" Binding="{Binding PaymentMethod}" Width="120"/>
                         <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="150"/>

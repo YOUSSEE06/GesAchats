@@ -20,7 +20,7 @@
         <!-- Header -->
         <DockPanel Margin="0,0,0,20">
             <Button Content="← Retour" DockPanel.Dock="Left" Padding="10,5" Background="Transparent" BorderThickness="0" Foreground="#566573" Command="{Binding CloseCommand}"/>
-            <TextBlock Text="{Binding Invoice.InvoiceNumber, StringFormat='Détails Facture: {0}'}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, StringFormat='Détails Facture: {0}', TargetNullValue='Détails Facture'}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
         </DockPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -33,8 +33,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="N° Facture:" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Invoice.InvoiceNumber}" Margin="0,0,0,10"/>
+                            <TextBlock Text="N° Facture" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Margin="0,0,0,10"/>
                             
                             <TextBlock Text="Fournisseur:" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding Invoice.Supplier.CompanyName}" Margin="0,0,0,10"/>

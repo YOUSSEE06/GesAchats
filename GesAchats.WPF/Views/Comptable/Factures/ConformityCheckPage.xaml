@@ -30,7 +30,7 @@
             <StackPanel Orientation="Horizontal">
                 <Button Content="⬅" Command="{Binding BackCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,10,0"/>
                 <TextBlock Text="Vérification de Conformité - " FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
-                <TextBlock Text="{Binding Invoice.InvoiceNumber}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2196F3"/>
+                <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="#2196F3"/>
             </StackPanel>
         </Border>
 

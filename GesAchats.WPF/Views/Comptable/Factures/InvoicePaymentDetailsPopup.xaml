@@ -45,7 +45,7 @@
                             <TextBlock Text="🔢" FontSize="16" VerticalAlignment="Center"/>
                             <TextBlock Text="Numéro Facture" Foreground="#616161" FontSize="13" VerticalAlignment="Center" Margin="8,0,0,0"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding Invoice.InvoiceNumber}" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,5,0,0"/>
+                        <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52" Margin="0,5,0,0"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Margin="20,0">

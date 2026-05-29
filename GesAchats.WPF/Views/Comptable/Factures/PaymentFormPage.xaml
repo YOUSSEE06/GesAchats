@@ -43,7 +43,7 @@
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Invoice.InvoiceNumber}"/>
+                                        <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}"/>
                                         <TextBlock Text=" - "/>
                                         <TextBlock Text="{Binding Invoice.Supplier.CompanyName}"/>
                                         <TextBlock Text=" - "/>
@@ -64,7 +64,7 @@
                             
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Facture N°" Foreground="#757575" FontSize="12"/>
-                                <TextBlock Text="{Binding SelectedInvoice.Invoice.InvoiceNumber}" FontWeight="SemiBold" FontSize="16"/>
+                                <TextBlock Text="{Binding SelectedInvoice.Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" FontWeight="SemiBold" FontSize="16"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1">
@@ -116,8 +116,7 @@
                             <WrapPanel Orientation="Horizontal" Margin="0,5">
                                 <RadioButton Content="Virement" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Virement}" Margin="0,0,15,0"/>
                                 <RadioButton Content="Chèque" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Chèque}" Margin="0,0,15,0"/>
-                                <RadioButton Content="Lettre de change" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Lettre de change}" Margin="0,0,15,0"/>
-                                <RadioButton Content="Espèces" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Espèces}"/>
+                                <RadioButton Content="Lettre de change" IsChecked="{Binding Payment.PaymentMethod, Converter={StaticResource EqualityConverter}, ConverterParameter=Lettre de change}"/>
                             </WrapPanel>
                         </StackPanel>
 

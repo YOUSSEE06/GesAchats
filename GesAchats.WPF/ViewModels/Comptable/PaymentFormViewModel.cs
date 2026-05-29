@@ -43,7 +43,7 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
         }
     }
 
-    private Payment _payment = new() { PaymentDate = DateTime.Now };
+    private Payment _payment = new() { PaymentDate = DateTime.Now, PaymentMethod = "Virement" };
     public Payment Payment
     {
         get => _payment;

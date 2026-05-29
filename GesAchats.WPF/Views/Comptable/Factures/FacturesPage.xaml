@@ -69,39 +69,41 @@
 
             <!-- Filtres -->
             <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel Margin="0,0,15,0">
-                        <TextBlock Text="Fournisseur" Style="{StaticResource LabelStyle}"/>
-                        <ComboBox Width="160" ItemsSource="{Binding Suppliers}" DisplayMemberPath="CompanyName" SelectedItem="{Binding SelectedSupplier}"/>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,15,0">
-                        <TextBlock Text="Statut" Style="{StaticResource LabelStyle}"/>
-                        <ComboBox Width="140" SelectedValue="{Binding SelectedStatus}" SelectedValuePath="Content">
-                            <ComboBoxItem Content="Tous"/>
-                            <ComboBoxItem Content="En attente"/>
-                            <ComboBoxItem Content="Partiellement payée"/>
-                            <ComboBoxItem Content="Payée"/>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel Margin="0,0,15,0">
-                        <TextBlock Text="Période" Style="{StaticResource LabelStyle}"/>
-                        <StackPanel Orientation="Horizontal">
-                            <DatePicker Width="110" SelectedDate="{Binding StartDate}"/>
-                            <TextBlock Text="au" VerticalAlignment="Center" Margin="5,0"/>
-                            <DatePicker Width="110" SelectedDate="{Binding EndDate}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <StackPanel Margin="0,0,15,0">
+                            <TextBlock Text="Fournisseur" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Width="160" ItemsSource="{Binding Suppliers}" DisplayMemberPath="CompanyName" SelectedItem="{Binding SelectedSupplier}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,15,0">
+                            <TextBlock Text="Statut" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Width="140" SelectedValue="{Binding SelectedStatus}" SelectedValuePath="Content">
+                                <ComboBoxItem Content="Tous"/>
+                                <ComboBoxItem Content="En attente"/>
+                                <ComboBoxItem Content="Partiellement payée"/>
+                                <ComboBoxItem Content="Payée"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,15,0">
+                            <TextBlock Text="Date" Style="{StaticResource LabelStyle}"/>
+                            <DatePicker Width="110" SelectedDate="{Binding SelectedDate}"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Recherche" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
                         </StackPanel>
                     </StackPanel>
-                    <StackPanel>
-                        <TextBlock Text="Recherche" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
-                    </StackPanel>
-                </StackPanel>
+                    <Button Content="Réinitialiser" Command="{Binding ResetFiltersCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Grid.Column="1" Margin="15,0,0,0"/>
+                </Grid>
             </Border>
 
             <!-- Boutons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="15,0,0,0">
-                <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0,0,10,0"/>
-                <Button Content="Actualiser" Command="{Binding LoadFacturesCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource MaterialDesignRaisedButton}"/>
             </StackPanel>
         </Grid>
 
@@ -113,7 +115,7 @@
                           Background="Transparent" BorderThickness="0" RowHeight="45"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="N° Facture" Binding="{Binding Invoice.InvoiceNumber}" Width="110"/>
+                        <DataGridTextColumn Header="N° Facture" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="150"/>
                         <DataGridTextColumn Header="Fournisseur" Binding="{Binding Invoice.Supplier.CompanyName}" Width="*"/>
                         
                         <DataGridTemplateColumn Header="BC" Width="100">
