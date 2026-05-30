@@ -32,26 +32,6 @@
                             <TextBlock Text="Gestion des Devis" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Command="{Binding RefreshCommand}" 
-                                    Style="{StaticResource ModernPrimaryButton}" 
-                                    Background="White" 
-                                    Foreground="{StaticResource PrimaryBrush}"
-                                    BorderBrush="{StaticResource PrimaryBrush}" 
-                                    BorderThickness="1"
-                                    Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="↻" FontSize="16" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Actualiser"/>
-                                </StackPanel>
-                            </Button>
-                            <Button Command="{Binding NavigateToDashboardCommand}" 
-                                    Style="{StaticResource ModernPrimaryButton}"
-                                    Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Tableau de bord"/>
-                                </StackPanel>
-                            </Button>
                             <Button Command="{Binding OpenCreateDialogCommand}" 
                                     Style="{StaticResource ModernPrimaryButton}">
                                 <StackPanel Orientation="Horizontal">
@@ -195,6 +175,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Margin="0,0,16,0">
@@ -206,7 +187,7 @@
                                      Foreground="Black"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="0,0,16,0">
-                            <TextBlock Text="Fournisseur" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <TextBlock Text="Fournisseur (sélection)" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
                             <ComboBox ItemsSource="{Binding FilterSuppliers}"
                                       SelectedItem="{Binding SelectedFilterSupplier}"
                                       Style="{StaticResource ModernComboBox}"
@@ -235,6 +216,14 @@
                             </ComboBox>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                            <TextBlock Text="Rechercher fournisseur" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding FilterSupplierName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBox}"
+                                     Height="36"
+                                     Background="White"
+                                     Foreground="Black"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,16,0">
                             <TextBlock Text="Statut" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
                             <ComboBox ItemsSource="{Binding}"
                                       SelectedItem="{Binding FilterStatus}"
@@ -250,7 +239,7 @@
                                 <sys:String>Validé</sys:String>
                             </ComboBox>
                         </StackPanel>
-                        <Button Grid.Column="3" Command="{Binding ClearFiltersCommand}" 
+                        <Button Grid.Column="4" Command="{Binding ClearFiltersCommand}" 
                                 Style="{StaticResource ModernPrimaryButton}"
                                 Background="White"
                                 Foreground="#757575"

@@ -156,6 +156,7 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         PurchaseOrders.Clear();
         var pos = await _unitOfWork.PurchaseOrders.FindAsync(p => 
+            p.Status != PurchaseOrderStatus.Validated && 
             p.Status != "Delivered" && 
             p.Status != "Livré" && 
             p.Status != "Closed" && 
@@ -389,9 +390,9 @@ public class DeliveryNotesViewModel : BaseViewModel
             }
 
             if (dn.Status == "FullyReceived")
-                SelectedPurchaseOrder.Status = "Delivered";
+                SelectedPurchaseOrder.Status = PurchaseOrderStatus.Validated;
             else
-                SelectedPurchaseOrder.Status = "PartiallyDelivered";
+                SelectedPurchaseOrder.Status = PurchaseOrderStatus.Validated;
 
             await _unitOfWork.DeliveryNotes.AddAsync(dn);
             await _unitOfWork.CompleteAsync();

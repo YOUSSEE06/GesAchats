@@ -58,47 +58,6 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </GroupBox>
-
-                <!-- Bons de Commande -->
-                <GroupBox Header="BONS DE COMMANDE GÉNÉRÉS" Margin="0,0,0,15" Padding="10">
-                    <DataGrid ItemsSource="{Binding PurchaseOrders}" AutoGenerateColumns="False" IsReadOnly="True" Background="White" BorderThickness="1">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="N° BC" Binding="{Binding OrderNumber}" Width="100"/>
-                            <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
-                            <DataGridTextColumn Header="Statut" Binding="{Binding Status}" Width="100"/>
-                            <DataGridTemplateColumn Width="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button x:Name="BtnCancel" Content="Annuler" 
-                                                Command="{Binding DataContext.CancelOrderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"
-                                                Background="#F44336" Foreground="White" BorderThickness="0" Padding="5,2"/>
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Status}" Value="Cancelled">
-                                                <Setter TargetName="BtnCancel" Property="Visibility" Value="Collapsed"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Status}" Value="Delivered">
-                                                <Setter TargetName="BtnCancel" Property="Visibility" Value="Collapsed"/>
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </GroupBox>
-
-                <!-- Bons de Livraison -->
-                <GroupBox Header="BONS DE LIVRAISON REÇUS" Margin="0,0,0,15" Padding="10">
-                    <DataGrid ItemsSource="{Binding DeliveryNotes}" AutoGenerateColumns="False" IsReadOnly="True" Background="White" BorderThickness="1">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date Réc." Binding="{Binding ReceptionDate, StringFormat=dd/MM}" Width="80"/>
-                            <DataGridTextColumn Header="N° BL" Binding="{Binding DeliveryNumber}" Width="100"/>
-                            <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
-                            <DataGridTextColumn Header="Statut" Binding="{Binding Status}" Width="100"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </GroupBox>
             </StackPanel>
         </ScrollViewer>
 

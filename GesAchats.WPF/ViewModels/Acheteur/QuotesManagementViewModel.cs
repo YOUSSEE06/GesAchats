@@ -67,7 +67,8 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private bool _isCreateDialogOpen;
     private string _filterReference = string.Empty;
     private int? _filterSupplierId;
-    private string _filterStatus = QuotationStatus.Validated;
+    private string _filterSupplierName = string.Empty;
+    private string _filterStatus = "Tous";
 
     public ObservableCollection<Need> PendingNeeds { get; } = new ObservableCollection<Need>();
     public ObservableCollection<ArticleSelectionViewModel> ArticlesToQuote { get; } = new ObservableCollection<ArticleSelectionViewModel>();
@@ -150,6 +151,18 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _filterStatus, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    public string FilterSupplierName
+    {
+        get => _filterSupplierName;
+        set
+        {
+            if (SetProperty(ref _filterSupplierName, value))
             {
                 ApplyFilters();
             }
@@ -434,6 +447,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             foreach (var q in quotes) AllQuotations.Add(q);
 
             SelectedFilterSupplier = "Tous";
+            FilterStatus = "Tous";
             CalculateStatistics();
             ApplyFilters();
         }
@@ -485,6 +499,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         {
             filtered = filtered.Where(q => q.SupplierId == FilterSupplierId.Value);
         }
+        else if (!string.IsNullOrWhiteSpace(FilterSupplierName))
+        {
+            var searchLower = FilterSupplierName.ToLower();
+            filtered = filtered.Where(q => q.Supplier != null && q.Supplier.CompanyName.ToLower().Contains(searchLower));
+        }
 
         if (FilterStatus != "Tous")
         {
@@ -502,6 +521,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         FilterReference = string.Empty;
         SelectedFilterSupplier = "Tous";
         FilterSupplierId = null;
+        FilterSupplierName = string.Empty;
         FilterStatus = "Tous";
     }
 

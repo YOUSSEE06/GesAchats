@@ -54,7 +54,6 @@ public partial class AcheteurShell : Window
             "ProductStats" => _serviceProvider.GetRequiredService<ProductStatsPage>(),
             "Fournisseurs" => _serviceProvider.GetRequiredService<GestionFournisseursPage>(),
             "Commandes" => _serviceProvider.GetRequiredService<BonsCommandePage>(),
-            "Suivi" => _serviceProvider.GetRequiredService<OrderTrackingPage>(),
             _ => null
         };
 

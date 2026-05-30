@@ -33,6 +33,7 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -40,8 +41,28 @@
             <TextBlock Text="DEMANDES DE RÉAPPROVISIONNEMENT" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
             <Button Content="&#x21bb; Actualiser" Command="{Binding RefreshCommand}" HorizontalAlignment="Right" Padding="15,8" Background="Transparent"/>
         </DockPanel>
+        
+        <!-- Filters -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="N° Demande" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBox Width="200" Text="{Binding SearchNumeroDemande, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                </StackPanel>
+                
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Date" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <DatePicker SelectedDate="{Binding SearchDate}" Width="150"/>
+                </StackPanel>
+                
+                <StackPanel Margin="0,0,0,0">
+                    <TextBlock Text="" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="15,5" Background="#757575" Foreground="White" BorderThickness="0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Needs}" AutoGenerateColumns="False" CanUserAddRows="False"
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Needs}" AutoGenerateColumns="False" CanUserAddRows="False"
                   Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
                   RowHeight="60" GridLinesVisibility="None" HeadersVisibility="Column">
             <DataGrid.Columns>

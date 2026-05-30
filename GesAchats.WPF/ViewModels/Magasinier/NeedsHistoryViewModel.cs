@@ -21,15 +21,37 @@ public class NeedHistoryItemViewModel : BaseViewModel
 {
     public Need Need { get; }
     public int ArticleCount { get; }
-    public string StatusText { get; }
-    public string StatusColor { get; }
+    
+    private string _statusText = string.Empty;
+    private string _statusColor = string.Empty;
+    
+    public string StatusText
+    {
+        get => _statusText;
+        set => SetProperty(ref _statusText, value);
+    }
+    
+    public string StatusColor
+    {
+        get => _statusColor;
+        set => SetProperty(ref _statusColor, value);
+    }
+    
+    public bool IsStatusEnCours => Need.Status == NeedStatus.InPurchase || Need.Status == NeedStatus.Draft || Need.Status == NeedStatus.ToValidate;
+    public bool IsStatusAnnule => Need.Status == NeedStatus.Cancelled || Need.Status == NeedStatus.Rejected;
+    public bool IsStatusTransmis => Need.Status == NeedStatus.TransmittedToPurchasing;
+    public bool IsNotTransmis => !IsStatusTransmis;
 
     public NeedHistoryItemViewModel(Need need)
     {
         Need = need;
         ArticleCount = need.Details?.Count ?? 0;
-        
-        (StatusText, StatusColor) = need.Status switch
+        UpdateStatusDisplay();
+    }
+    
+    private void UpdateStatusDisplay()
+    {
+        (_statusText, _statusColor) = Need.Status switch
         {
             NeedStatus.Draft => ("En attente", "#9E9E9E"),
             NeedStatus.ToValidate => ("À Valider", "#607D8B"),
@@ -37,9 +59,20 @@ public class NeedHistoryItemViewModel : BaseViewModel
             NeedStatus.InPurchase => ("En cours", "#FFC107"),
             NeedStatus.Validated => ("Complété", "#4CAF50"),
             NeedStatus.Cancelled => ("Annulé", "#F44336"),
-            NeedStatus.Rejected => ("Rejeté", "#F44336"),
-            _ => (need.Status.ToString(), "#000000")
+            NeedStatus.Rejected => ("Annulé", "#F44336"),
+            _ => (Need.Status.ToString(), "#000000")
         };
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(StatusColor));
+    }
+    
+    public void RefreshStatusFlags()
+    {
+        UpdateStatusDisplay();
+        OnPropertyChanged(nameof(IsStatusEnCours));
+        OnPropertyChanged(nameof(IsStatusAnnule));
+        OnPropertyChanged(nameof(IsStatusTransmis));
+        OnPropertyChanged(nameof(IsNotTransmis));
     }
 }
 
@@ -52,20 +85,22 @@ public class NeedsHistoryViewModel : BaseViewModel
 
     private string _searchText = string.Empty;
     private string _selectedStatus = "Tous";
-    private string _selectedPeriod = "Ce mois";
+    private DateTime? _exactDate = null;
 
     public ObservableCollection<NeedHistoryItemViewModel> Needs { get; } = new ObservableCollection<NeedHistoryItemViewModel>();
-    public ObservableCollection<string> StatusFilterOptions { get; } = new ObservableCollection<string> { "Tous", "En attente", "Transmis", "En cours", "Complété", "Annulé" };
-    public ObservableCollection<string> PeriodFilterOptions { get; } = new ObservableCollection<string> { "Ce mois", "3 derniers mois", "6 mois", "1 an", "Tout" };
+    public ObservableCollection<string> StatusFilterOptions { get; } = new ObservableCollection<string> { "Tous", "Transmis", "En cours", "Annulé" };
 
     public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterNeeds(); } }
     public string SelectedStatus { get => _selectedStatus; set { if (SetProperty(ref _selectedStatus, value)) FilterNeeds(); } }
-    public string SelectedPeriod { get => _selectedPeriod; set { if (SetProperty(ref _selectedPeriod, value)) FilterNeeds(); } }
+    public DateTime? ExactDate { get => _exactDate; set { if (SetProperty(ref _exactDate, value)) FilterNeeds(); } }
 
     public ICommand RefreshCommand { get; }
     public ICommand ViewDetailsCommand { get; }
     public ICommand ShowStatsCommand { get; }
     public ICommand ExportCsvCommand { get; }
+    public ICommand AnnulerCommand { get; }
+    public ICommand ReactiverCommand { get; }
+    public ICommand SupprimerCommand { get; }
 
     private List<Need> _allNeeds = new List<Need>();
 
@@ -81,6 +116,9 @@ public class NeedsHistoryViewModel : BaseViewModel
         ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as NeedHistoryItemViewModel));
         ShowStatsCommand = new RelayCommand(_ => ExecuteShowStats());
         ExportCsvCommand = new RelayCommand(async _ => await ExecuteExportCsv());
+        AnnulerCommand = new RelayCommand(async p => await ExecuteAnnuler(p as NeedHistoryItemViewModel));
+        ReactiverCommand = new RelayCommand(async p => await ExecuteReactiver(p as NeedHistoryItemViewModel));
+        SupprimerCommand = new RelayCommand(async p => await ExecuteSupprimer(p as NeedHistoryItemViewModel));
 
         _ = LoadData();
     }
@@ -114,29 +152,19 @@ public class NeedsHistoryViewModel : BaseViewModel
         {
             var targetStatus = SelectedStatus switch
             {
-                "En attente" => new[] { NeedStatus.Draft, NeedStatus.ToValidate },
                 "Transmis" => new[] { NeedStatus.TransmittedToPurchasing },
                 "En cours" => new[] { NeedStatus.InPurchase },
-                "Complété" => new[] { NeedStatus.Validated },
                 "Annulé" => new[] { NeedStatus.Cancelled, NeedStatus.Rejected },
                 _ => Array.Empty<NeedStatus>()
             };
             filtered = filtered.Where(n => targetStatus.Contains(n.Status));
         }
 
-        // Période (simplifié)
-        if (SelectedPeriod != "Tout")
+        // Filtre par date exacte
+        if (ExactDate.HasValue)
         {
-            var now = DateTime.UtcNow;
-            var startDate = SelectedPeriod switch
-            {
-                "Ce mois" => new DateTime(now.Year, now.Month, 1),
-                "3 derniers mois" => now.AddMonths(-3),
-                "6 mois" => now.AddMonths(-6),
-                "1 an" => now.AddYears(-1),
-                _ => DateTime.MinValue
-            };
-            filtered = filtered.Where(n => n.RequestedAt >= startDate);
+            var dateUtc = ExactDate.Value.Date;
+            filtered = filtered.Where(n => n.RequestedAt.Date == dateUtc);
         }
 
         foreach (var n in filtered.OrderByDescending(x => x.RequestedAt))
@@ -153,6 +181,92 @@ public class NeedsHistoryViewModel : BaseViewModel
             var win = ActivatorUtilities.CreateInstance<NeedsDetailsWindow>(scope.ServiceProvider, vm);
             win.Owner = System.Windows.Application.Current.MainWindow;
             win.ShowDialog();
+        }
+    }
+    
+    private async Task ExecuteAnnuler(NeedHistoryItemViewModel? item)
+    {
+        if (item == null) return;
+        
+        item.Need.Status = NeedStatus.Cancelled;
+        item.Need.UpdatedAt = DateTime.UtcNow;
+        _unitOfWork.Needs.Update(item.Need);
+        await _unitOfWork.CompleteAsync();
+        item.RefreshStatusFlags();
+    }
+    
+    private async Task ExecuteReactiver(NeedHistoryItemViewModel? item)
+    {
+        if (item == null) return;
+        
+        item.Need.Status = NeedStatus.InPurchase;
+        item.Need.UpdatedAt = DateTime.UtcNow;
+        _unitOfWork.Needs.Update(item.Need);
+        await _unitOfWork.CompleteAsync();
+        item.RefreshStatusFlags();
+    }
+    
+    private async Task ExecuteSupprimer(NeedHistoryItemViewModel? item)
+    {
+        if (item == null) return;
+        
+        var result = MessageBox.Show(
+            $"Êtes-vous sûr de vouloir supprimer le besoin {item.Need.NumeroBesoin} ? Cette action est irréversible.",
+            "Confirmer la suppression",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+            
+        if (result == MessageBoxResult.Yes)
+        {
+            try
+            {
+                // Récupérer le besoin avec tous les détails depuis la base de données
+                var need = await _unitOfWork.Needs.GetByIdWithDetailsAsync(item.Need.Id);
+                if (need != null)
+                {
+                    // Désolidariser les Quotations liés à ce Need (Need n'a pas de nav prop Quotations, donc on les recherche via QuotationRepository)
+                    var linkedQuotations = await _unitOfWork.Quotations.FindAsync(q => q.NeedId == need.Id);
+                    foreach (var q in linkedQuotations)
+                    {
+                        q.NeedId = null;
+                        _unitOfWork.Quotations.Update(q);
+                    }
+
+                    // Désolidariser les PurchaseOrders liés à ce Need
+                    foreach (var po in need.PurchaseOrders.ToList())
+                    {
+                        po.NeedId = null;
+                        _unitOfWork.PurchaseOrders.Update(po);
+                    }
+
+                    // Supprimer d'abord les NeedDetails
+                    foreach (var detail in need.Details.ToList())
+                    {
+                        _unitOfWork.NeedDetails.Remove(detail);
+                    }
+                    
+                    // Puis supprimer le Need
+                    _unitOfWork.Needs.Remove(need);
+                    await _unitOfWork.CompleteAsync();
+                    
+                    Needs.Remove(item);
+                    _allNeeds.Remove(need);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Récupérer toutes les inner exceptions
+                var fullErrorMessage = $"Erreur lors de la suppression : {ex.Message}";
+                var innerEx = ex.InnerException;
+                int counter = 1;
+                while (innerEx != null)
+                {
+                    fullErrorMessage += $"\n\nInner Exception {counter} : {innerEx.Message}";
+                    innerEx = innerEx.InnerException;
+                    counter++;
+                }
+                MessageBox.Show(fullErrorMessage, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

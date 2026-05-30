@@ -44,7 +44,7 @@ public partial class App : Application
         // Gestion globale des erreurs
         this.DispatcherUnhandledException += (s, args) =>
         {
-            MessageBox.Show($"Une erreur non gérée est survenue : {args.Exception.Message}", "Erreur Critique", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Une erreur non gérée est survenue : {args.Exception.Message}\n\n{args.Exception.StackTrace}", "Erreur Critique", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
 
@@ -62,142 +62,142 @@ public partial class App : Application
                 ServiceProvider = serviceCollection.BuildServiceProvider();
 
                 // Initialisation de la base de données (Seed) de manière asynchrone sans bloquer l'UI
-                try
+            try
+            {
+                using (var scope = ServiceProvider.CreateScope())
                 {
-                    using (var scope = ServiceProvider.CreateScope())
-                    {
-                        var context = scope.ServiceProvider.GetRequiredService<GesAchatsDbContext>();
-                        
-                        // Étape 1: Vérifier et ajouter les colonnes manquantes à la table Products
-                        await context.Database.ExecuteSqlRawAsync(@"
-                            DO $$
-                            BEGIN
-                                -- Ajouter LastPurchaseDate si elle n'existe pas
-                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                               WHERE table_name = 'Products' AND column_name = 'LastPurchaseDate') THEN
-                                    ALTER TABLE ""Products"" ADD COLUMN ""LastPurchaseDate"" TIMESTAMP WITH TIME ZONE NULL;
+                    var context = scope.ServiceProvider.GetRequiredService<GesAchatsDbContext>();
+                    
+                    // Étape 1: Vérifier et ajouter les colonnes manquantes à la table Products
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        DO $$
+                        BEGIN
+                            -- Ajouter LastPurchaseDate si elle n'existe pas
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                           WHERE table_name = 'Products' AND column_name = 'LastPurchaseDate') THEN
+                                ALTER TABLE ""Products"" ADD COLUMN ""LastPurchaseDate"" TIMESTAMP WITH TIME ZONE NULL;
+                            END IF;
+
+                            -- Ajouter DailyConsumption si elle n'existe pas
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                           WHERE table_name = 'Products' AND column_name = 'DailyConsumption') THEN
+                                ALTER TABLE ""Products"" ADD COLUMN ""DailyConsumption"" NUMERIC(18,2) NOT NULL DEFAULT 1;
+                            END IF;
+
+                            -- Ajouter IsNew si elle n'existe pas
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                           WHERE table_name = 'Products' AND column_name = 'IsNew') THEN
+                                ALTER TABLE ""Products"" ADD COLUMN ""IsNew"" BOOLEAN NOT NULL DEFAULT false;
+                            END IF;
+
+                            -- Ajouter CreatedBy si elle n'existe pas
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                           WHERE table_name = 'Products' AND column_name = 'CreatedBy') THEN
+                                ALTER TABLE ""Products"" ADD COLUMN ""CreatedBy"" VARCHAR(255) NULL;
+                            END IF;
+
+                            -- RÉPARATION DU MODULE COMPTABLE (bc_id, bl_id, etc.)
+                            -- 1. Renommage des tables si nécessaire
+                            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Invoices') AND 
+                               NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                                ALTER TABLE ""Invoices"" RENAME TO factures;
+                            END IF;
+
+                            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Payments') AND 
+                               NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reglements') THEN
+                                ALTER TABLE ""Payments"" RENAME TO reglements;
+                            END IF;
+
+                            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'DeliveryNotes') AND 
+                               NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
+                                ALTER TABLE ""DeliveryNotes"" RENAME TO bons_livraison;
+                            END IF;
+
+                            -- 2. Ajout des colonnes à la table factures
+                            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bc_id') THEN
+                                    ALTER TABLE factures ADD COLUMN bc_id INTEGER;
+                                END IF;
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bl_id') THEN
+                                    ALTER TABLE factures ADD COLUMN bl_id INTEGER;
+                                END IF;
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_ht') THEN
+                                    ALTER TABLE factures ADD COLUMN montant_ht NUMERIC(18,2) DEFAULT 0;
+                                END IF;
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_tva') THEN
+                                    ALTER TABLE factures ADD COLUMN montant_tva NUMERIC(18,2) DEFAULT 0;
+                                END IF;
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='taux_tva') THEN
+                                    ALTER TABLE factures ADD COLUMN taux_tva NUMERIC(18,2) DEFAULT 20.00;
+                                END IF;
+                            END IF;
+                        END $$;
+                    ");
+
+                    // Étape 2: Vérifier si la table __EFMigrationsHistory existe, et marquer InitialPostgres comme appliquée si nécessaire
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        DO $$
+                        BEGIN
+                            -- Vérifier si la table __EFMigrationsHistory existe
+                            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory') THEN
+                                -- Vérifier si InitialPostgres est déjà enregistrée
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260430151534_InitialPostgres') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260430151534_InitialPostgres', '8.0.10');
                                 END IF;
 
-                                -- Ajouter DailyConsumption si elle n'existe pas
-                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                               WHERE table_name = 'Products' AND column_name = 'DailyConsumption') THEN
-                                    ALTER TABLE ""Products"" ADD COLUMN ""DailyConsumption"" NUMERIC(18,2) NOT NULL DEFAULT 1;
+                                -- Vérifier si les autres migrations sont déjà enregistrées (si vous en avez)
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113458_AddInvoiceFilePath') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260506113458_AddInvoiceFilePath', '8.0.10');
                                 END IF;
-
-                                -- Ajouter IsNew si elle n'existe pas
-                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                               WHERE table_name = 'Products' AND column_name = 'IsNew') THEN
-                                    ALTER TABLE ""Products"" ADD COLUMN ""IsNew"" BOOLEAN NOT NULL DEFAULT false;
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113841_SyncInvoiceModel') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260506113841_SyncInvoiceModel', '8.0.10');
                                 END IF;
-
-                                -- Ajouter CreatedBy si elle n'existe pas
-                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                               WHERE table_name = 'Products' AND column_name = 'CreatedBy') THEN
-                                    ALTER TABLE ""Products"" ADD COLUMN ""CreatedBy"" VARCHAR(255) NULL;
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506114425_FixPendingChanges') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260506114425_FixPendingChanges', '8.0.10');
                                 END IF;
-
-                                -- RÉPARATION DU MODULE COMPTABLE (bc_id, bl_id, etc.)
-                                -- 1. Renommage des tables si nécessaire
-                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Invoices') AND 
-                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
-                                    ALTER TABLE ""Invoices"" RENAME TO factures;
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260505165725_UpdateComptableModule') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260505165725_UpdateComptableModule', '8.0.10');
                                 END IF;
+                            END IF;
+                        END $$;
+                    ");
 
-                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Payments') AND 
-                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reglements') THEN
-                                    ALTER TABLE ""Payments"" RENAME TO reglements;
-                                END IF;
+                    // Étape 3: Appliquer les migrations restantes (notamment AddMagasin)
+                    await context.Database.MigrateAsync();
+                    
+                    // Étape 4: Nettoyer les magasins dupliqués
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        DO $$
+                        BEGIN
+                            -- Garder seulement le premier magasin pour chaque nom, et supprimer les doublons
+                            DELETE FROM ""Magasins""
+                            WHERE ""Id"" NOT IN (
+                                SELECT MIN(""Id"")
+                                FROM ""Magasins""
+                                GROUP BY ""Nom""
+                            );
 
-                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'DeliveryNotes') AND 
-                                   NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bons_livraison') THEN
-                                    ALTER TABLE ""DeliveryNotes"" RENAME TO bons_livraison;
-                                END IF;
+                            -- Mettre à jour les produits qui pointaient vers des magasins supprimés, pour pointer vers le premier magasin
+                            UPDATE ""Products""
+                            SET ""MagasinId"" = (SELECT MIN(""Id"") FROM ""Magasins"" WHERE ""Nom"" = 'Magasin Principal')
+                            WHERE ""MagasinId"" NOT IN (SELECT ""Id"" FROM ""Magasins"");
+                        END $$;
+                    ");
 
-                                -- 2. Ajout des colonnes à la table factures
-                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bc_id') THEN
-                                        ALTER TABLE factures ADD COLUMN bc_id INTEGER;
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bl_id') THEN
-                                        ALTER TABLE factures ADD COLUMN bl_id INTEGER;
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_ht') THEN
-                                        ALTER TABLE factures ADD COLUMN montant_ht NUMERIC(18,2) DEFAULT 0;
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='montant_tva') THEN
-                                        ALTER TABLE factures ADD COLUMN montant_tva NUMERIC(18,2) DEFAULT 0;
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='taux_tva') THEN
-                                        ALTER TABLE factures ADD COLUMN taux_tva NUMERIC(18,2) DEFAULT 20.00;
-                                    END IF;
-                                END IF;
-                            END $$;
-                        ");
-
-                        // Étape 2: Vérifier si la table __EFMigrationsHistory existe, et marquer InitialPostgres comme appliquée si nécessaire
-                        await context.Database.ExecuteSqlRawAsync(@"
-                            DO $$
-                            BEGIN
-                                -- Vérifier si la table __EFMigrationsHistory existe
-                                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory') THEN
-                                    -- Vérifier si InitialPostgres est déjà enregistrée
-                                    IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260430151534_InitialPostgres') THEN
-                                        INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                        VALUES ('20260430151534_InitialPostgres', '8.0.10');
-                                    END IF;
-
-                                    -- Vérifier si les autres migrations sont déjà enregistrées (si vous en avez)
-                                    IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113458_AddInvoiceFilePath') THEN
-                                        INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                        VALUES ('20260506113458_AddInvoiceFilePath', '8.0.10');
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113841_SyncInvoiceModel') THEN
-                                        INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                        VALUES ('20260506113841_SyncInvoiceModel', '8.0.10');
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506114425_FixPendingChanges') THEN
-                                        INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                        VALUES ('20260506114425_FixPendingChanges', '8.0.10');
-                                    END IF;
-                                    IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260505165725_UpdateComptableModule') THEN
-                                        INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                        VALUES ('20260505165725_UpdateComptableModule', '8.0.10');
-                                    END IF;
-                                END IF;
-                            END $$;
-                        ");
-
-                        // Étape 3: Appliquer les migrations restantes (notamment AddMagasin)
-                        await context.Database.MigrateAsync();
-                        
-                        // Étape 4: Nettoyer les magasins dupliqués
-                        await context.Database.ExecuteSqlRawAsync(@"
-                            DO $$
-                            BEGIN
-                                -- Garder seulement le premier magasin pour chaque nom, et supprimer les doublons
-                                DELETE FROM ""Magasins""
-                                WHERE ""Id"" NOT IN (
-                                    SELECT MIN(""Id"")
-                                    FROM ""Magasins""
-                                    GROUP BY ""Nom""
-                                );
-
-                                -- Mettre à jour les produits qui pointaient vers des magasins supprimés, pour pointer vers le premier magasin
-                                UPDATE ""Products""
-                                SET ""MagasinId"" = (SELECT MIN(""Id"") FROM ""Magasins"" WHERE ""Nom"" = 'Magasin Principal')
-                                WHERE ""MagasinId"" NOT IN (SELECT ""Id"" FROM ""Magasins"");
-                            END $$;
-                        ");
-
-                        // Étape 5: Seed des données
-                        await DbInitializer.SeedDataAsync(context);
-                    }
+                    // Étape 5: Seed des données
+                    await DbInitializer.SeedDataAsync(context);
                 }
-                catch (Exception dbEx)
-                {
-                    MessageBox.Show($"Avertissement : Impossible d'initialiser la base de données.\n\nErreur : {dbEx.Message}", 
-                        "Avertissement Base de Données", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
+            }
+            catch (Exception dbEx)
+            {
+                MessageBox.Show($"Avertissement : Impossible d'initialiser la base de données.\n\nErreur : {dbEx.Message}", 
+                    "Avertissement Base de Données", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
                 // Démarrage de l'interface utilisateur
                 var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
@@ -205,7 +205,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}", 
+                MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}\n\nInner Exception : {ex.InnerException?.Message}", 
                     "Erreur de Démarrage", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
             }

@@ -6,30 +6,75 @@
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Magasinier.NeedsHistory"
       mc:Ignorable="d" 
       Title="Historique des Besoins"
-      d:DesignHeight="700" d:DesignWidth="1000">
+      d:DesignHeight="700" d:DesignWidth="1200">
     
     <Page.Resources>
         <Style x:Key="TextCenterStyle" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#2196F3"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,5"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+        
+        <!-- Base Action Button Style -->
+        <Style x:Key="ActionButtonBase" TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="MinWidth" Value="80"/>
             <Style.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="4"/>
                 </Style>
             </Style.Resources>
+        </Style>
+        
+        <!-- Details Button Style -->
+        <Style x:Key="DetailsButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonBase}">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#1976D2"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
+        
+        <!-- Annuler Button Style -->
+        <Style x:Key="AnnulerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonBase}">
+            <Setter Property="Background" Value="#FF5722"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E64A19"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Reactiver Button Style -->
+        <Style x:Key="ReactiverButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonBase}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#388E3C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Supprimer Button Style -->
+        <Style x:Key="SupprimerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonBase}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Boolean to Visibility Converter (using existing one) -->
     </Page.Resources>
 
     <Grid Margin="20">
@@ -41,33 +86,26 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="HISTORIQUE DES BESOINS" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="📊 Statistiques" Command="{Binding ShowStatsCommand}" 
-                        Padding="15,8" Margin="0,0,10,0" Background="#F4F6F7" BorderThickness="1" BorderBrush="#D5DBDB"/>
-                <Button Content="📥 Exporter CSV" Command="{Binding ExportCsvCommand}" 
-                        Padding="15,8" Margin="0,0,10,0" Background="#1B2631" Foreground="White"/>
-                <Button Content="&#x21bb; Actualiser" Command="{Binding RefreshCommand}" 
-                        Padding="15,8" Background="Transparent"/>
-            </StackPanel>
         </DockPanel>
 
-        <!-- Filtres Rapides (Optionnel mais recommandé pour l'UX) -->
+        <!-- Filtres Rapides -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,45,0,0">
             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Width="200" Padding="5" Margin="0,0,10,0" Tag="N° Besoin..."/>
             <ComboBox ItemsSource="{Binding StatusFilterOptions}" SelectedItem="{Binding SelectedStatus}" Width="150" Padding="5" Margin="0,0,10,0"/>
-            <ComboBox ItemsSource="{Binding PeriodFilterOptions}" SelectedItem="{Binding SelectedPeriod}" Width="150" Padding="5"/>
+            <DatePicker SelectedDate="{Binding ExactDate}" Width="150" Padding="5"/>
         </StackPanel>
 
-        <!-- Tableau Principal (Copie conforme de l'UI Acheteur) -->
+        <!-- DataGrid -->
         <DataGrid Grid.Row="1" ItemsSource="{Binding Needs}" AutoGenerateColumns="False" CanUserAddRows="False"
                   Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                  RowHeight="60" GridLinesVisibility="None" HeadersVisibility="Column">
+                  RowHeight="70" GridLinesVisibility="None" HeadersVisibility="Column"
+                  IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="N° Demande" Binding="{Binding Need.NumeroBesoin}" Width="150" FontWeight="Bold"/>
                 <DataGridTextColumn Header="Date" Binding="{Binding Need.RequestedAt, StringFormat=d}" Width="120"/>
                 <DataGridTextColumn Header="Demandeur" Binding="{Binding Need.RequestedBy.FullName}" Width="*"/>
                 <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
-                <DataGridTemplateColumn Header="Statut" Width="120">
+                <DataGridTemplateColumn Header="Statut" Width="130">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
@@ -76,15 +114,36 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Actions" Width="150">
+                <DataGridTemplateColumn Header="Actions" Width="400">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <!-- Details Button (Always Visible) -->
                                 <Button Content="Détails" 
                                         Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                         CommandParameter="{Binding}" 
-                                        Style="{StaticResource ActionButtonStyle}"
-                                        Margin="5"/>
+                                        Style="{StaticResource DetailsButtonStyle}"/>
+                                
+                                <!-- Annuler Button (Visible for En Cours) -->
+                                <Button Content="Annuler" 
+                                        Command="{Binding DataContext.AnnulerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                        CommandParameter="{Binding}" 
+                                        Style="{StaticResource AnnulerButtonStyle}"
+                                        Visibility="{Binding IsStatusEnCours, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                
+                                <!-- Reactiver Button (Visible for Annulé) -->
+                                <Button Content="Réactiver" 
+                                        Command="{Binding DataContext.ReactiverCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                        CommandParameter="{Binding}" 
+                                        Style="{StaticResource ReactiverButtonStyle}"
+                                        Visibility="{Binding IsStatusAnnule, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                
+                                <!-- Supprimer Button (Visible for not Transmis) -->
+                                <Button Content="Supprimer" 
+                                        Command="{Binding DataContext.SupprimerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                        CommandParameter="{Binding}" 
+                                        Style="{StaticResource SupprimerButtonStyle}"
+                                        Visibility="{Binding IsNotTransmis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

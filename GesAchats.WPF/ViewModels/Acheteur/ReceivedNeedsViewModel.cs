@@ -38,11 +38,40 @@ public class ReceivedNeedsViewModel : BaseViewModel
     private readonly IServiceProvider _serviceProvider;
     private readonly INavigationService _navigationService;
 
+    private List<ReceivedNeedItemViewModel> _allNeeds = new List<ReceivedNeedItemViewModel>();
+
     public ObservableCollection<ReceivedNeedItemViewModel> Needs { get; } = new ObservableCollection<ReceivedNeedItemViewModel>();
+
+    private string _searchNumeroDemande = string.Empty;
+    public string SearchNumeroDemande
+    {
+        get => _searchNumeroDemande;
+        set
+        {
+            if (SetProperty(ref _searchNumeroDemande, value))
+            {
+                FilterNeeds();
+            }
+        }
+    }
+
+    private DateTime? _searchDate;
+    public DateTime? SearchDate
+    {
+        get => _searchDate;
+        set
+        {
+            if (SetProperty(ref _searchDate, value))
+            {
+                FilterNeeds();
+            }
+        }
+    }
 
     public ICommand RefreshCommand { get; }
     public ICommand ViewDetailsCommand { get; }
     public ICommand CreateQuoteCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public ReceivedNeedsViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, INavigationService navigationService)
     {
@@ -54,6 +83,7 @@ public class ReceivedNeedsViewModel : BaseViewModel
         RefreshCommand = new RelayCommand(async _ => await LoadData());
         ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as ReceivedNeedItemViewModel));
         CreateQuoteCommand = new RelayCommand(p => ExecuteCreateQuote(p as ReceivedNeedItemViewModel));
+        ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
 
         _ = LoadData();
     }
@@ -64,19 +94,51 @@ public class ReceivedNeedsViewModel : BaseViewModel
         try
         {
             var needs = await _unitOfWork.Needs.GetPendingNeedsWithProductsAsync();
-            Needs.Clear();
+            _allNeeds.Clear();
             if (needs != null)
             {
                 foreach (var n in needs)
                 {
-                    Needs.Add(new ReceivedNeedItemViewModel(n));
+                    _allNeeds.Add(new ReceivedNeedItemViewModel(n));
                 }
             }
+            FilterNeeds();
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private void FilterNeeds()
+    {
+        var filtered = _allNeeds.AsEnumerable();
+        
+        if (!string.IsNullOrWhiteSpace(SearchNumeroDemande))
+        {
+            filtered = filtered.Where(n => 
+                n.Need.NumeroBesoin != null && 
+                n.Need.NumeroBesoin.Contains(SearchNumeroDemande, StringComparison.OrdinalIgnoreCase));
+        }
+        
+        if (SearchDate.HasValue)
+        {
+            filtered = filtered.Where(n => 
+                n.Need.DateTransmission.HasValue && 
+                n.Need.DateTransmission.Value.Date == SearchDate.Value.Date);
+        }
+        
+        Needs.Clear();
+        foreach (var n in filtered)
+        {
+            Needs.Add(n);
+        }
+    }
+    
+    private void ExecuteResetFilters()
+    {
+        SearchNumeroDemande = string.Empty;
+        SearchDate = null;
     }
 
     private void ExecuteViewDetails(ReceivedNeedItemViewModel? item)

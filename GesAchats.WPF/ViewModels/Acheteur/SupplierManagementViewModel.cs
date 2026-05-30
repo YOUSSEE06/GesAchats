@@ -13,8 +13,22 @@ public class SupplierManagementViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
     private Supplier? _selectedSupplier;
+    private List<Supplier> _allSuppliers = new();
+    private string _searchText = string.Empty;
 
     public ObservableCollection<Supplier> Suppliers { get; } = new();
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                FilterSuppliers();
+            }
+        }
+    }
 
     public Supplier? SelectedSupplier
     {
@@ -45,15 +59,33 @@ public class SupplierManagementViewModel : BaseViewModel
         try
         {
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            Suppliers.Clear();
-            foreach (var s in suppliers.OrderBy(x => x.CompanyName))
-            {
-                Suppliers.Add(s);
-            }
+            _allSuppliers = suppliers.OrderBy(x => x.CompanyName).ToList();
+            FilterSuppliers();
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void FilterSuppliers()
+    {
+        var filtered = _allSuppliers.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var searchLower = SearchText.ToLower();
+            filtered = filtered.Where(s => 
+                s.CompanyName.ToLower().Contains(searchLower) || 
+                s.ContactName.ToLower().Contains(searchLower) ||
+                s.Email.ToLower().Contains(searchLower) ||
+                s.Phone.ToLower().Contains(searchLower) ||
+                s.City.ToLower().Contains(searchLower));
+        }
+        
+        Suppliers.Clear();
+        foreach (var s in filtered)
+        {
+            Suppliers.Add(s);
         }
     }
 

@@ -52,18 +52,13 @@
         <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="N° BC" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <TextBox Width="120" Text="{Binding SearchBCNumber, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
-                </StackPanel>
-                
-                <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="Fournisseur" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <TextBox Width="150" Text="{Binding SearchSupplier, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                    <TextBlock Text="Recherche" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBox Width="300" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
                 </StackPanel>
 
                 <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="Réf. Devis" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <TextBox Width="120" Text="{Binding SearchDevisRef, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                    <TextBlock Text="Fournisseur" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <ComboBox Width="200" ItemsSource="{Binding Suppliers}" DisplayMemberPath="CompanyName" SelectedItem="{Binding SelectedSupplierFilter, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
                 <StackPanel Margin="0,0,20,0">
@@ -73,12 +68,12 @@
                 
                 <StackPanel Margin="0,0,20,0">
                     <TextBlock Text="Statut" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <ComboBox Width="120" SelectedItem="{Binding SelectedStatusFilter, UpdateSourceTrigger=PropertyChanged}">
-                        <ComboBoxItem Content="Tous"/>
-                        <ComboBoxItem Content="En attente"/>
-                        <ComboBoxItem Content="Validé"/>
-                        <ComboBoxItem Content="Annulé"/>
-                    </ComboBox>
+                    <ComboBox Width="120" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding SelectedStatusFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                
+                <StackPanel Margin="0,0,0,0">
+                    <TextBlock Text="" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="15,5" Background="#757575" Foreground="White" BorderThickness="0"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -133,6 +128,8 @@
                                             CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#FF9800" Foreground="White" BorderThickness="0" MinWidth="65"/>
                                     <Button Content="📄 PDF" Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                             CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#2196F3" Foreground="White" BorderThickness="0" MinWidth="55"/>
+                                    
+                        
                                     
                                     <Button Content="Annuler" Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                             CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#F44336" Foreground="White" BorderThickness="0" MinWidth="65">

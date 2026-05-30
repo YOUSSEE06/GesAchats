@@ -133,11 +133,10 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     private bool _isInspectView = false;
 
     // Filter properties
-    private string _searchBCNumber = string.Empty;
-    private string _searchSupplier = string.Empty;
-    private string _searchDevisRef = string.Empty;
+    private string _searchText = string.Empty;
     private DateTime? _searchDate;
     private string _selectedStatusFilter = "Tous";
+    private Supplier? _selectedSupplierFilter;
 
     // Form properties
     private Supplier? _selectedSupplier;
@@ -230,11 +229,18 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     public bool IsInspectView { get => _isInspectView; set => SetProperty(ref _isInspectView, value); }
 
     // Filter Accessors
-    public string SearchBCNumber { get => _searchBCNumber; set { if (SetProperty(ref _searchBCNumber, value)) FilterOrders(); } }
-    public string SearchSupplier { get => _searchSupplier; set { if (SetProperty(ref _searchSupplier, value)) FilterOrders(); } }
-    public string SearchDevisRef { get => _searchDevisRef; set { if (SetProperty(ref _searchDevisRef, value)) FilterOrders(); } }
+    public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterOrders(); } }
     public DateTime? SearchDate { get => _searchDate; set { if (SetProperty(ref _searchDate, value)) FilterOrders(); } }
     public string SelectedStatusFilter { get => _selectedStatusFilter; set { if (SetProperty(ref _selectedStatusFilter, value)) FilterOrders(); } }
+    public Supplier? SelectedSupplierFilter { get => _selectedSupplierFilter; set { if (SetProperty(ref _selectedSupplierFilter, value)) FilterOrders(); } }
+
+    public ObservableCollection<string> StatusFilters { get; } = new ObservableCollection<string>
+    {
+        "Tous",
+        PurchaseOrderStatus.Pending,
+        PurchaseOrderStatus.Validated,
+        PurchaseOrderStatus.Cancelled
+    };
 
     // Form Accessors
     public Supplier? SelectedSupplier
@@ -329,6 +335,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     public ICommand InspectCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand ReactivateCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public BonsCommandeViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService)
     {
@@ -345,6 +352,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         InspectCommand = new RelayCommand(async p => await ExecuteInspect(p as PurchaseOrder));
         CancelCommand = new RelayCommand(async p => await ExecuteCancel(p as PurchaseOrder));
         ReactivateCommand = new RelayCommand(async p => await ExecuteReactivate(p as PurchaseOrder));
+        ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
 
         _ = LoadInitialData();
     }
@@ -461,7 +469,11 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         {
             var suppliers = await _unitOfWork.Suppliers.FindAsync(s => s.IsActive);
             Suppliers.Clear();
+            // Add "Tous" option at the beginning (dummy supplier with Id -1)
+            var tousSupplier = new Supplier { Id = -1, CompanyName = "Tous", IsActive = true };
+            Suppliers.Add(tousSupplier);
             foreach (var s in suppliers) Suppliers.Add(s);
+            SelectedSupplierFilter = tousSupplier;
 
             var orders = await _unitOfWork.PurchaseOrders.GetAllWithSuppliersAsync();
             _allOrders = orders.ToList();
@@ -471,7 +483,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             AvailableQuotations.Clear();
             if (quotes != null)
             {
-                foreach (var q in quotes.Where(x => x.Status == QuotationStatus.Validated))
+                foreach (var q in quotes)
                 {
                     AvailableQuotations.Add(q);
                 }
@@ -490,19 +502,18 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     {
         var filtered = _allOrders.AsEnumerable();
         
-        if (!string.IsNullOrWhiteSpace(SearchBCNumber))
+        if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            filtered = filtered.Where(o => o.OrderNumber.Contains(SearchBCNumber, StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(o => 
+                o.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                (o.Supplier?.CompanyName?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (o.Quotation?.ReferenceNumber?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
         }
 
-        if (!string.IsNullOrWhiteSpace(SearchSupplier))
+        if (SelectedSupplierFilter != null && SelectedSupplierFilter.Id != -1)
         {
-            filtered = filtered.Where(o => o.Supplier?.CompanyName?.Contains(SearchSupplier, StringComparison.OrdinalIgnoreCase) ?? false);
-        }
-
-        if (!string.IsNullOrWhiteSpace(SearchDevisRef))
-        {
-            filtered = filtered.Where(o => o.Quotation?.ReferenceNumber?.Contains(SearchDevisRef, StringComparison.OrdinalIgnoreCase) ?? false);
+            filtered = filtered.Where(o => o.SupplierId == SelectedSupplierFilter.Id);
         }
 
         if (SearchDate.HasValue)
@@ -520,6 +531,14 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             OrdersHistory.Add(o);
     }
 
+    private void ExecuteResetFilters()
+    {
+        SearchText = string.Empty;
+        SearchDate = null;
+        SelectedStatusFilter = "Tous";
+        SelectedSupplierFilter = Suppliers.FirstOrDefault(s => s.Id == -1);
+    }
+
     private async void LoadQuotationsForSupplier()
     {
         var supplier = SelectedSupplier;
@@ -530,7 +549,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             AvailableQuotations.Clear();
             if (quotes != null)
             {
-                foreach (var q in quotes.Where(x => x.Status == QuotationStatus.Validated))
+                foreach (var q in quotes)
                 {
                     AvailableQuotations.Add(q);
                 }
@@ -659,7 +678,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
                 TotalAmountHT = TotalHT,
                 TotalVAT = TotalVAT,
                 TotalAmountTTC = TotalTTC,
-                Status = "Issued",
+                Status = PurchaseOrderStatus.Pending,
                 CreatedById = _userSession.CurrentUser?.Id ?? 1,
                 Observations = Observations,
                 CreatedAt = DateTime.UtcNow,
@@ -706,6 +725,15 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     {
         if (order == null || order.Status != PurchaseOrderStatus.Pending) return;
 
+        // Show confirmation dialog
+        var result = System.Windows.MessageBox.Show(
+            $"Êtes-vous sûr de vouloir annuler le Bon de Commande {order.OrderNumber} ?", 
+            "Confirmation d'annulation", 
+            System.Windows.MessageBoxButton.YesNo, 
+            System.Windows.MessageBoxImage.Question);
+            
+        if (result != System.Windows.MessageBoxResult.Yes) return;
+
         IsBusy = true;
         try
         {
@@ -747,5 +775,7 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             IsBusy = false;
         }
     }
+
+
 }
 

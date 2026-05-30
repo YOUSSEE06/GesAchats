@@ -239,7 +239,8 @@ public class FacturesViewModel : BaseViewModel
         {
             string search = SearchText.ToLower();
             filtered = filtered.Where(f => 
-                f.Invoice.InvoiceNumber.ToLower().Contains(search) ||
+                (f.Invoice.InvoiceNumber != null && f.Invoice.InvoiceNumber.ToLower().Contains(search)) ||
+                (f.Invoice.ExternalInvoiceNumber != null && f.Invoice.ExternalInvoiceNumber.ToLower().Contains(search)) ||
                 f.Invoice.Supplier.CompanyName.ToLower().Contains(search) ||
                 (f.Invoice.PurchaseOrder != null && f.Invoice.PurchaseOrder.OrderNumber.ToLower().Contains(search)) ||
                 (f.Invoice.DeliveryNote != null && f.Invoice.DeliveryNote.DeliveryNumber.ToLower().Contains(search))

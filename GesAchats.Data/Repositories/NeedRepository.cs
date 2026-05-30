@@ -39,6 +39,7 @@ public class NeedRepository : Repository<Need>, INeedRepository
             .Include(n => n.RequestedBy)
             .Include(n => n.Details)
                 .ThenInclude(d => d.Product)
+            .Include(n => n.PurchaseOrders) // Ajouté pour inclure les PurchaseOrders liés
             .FirstOrDefaultAsync(n => n.Id == id);
     }
 }

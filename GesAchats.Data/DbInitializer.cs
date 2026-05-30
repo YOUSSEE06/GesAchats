@@ -12,11 +12,55 @@ public static class DbInitializer
         // 1. Initialisation de la base (crée la base si elle n'existe pas)
         await context.Database.EnsureCreatedAsync();
 
-        // Mettre à jour les statuts des devis
+        // Mettre à jour les statuts des bons de commande (seulement si la colonne Status existe)
         await context.Database.ExecuteSqlRawAsync(@"
-            UPDATE ""Quotations""
-            SET ""Status"" = 'Validé'
-            WHERE ""Status"" IN ('Validated', 'Accepted', 'accepted', 'validated', 'Valide', 'valide', 'Sent');
+            DO $$ 
+            BEGIN 
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='PurchaseOrders' AND column_name='Status') THEN
+                    BEGIN
+                        -- Étape 1: Mettre à jour les statuts existants vers les nouveaux noms
+                        UPDATE ""PurchaseOrders""
+                        SET ""Status"" = 'En attente'
+                        WHERE ""Status"" IN ('Issued', 'Pending', 'pending', 'issued');
+
+                        UPDATE ""PurchaseOrders""
+                        SET ""Status"" = 'Validé'
+                        WHERE ""Status"" IN ('Validated', 'validated', 'Valide', 'valide', 'Accepted', 'accepted');
+
+                        UPDATE ""PurchaseOrders""
+                        SET ""Status"" = 'Annulé'
+                        WHERE ""Status"" IN ('Cancelled', 'cancelled', 'Rejected', 'rejected');
+
+                        -- Étape 2: Mettre à jour les bons de commande qui ont un BL lié à 'Validé'
+                        UPDATE ""PurchaseOrders"" po
+                        SET ""Status"" = 'Validé'
+                        WHERE EXISTS (
+                            SELECT 1 FROM bons_livraison bl
+                            WHERE bl.bc_id = po.""Id""
+                        );
+                    EXCEPTION
+                        WHEN undefined_column THEN
+                            RAISE NOTICE 'Column Status does not exist in PurchaseOrders, skipping update';
+                    END;
+                END IF;
+            END $$;
+        ");
+
+        // Mettre à jour les statuts des devis (seulement si la colonne Status existe)
+        await context.Database.ExecuteSqlRawAsync(@"
+            DO $$ 
+            BEGIN 
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Quotations' AND column_name='Status') THEN
+                    BEGIN
+                        UPDATE ""Quotations""
+                        SET ""Status"" = 'Validé'
+                        WHERE ""Status"" IN ('Validated', 'Accepted', 'accepted', 'validated', 'Valide', 'valide', 'Sent');
+                    EXCEPTION
+                        WHEN undefined_column THEN
+                            RAISE NOTICE 'Column Status does not exist in Quotations, skipping update';
+                    END;
+                END IF;
+            END $$;
         ");
 
         // 1.1 Migration manuelle du schéma (FullName, etc.)
@@ -402,7 +446,7 @@ public static class DbInitializer
                     ReferenceNumber = "DEV-SIM-001", 
                     SupplierId = supplier1.Id, 
                     NeedId = firstNeed.Id, 
-                    Status = "Sent", 
+                    Status = QuotationStatus.Pending, 
                     TotalAmountHT = 1200, 
                     TotalAmountTTC = 1440,
                     CreatedById = acheteur.Id // Ajout de l'ID utilisateur
@@ -414,7 +458,7 @@ public static class DbInitializer
                     ReferenceNumber = "DEV-SIM-002", 
                     SupplierId = supplier2.Id, 
                     NeedId = firstNeed.Id, 
-                    Status = "Sent", 
+                    Status = QuotationStatus.Pending, 
                     TotalAmountHT = 1300, 
                     TotalAmountTTC = 1560,
                     CreatedById = acheteur.Id // Ajout de l'ID utilisateur
@@ -429,7 +473,7 @@ public static class DbInitializer
                     OrderNumber = "BC-2026-0001", 
                     OrderDate = DateTime.UtcNow.AddDays(-5), 
                     SupplierId = supplier1.Id, 
-                    Status = "Issued",
+                    Status = PurchaseOrderStatus.Pending,
                     ExpectedDeliveryDate = DateTime.UtcNow.AddDays(2),
                     CreatedById = acheteur.Id,
                     TotalAmountHT = 850,
@@ -445,7 +489,7 @@ public static class DbInitializer
                     OrderNumber = "BC-2026-0002", 
                     OrderDate = DateTime.UtcNow.AddDays(-2), 
                     SupplierId = supplier1.Id, 
-                    Status = "Issued",
+                    Status = PurchaseOrderStatus.Validated,
                     ExpectedDeliveryDate = DateTime.UtcNow.AddDays(1),
                     CreatedById = acheteur.Id,
                     TotalAmountHT = 2250,
@@ -501,7 +545,7 @@ public static class DbInitializer
                             ReferenceNumber = $"DEV-{product.Id}-{i}", 
                             SupplierId = supplier.Id, 
                             TotalAmountHT = unitPrice * quantity, 
-                            Status = "Validated", 
+                            Status = QuotationStatus.Pending, 
                             Date = date.AddDays(-1), 
                             CreatedById = 1 
                         };
@@ -558,10 +602,20 @@ public static class DbInitializer
 
                 if (magasinier != null && products.Any())
                 { 
-                    // Création de 15 listes de besoins avec différents statuts
+                    // Création de 15 listes de besoins avec différents statuts, en s'assurant d'avoir des besoins transmis
                     for (int i = 1; i <= 15; i++)
                     {
-                        var status = (NeedStatus)random.Next(0, 6);
+                        NeedStatus status;
+                        // Les 5 premiers besoins sont garantis d'être transmis ou en cours d'achat
+                        if (i <= 5)
+                        {
+                            status = i % 2 == 0 ? NeedStatus.TransmittedToPurchasing : NeedStatus.InPurchase;
+                        }
+                        else
+                        {
+                            status = (NeedStatus)random.Next(0, 6);
+                        }
+                        
                         var need = new Need
                         {
                             NumeroBesoin = $"BES-2024-{i:D3}",

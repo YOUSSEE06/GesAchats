@@ -55,8 +55,7 @@
                     <TextBlock Text="COMMANDES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
                     <Button Content="&#x1f4e6; Bons de Commande" Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" CommandParameter="Commandes"/>
-                    <Button Content="&#x1f6e2; Suivi Commandes" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Suivi"/>
+
                 </StackPanel>
 
                 <!-- User & Logout -->
