@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=GesAchatsDb;Username=postgres;Password=VOTRE_MOT_DE_PASSE;Timeout=5;CommandTimeout=5;"
+  }
+}

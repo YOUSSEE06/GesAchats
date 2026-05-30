@@ -33,8 +33,8 @@ public class GesAchatsDbContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             // Cette configuration sera normalement faite via l'injection de dépendances dans le projet WPF
-            // Mais on peut mettre une valeur par défaut pour les outils de design (migrations)
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=GesAchatsDb;Username=postgres;Password=0000");
+            // Pour les outils de design (migrations), utilisez appsettings.local.json dans le projet WPF
+            // Ou configurez manuellement avec : optionsBuilder.UseNpgsql("votre_chaine_de_connexion");
         }
         
         // Supprimer l'avertissement sur les modifications de modèle en attente

@@ -99,6 +99,12 @@ publish/
 ehthumbs.db
 Thumbs.db
 
+# Local configuration files (contains sensitive data)
+appsettings.local.json
+appsettings.*.local.json
+# But allow the example template to be committed
+!appsettings.local.json.example
+
 # Temporary files
 *.cache
 *.swp
