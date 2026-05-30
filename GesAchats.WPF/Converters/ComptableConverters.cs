@@ -49,6 +49,28 @@ public class StatusVisibilityConverter : IValueConverter
     }
 }
 
+public class StatusVisibilityMultiConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length < 2) return Visibility.Collapsed;
+
+        string status = values[0]?.ToString() ?? "";
+        bool isAdmin = values[1] is bool b && b;
+
+        // Si c'est un admin, on masque toujours le bouton payer
+        if (isAdmin) return Visibility.Collapsed;
+
+        // Sinon (pour le comptable), on affiche si la facture n'est pas payée
+        return status != "Payée" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public class StaticValueConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

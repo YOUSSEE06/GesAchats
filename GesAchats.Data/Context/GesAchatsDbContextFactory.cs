@@ -9,7 +9,7 @@ public class GesAchatsDbContextFactory : IDesignTimeDbContextFactory<GesAchatsDb
     public GesAchatsDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<GesAchatsDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=GesAchatsDb;Username=postgres;Password=0000");
+        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=gesachatsdb;Username=postgres;Password=medpos2025");
 
         return new GesAchatsDbContext(optionsBuilder.Options);
     }

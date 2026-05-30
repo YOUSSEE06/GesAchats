@@ -14,6 +14,14 @@ public class FacturesViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IUserSession _userSession;
+
+    private bool _isAdmin;
+    public bool IsAdmin
+    {
+        get => _isAdmin;
+        set => SetProperty(ref _isAdmin, value);
+    }
 
     private ObservableCollection<InvoiceWithPaymentsViewModel> _allFactures = new();
     private ObservableCollection<InvoiceWithPaymentsViewModel> _factures = new();
@@ -113,12 +121,14 @@ public class FacturesViewModel : BaseViewModel
     public ICommand ViewFileCommand { get; }
     public ICommand ResetFiltersCommand { get; }
 
-    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider)
+    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _serviceProvider = serviceProvider;
+        _userSession = userSession;
         Title = "Factures Fournisseurs";
+        IsAdmin = _userSession.CurrentUser?.Role?.Code?.ToUpper() == "ADMIN";
 
         LoadFacturesCommand = new RelayCommand(async _ => await LoadFacturesAsync());
         AddFactureCommand = new RelayCommand(_ => _navigationService.NavigateTo("InvoiceForm"));
