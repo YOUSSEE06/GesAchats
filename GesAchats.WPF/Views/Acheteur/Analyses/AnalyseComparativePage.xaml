@@ -32,7 +32,6 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Margin="10,0" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
             </StackPanel>
         </Border>
 

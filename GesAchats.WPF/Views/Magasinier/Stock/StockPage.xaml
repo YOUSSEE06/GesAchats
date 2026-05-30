@@ -28,8 +28,6 @@
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
                 <Button Content="➕ Nouveau Produit" Command="{Binding AddProductCommand}" 
                         Padding="15,8" Margin="0,0,10,0" Background="{StaticResource NewProductBrush}" Foreground="White" FontWeight="Bold"/>
-                <Button Content="🔄 Actualiser" Command="{Binding RefreshCommand}" 
-                        Padding="15,8" Margin="0,0,10,0" Background="Transparent"/>
                 <Button Content="➕ Créer un Besoin" Command="{Binding CreateNeedCommand}" 
                         Padding="15,8" Background="{StaticResource PrimaryBrush}" Foreground="White" FontWeight="Bold"/>
             </StackPanel>

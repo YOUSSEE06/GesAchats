@@ -66,9 +66,9 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private bool _isEditMode;
     private Quotation? _editingQuotation;
     private bool _isCreateDialogOpen;
-    private string _filterReference = string.Empty;
+    private string _filterSearch = string.Empty;
+    private DateTime? _filterDate;
     private int? _filterSupplierId;
-    private string _filterSupplierName = string.Empty;
     private string _filterStatus = "Tous";
     
     // Debouncing
@@ -135,14 +135,26 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _isCreateDialogOpen, value);
     }
 
-    public string FilterReference
+    public string FilterSearch
     {
-        get => _filterReference;
+        get => _filterSearch;
         set
         {
-            if (SetProperty(ref _filterReference, value))
+            if (SetProperty(ref _filterSearch, value))
             {
                 DebounceApplyFilters();
+            }
+        }
+    }
+
+    public DateTime? FilterDate
+    {
+        get => _filterDate;
+        set
+        {
+            if (SetProperty(ref _filterDate, value))
+            {
+                ApplyFilters();
             }
         }
     }
@@ -167,18 +179,6 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             if (SetProperty(ref _filterStatus, value))
             {
                 ApplyFilters();
-            }
-        }
-    }
-
-    public string FilterSupplierName
-    {
-        get => _filterSupplierName;
-        set
-        {
-            if (SetProperty(ref _filterSupplierName, value))
-            {
-                DebounceApplyFilters();
             }
         }
     }
@@ -594,19 +594,23 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         // Store all filtered results first
         var filtered = AllQuotations.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(FilterReference))
+        if (!string.IsNullOrWhiteSpace(FilterSearch))
         {
-            filtered = filtered.Where(q => q.ReferenceNumber.Contains(FilterReference, StringComparison.OrdinalIgnoreCase));
+            var searchLower = FilterSearch.ToLower();
+            filtered = filtered.Where(q => 
+                q.ReferenceNumber.Contains(FilterSearch, StringComparison.OrdinalIgnoreCase) || 
+                (q.Supplier != null && q.Supplier.CompanyName.ToLower().Contains(searchLower)));
+        }
+
+        if (FilterDate.HasValue)
+        {
+            var date = FilterDate.Value.Date;
+            filtered = filtered.Where(q => q.Date.Date == date);
         }
 
         if (FilterSupplierId.HasValue)
         {
             filtered = filtered.Where(q => q.SupplierId == FilterSupplierId.Value);
-        }
-        else if (!string.IsNullOrWhiteSpace(FilterSupplierName))
-        {
-            var searchLower = FilterSupplierName.ToLower();
-            filtered = filtered.Where(q => q.Supplier != null && q.Supplier.CompanyName.ToLower().Contains(searchLower));
         }
 
         if (FilterStatus != "Tous")
@@ -645,10 +649,10 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
 
     private void ClearFilters()
     {
-        FilterReference = string.Empty;
+        FilterSearch = string.Empty;
+        FilterDate = null;
         SelectedFilterSupplier = "Tous";
         FilterSupplierId = null;
-        FilterSupplierName = string.Empty;
         FilterStatus = "Tous";
     }
 
