@@ -53,6 +53,17 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         }
     }
 
+    private string? _searchInvoiceNumber;
+    public string? SearchInvoiceNumber
+    {
+        get => _searchInvoiceNumber;
+        set
+        {
+            SetProperty(ref _searchInvoiceNumber, value);
+            ApplyFilters();
+        }
+    }
+
     public ObservableCollection<Supplier> Suppliers { get; set; } = new();
     public ObservableCollection<string> StatusOptions { get; set; } = new()
     {
@@ -160,6 +171,15 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             filtered = filtered.Where(i => i.Invoice.InvoiceDate.Date == SelectedDate.Value.Date);
         }
 
+        if (!string.IsNullOrWhiteSpace(SearchInvoiceNumber))
+        {
+            string search = SearchInvoiceNumber.ToLower();
+            filtered = filtered.Where(i => 
+                (i.Invoice.ExternalInvoiceNumber != null && i.Invoice.ExternalInvoiceNumber.ToLower().Contains(search)) ||
+                (i.Invoice.InvoiceNumber != null && i.Invoice.InvoiceNumber.ToLower().Contains(search))
+            );
+        }
+
         FilteredInvoices.Clear();
         foreach (var invoice in filtered)
         {
@@ -193,5 +213,6 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         SelectedSupplier = Suppliers.FirstOrDefault();
         SelectedStatus = "Tous";
         SelectedDate = null;
+        SearchInvoiceNumber = string.Empty;
     }
 }

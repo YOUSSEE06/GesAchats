@@ -259,12 +259,13 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         var filtered = _allDeliveries.AsEnumerable();
 
-        // Search filter: BL number OR Purchase Order number
+        // Search filter: BL number OR Purchase Order number OR Invoice number
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             filtered = filtered.Where(item => 
                 item.DeliveryNote.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (item.DeliveryNote.PurchaseOrder != null && item.DeliveryNote.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                (item.DeliveryNote.PurchaseOrder != null && item.DeliveryNote.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (item.InvoiceNumber != null && item.InvoiceNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
             );
         }
 
