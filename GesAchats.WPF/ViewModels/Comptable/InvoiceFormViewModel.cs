@@ -9,11 +9,50 @@ using Microsoft.Win32;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
-public class InvoiceFormViewModel : BaseViewModel
+public class InvoiceFormViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
     private readonly IUserSession _userSession;
+    private Task? _initializationTask;
+
+    public async void OnNavigatedTo(object parameter)
+    {
+        IsBusy = true;
+        try 
+        {
+            // Attendre l'initialisation si nécessaire pour avoir la liste des BL
+            await EnsureInitializedAsync();
+
+            if (parameter is DeliveryNote dn)
+            {
+                // Rechercher le BL dans la liste déjà chargée (qui inclut les détails)
+                var fullDn = DeliveryNotes.FirstOrDefault(d => d.Id == dn.Id);
+                
+                // Si pas dans la liste (ex: déjà facturé mais on y accède par lien direct)
+                if (fullDn == null)
+                {
+                    var allWithDetails = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
+                    fullDn = allWithDetails.FirstOrDefault(d => d.Id == dn.Id);
+                    
+                    if (fullDn != null)
+                    {
+                        DeliveryNotes.Add(fullDn);
+                    }
+                }
+
+                if (fullDn != null)
+                {
+                    // Sélectionner le BL (ceci déclenchera LoadLineItemsFromDeliveryNote via le setter)
+                    SelectedDeliveryNote = fullDn;
+                }
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     private Invoice _invoice = new() { InvoiceDate = DateTime.Now, DueDate = DateTime.Now.AddMonths(1) };
     public Invoice Invoice
@@ -114,7 +153,12 @@ public class InvoiceFormViewModel : BaseViewModel
         CancelCommand = new RelayCommand(_ => _navigationService.NavigateTo("Factures"));
         UploadFileCommand = new RelayCommand(_ => ExecuteUploadFile());
 
-        _ = InitializeAsync();
+        _initializationTask = InitializeAsync();
+    }
+
+    private Task EnsureInitializedAsync()
+    {
+        return _initializationTask ??= InitializeAsync();
     }
 
     private async Task InitializeAsync()

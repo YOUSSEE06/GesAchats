@@ -4,9 +4,14 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Magasinier.Livraisons"
+      xmlns:shared="clr-namespace:GesAchats.WPF.Resources.Shared"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Réception des Bons de Livraison">
+
+    <Page.Resources>
+        <shared:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </Page.Resources>
 
     <Grid Background="#F5F5F5">
         <Grid.RowDefinitions>
@@ -28,7 +33,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Command="{Binding ShowAddFormCommand}" Content="&#x2795; Ajouter un Bon de Livraison" 
                             Padding="15,8" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"
-                            Visibility="{Binding IsHistoryView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            Visibility="{Binding CanAddBL, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <Button Command="{Binding BackToListCommand}" Content="&#x2b05; Retour à la liste" 
                             Padding="15,8" Background="#757575" Foreground="White" FontWeight="Bold" BorderThickness="0"
                             Visibility="{Binding IsHistoryView, Converter={StaticResource EnhancedBooleanToVisibilityConverter}, ConverterParameter=Inverse}"/>
@@ -81,10 +86,12 @@
                     <DataGrid ItemsSource="{Binding DeliveriesHistory}" AutoGenerateColumns="False" IsReadOnly="True" 
                               Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date de réception" Binding="{Binding ReceptionDate, StringFormat=d}" Width="Auto"/>
-                            <DataGridTextColumn Header="N° Bon de Livraison" Binding="{Binding DeliveryNumber}" Width="*"/>
-                            <DataGridTextColumn Header="Fournisseur (Société)" Binding="{Binding Supplier.CompanyName}" Width="1.5*"/>
-                            <DataGridTextColumn Header="BC correspondant" Binding="{Binding PurchaseOrder.OrderNumber}" Width="*"/>
+                            <DataGridTextColumn Header="Date de réception" Binding="{Binding DeliveryNote.ReceptionDate, StringFormat=d}" Width="Auto"/>
+                            <DataGridTextColumn Header="N° Bon de Livraison" Binding="{Binding DeliveryNote.DeliveryNumber}" Width="*"/>
+                            <DataGridTextColumn Header="Fournisseur (Société)" Binding="{Binding DeliveryNote.Supplier.CompanyName}" Width="1.5*"/>
+                            <DataGridTextColumn Header="BC correspondant" Binding="{Binding DeliveryNote.PurchaseOrder.OrderNumber}" Width="*"/>
+                            <DataGridTextColumn Header="N° Facture Fournisseur" Binding="{Binding InvoiceNumber}" Width="*" 
+                                                Visibility="{Binding Data.IsComptable, Source={StaticResource Proxy}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <DataGridTemplateColumn Header="Statut" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -92,10 +99,10 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Status}" Value="EnAttente">
+                                                        <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="EnAttente">
                                                             <Setter Property="Background" Value="#FFC107"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Valide">
+                                                        <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="Valide">
                                                             <Setter Property="Background" Value="#4CAF50"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -105,10 +112,10 @@
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Status}" Value="EnAttente">
+                                                            <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="EnAttente">
                                                                 <Setter Property="Text" Value="En attente"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Status}" Value="Valide">
+                                                            <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="Valide">
                                                                 <Setter Property="Text" Value="Validé"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -119,14 +126,35 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Actions" Width="135">
+                            <DataGridTemplateColumn Header="Actions" Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="🔍 Détails" Command="{Binding DataContext.InspectCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            <Button Content="🔍 Détails" Command="{Binding Data.InspectCommand, Source={StaticResource Proxy}}"
                                                     CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#FF9800" Foreground="White" BorderThickness="0" MinWidth="65"/>
-                                            <Button Content="📄 PDF" Command="{Binding DataContext.PrintPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            <Button Content="📄 PDF" Command="{Binding Data.PrintPdfCommand, Source={StaticResource Proxy}}"
                                                     CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#2196F3" Foreground="White" BorderThickness="0" MinWidth="55"/>
+                                            
+                                            <!-- Bouton Ajouter Facture (Comptable uniquement + pas de facture) -->
+                                            <Button Content="➕ Facture" 
+                                                    Command="{Binding Data.AddInvoiceCommand, Source={StaticResource Proxy}}"
+                                                    CommandParameter="{Binding}"
+                                                    Margin="2,0" Padding="8,4" Background="#4CAF50" Foreground="White" BorderThickness="0" MinWidth="75">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding Data.IsComptable, Source={StaticResource Proxy}}" Value="True"/>
+                                                                    <Condition Binding="{Binding HasInvoice}" Value="False"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

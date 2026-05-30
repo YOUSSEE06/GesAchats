@@ -12,15 +12,35 @@ using GesAchats.WPF.Services;
 
 namespace GesAchats.WPF.ViewModels.Magasinier;
 
+public class DeliveryNoteListItemViewModel : BaseViewModel
+{
+    public DeliveryNote DeliveryNote { get; }
+    public string? InvoiceNumber { get; set; }
+    public bool HasInvoice => !string.IsNullOrEmpty(InvoiceNumber);
+    public bool IsComptable { get; set; }
+
+    public DeliveryNoteListItemViewModel(DeliveryNote deliveryNote, string? invoiceNumber = null, bool isComptable = false)
+    {
+        DeliveryNote = deliveryNote;
+        InvoiceNumber = invoiceNumber;
+        IsComptable = isComptable;
+    }
+}
+
 public class DeliveryNotesViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserSession _userSession;
+    private readonly INavigationService _navigationService;
+    private Task? _initializationTask;
     
     // View State
     private bool _isHistoryView = true;
     private bool _isEditView = false;
     private bool _isInspectView = false;
+
+    public bool IsComptable => _userSession.HasRole("COMPTABLE");
+    public bool IsMagasinier => _userSession.HasRole("MAGASINIER");
 
     // Filter properties
     private string _searchText = string.Empty;
@@ -39,12 +59,24 @@ public class DeliveryNotesViewModel : BaseViewModel
     private string _supplierName = string.Empty;
     private DeliveryNote? _selectedDeliveryNote;
 
-    private List<DeliveryNote> _allDeliveries = new List<DeliveryNote>();
+    private List<DeliveryNoteListItemViewModel> _allDeliveries = new List<DeliveryNoteListItemViewModel>();
 
     // State Accessors
-    public bool IsHistoryView { get => _isHistoryView; set => SetProperty(ref _isHistoryView, value); }
+    public bool IsHistoryView 
+    { 
+        get => _isHistoryView; 
+        set 
+        {
+            if (SetProperty(ref _isHistoryView, value))
+            {
+                OnPropertyChanged(nameof(CanAddBL));
+            }
+        } 
+    }
     public bool IsEditView { get => _isEditView; set => SetProperty(ref _isEditView, value); }
     public bool IsInspectView { get => _isInspectView; set => SetProperty(ref _isInspectView, value); }
+
+    public bool CanAddBL => IsHistoryView && IsMagasinier;
 
     // Filter Accessors
     public string SearchText
@@ -105,7 +137,7 @@ public class DeliveryNotesViewModel : BaseViewModel
 
     public ObservableCollection<PurchaseOrder> PurchaseOrders { get; } = new ObservableCollection<PurchaseOrder>();
     public ObservableCollection<DeliveryNoteItemViewModel> DeliveryItems { get; } = new ObservableCollection<DeliveryNoteItemViewModel>();
-    public ObservableCollection<DeliveryNote> DeliveriesHistory { get; } = new ObservableCollection<DeliveryNote>();
+    public ObservableCollection<DeliveryNoteListItemViewModel> DeliveriesHistory { get; } = new ObservableCollection<DeliveryNoteListItemViewModel>();
 
     // Commands
     public ICommand SelectFileCommand { get; }
@@ -116,23 +148,39 @@ public class DeliveryNotesViewModel : BaseViewModel
     public ICommand InspectCommand { get; }
     public ICommand PrintPdfCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand AddInvoiceCommand { get; }
 
-    public DeliveryNotesViewModel(IUnitOfWork unitOfWork, IUserSession userSession)
+    public DeliveryNotesViewModel(IUnitOfWork unitOfWork, IUserSession userSession, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
         _userSession = userSession;
+        _navigationService = navigationService;
         Title = "Réception des Bons de Livraison";
         
         SelectFileCommand = new RelayCommand(_ => ExecuteSelectFile());
         ValidateCommand = new RelayCommand(async _ => await ExecuteValidate(), _ => CanValidate());
         RefreshCommand = new RelayCommand(async _ => await LoadInitialData());
         ShowAddFormCommand = new RelayCommand(_ => ExecuteShowAddForm());
-        BackToListCommand = new RelayCommand(_ => ExecuteBackToList());
-        InspectCommand = new RelayCommand(async p => await ExecuteInspect(p as DeliveryNote));
-        PrintPdfCommand = new RelayCommand(p => ExecuteOpenOriginalFile(p as DeliveryNote));
+        BackToListCommand = new RelayCommand(async _ => await ExecuteBackToList());
+        InspectCommand = new RelayCommand(async p => await ExecuteInspect((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
+        PrintPdfCommand = new RelayCommand(p => ExecuteOpenOriginalFile((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
+        AddInvoiceCommand = new RelayCommand(p => ExecuteAddInvoice(p as DeliveryNoteListItemViewModel));
 
-        _ = LoadInitialData();
+        _initializationTask = LoadInitialData();
+    }
+
+    private Task EnsureInitializedAsync()
+    {
+        return _initializationTask ??= LoadInitialData();
+    }
+
+    private void ExecuteAddInvoice(DeliveryNoteListItemViewModel? item)
+    {
+        if (item != null)
+        {
+            _navigationService.NavigateTo("InvoiceForm", item.DeliveryNote);
+        }
     }
 
     private void ExecuteResetFilters()
@@ -145,35 +193,60 @@ public class DeliveryNotesViewModel : BaseViewModel
 
     private async Task LoadInitialData()
     {
+        // On s'assure qu'une seule initialisation tourne à la fois
+        if (IsBusy && _initializationTask != null && !_initializationTask.IsCompleted)
+        {
+            await _initializationTask;
+            return;
+        }
+
         IsBusy = true;
         try
         {
             await LoadPurchaseOrders();
             
-            var deliveries = await _unitOfWork.DeliveryNotes.GetAllAsync();
-            _allDeliveries = deliveries.OrderByDescending(d => d.ReceptionDate).ToList();
+            // Récupération optimisée avec les relations
+            var deliveries = await _unitOfWork.DeliveryNotes.GetAllIncludingAsync(
+                d => d.Supplier, 
+                d => d.PurchaseOrder
+            );
             
-            // Charger les fournisseurs et BC pour l'affichage
-            foreach (var d in _allDeliveries)
+            var invoices = await _unitOfWork.Invoices.GetAllAsync();
+            var invoiceMap = invoices.Where(i => i.DeliveryNoteId.HasValue)
+                                    .ToDictionary(i => i.DeliveryNoteId!.Value, i => i.ExternalInvoiceNumber ?? i.InvoiceNumber);
+
+            var newDeliveries = new List<DeliveryNoteListItemViewModel>();
+            
+            foreach (var d in deliveries.OrderByDescending(d => d.ReceptionDate))
             {
-                if (d.Supplier == null) d.Supplier = (await _unitOfWork.Suppliers.GetByIdAsync(d.SupplierId))!;
-                if (d.PurchaseOrder == null) d.PurchaseOrder = (await _unitOfWork.PurchaseOrders.GetByIdAsync(d.PurchaseOrderId))!;
+                string? invoiceNumber = invoiceMap.TryGetValue(d.Id, out var num) ? num : null;
+                newDeliveries.Add(new DeliveryNoteListItemViewModel(d, invoiceNumber, IsComptable));
             }
+
+            _allDeliveries = newDeliveries;
 
             // Load suppliers for filter options
             var allSuppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            SupplierOptions.Clear();
-            SupplierOptions.Add("Tous");
+            var newSupplierOptions = new List<string> { "Tous" };
             var uniqueSupplierNames = allSuppliers
                 .Select(s => s.CompanyName)
                 .Distinct()
                 .OrderBy(n => n);
+            
             foreach (var name in uniqueSupplierNames)
             {
-                SupplierOptions.Add(name);
+                newSupplierOptions.Add(name);
             }
 
+            SupplierOptions.Clear();
+            foreach(var opt in newSupplierOptions) SupplierOptions.Add(opt);
+
             FilterDeliveries();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Erreur chargement BL: {ex.Message}");
+            System.Windows.MessageBox.Show($"Erreur lors du chargement des données : {ex.Message}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
         finally
         {
@@ -188,31 +261,31 @@ public class DeliveryNotesViewModel : BaseViewModel
         // Search filter: BL number OR Purchase Order number
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            filtered = filtered.Where(d => 
-                d.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (d.PurchaseOrder != null && d.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+            filtered = filtered.Where(item => 
+                item.DeliveryNote.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                (item.DeliveryNote.PurchaseOrder != null && item.DeliveryNote.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
             );
         }
 
-        // Supplier filter
-        if (SelectedSupplier != "Tous")
+        // Supplier filter - Correction : Gérer le null et le vide
+        if (!string.IsNullOrEmpty(SelectedSupplier) && SelectedSupplier != "Tous")
         {
-            filtered = filtered.Where(d => d.Supplier != null && d.Supplier.CompanyName == SelectedSupplier);
+            filtered = filtered.Where(item => item.DeliveryNote.Supplier != null && item.DeliveryNote.Supplier.CompanyName == SelectedSupplier);
         }
 
-        // Status filter
-        if (SelectedStatus != "Tous")
+        // Status filter - Correction : Gérer le null et le vide
+        if (!string.IsNullOrEmpty(SelectedStatus) && SelectedStatus != "Tous")
         {
             if (SelectedStatus == "En attente")
-                filtered = filtered.Where(d => d.Status == "EnAttente");
+                filtered = filtered.Where(item => item.DeliveryNote.Status == "EnAttente");
             else if (SelectedStatus == "Validé")
-                filtered = filtered.Where(d => d.Status == "Valide");
+                filtered = filtered.Where(item => item.DeliveryNote.Status == "Valide");
         }
 
         // Date filter
         if (SearchDate.HasValue)
         {
-            filtered = filtered.Where(d => d.ReceptionDate.Date == SearchDate.Value.Date);
+            filtered = filtered.Where(item => item.DeliveryNote.ReceptionDate.Date == SearchDate.Value.Date);
         }
 
         DeliveriesHistory.Clear();
@@ -247,13 +320,15 @@ public class DeliveryNotesViewModel : BaseViewModel
         Title = "Nouveau Bon de Livraison";
     }
 
-    private void ExecuteBackToList()
+    private async Task ExecuteBackToList()
     {
         IsEditView = false;
         IsInspectView = false;
         IsHistoryView = true;
         Title = "Réception des Bons de Livraison";
-        _ = LoadInitialData();
+
+        // On charge les données après avoir affiché le conteneur pour assurer la stabilité
+        await LoadInitialData();
     }
 
     private async Task ExecuteInspect(DeliveryNote? dn)
@@ -383,7 +458,7 @@ public class DeliveryNotesViewModel : BaseViewModel
                     dnToUpdate.UpdatedAt = DateTime.UtcNow;
                     await _unitOfWork.CompleteAsync();
                     System.Windows.MessageBox.Show("Modifications enregistrées avec succès !", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                    ExecuteBackToList();
+                    await ExecuteBackToList();
                 }
                 return;
             }
@@ -467,7 +542,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             await _unitOfWork.DeliveryNotes.AddAsync(dn);
             await _unitOfWork.CompleteAsync();
 
-            ExecuteBackToList();
+            await ExecuteBackToList();
         }
         catch (Exception ex)
         {
