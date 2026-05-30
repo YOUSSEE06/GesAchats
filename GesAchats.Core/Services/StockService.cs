@@ -11,6 +11,8 @@ public interface IStockService
     Task<IEnumerable<Product>> GetRuptureProductsAsync();
     Task<IEnumerable<Product>> GetNewProductsAsync();
     Task<bool> UpdateStockAsync(int productId, decimal quantityChange);
+    Task<bool> RecordStockExitAsync(StockExit stockExit);
+    Task<IEnumerable<StockExit>> GetAllStockExitsAsync();
 }
 
 public class StockService : IStockService
@@ -57,5 +59,24 @@ public class StockService : IStockService
         
         await _unitOfWork.CompleteAsync();
         return true;
+    }
+
+    public async Task<bool> RecordStockExitAsync(StockExit stockExit)
+    {
+        var product = await _unitOfWork.Products.GetByIdAsync(stockExit.ProductId);
+        if (product == null || product.CurrentStock < stockExit.Quantity) return false;
+
+        product.CurrentStock -= stockExit.Quantity;
+        product.UpdatedAt = DateTime.UtcNow;
+        stockExit.StockAfterExit = product.CurrentStock;
+
+        await _unitOfWork.StockExits.AddAsync(stockExit);
+        await _unitOfWork.CompleteAsync();
+        return true;
+    }
+
+    public async Task<IEnumerable<StockExit>> GetAllStockExitsAsync()
+    {
+        return await _unitOfWork.StockExits.GetAllWithDetailsAsync();
     }
 }

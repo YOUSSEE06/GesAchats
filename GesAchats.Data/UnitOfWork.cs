@@ -32,6 +32,7 @@ public class UnitOfWork : IUnitOfWork
         Needs = new NeedRepository(_context);
         NeedDetails = new Repository<NeedDetail>(_context);
         AuditLogs = new Repository<AuditLog>(_context);
+        StockExits = new StockExitRepository(_context);
     }
 
     public IUserRepository Users { get; private set; }
@@ -51,6 +52,7 @@ public class UnitOfWork : IUnitOfWork
     public INeedRepository Needs { get; private set; }
     public IRepository<NeedDetail> NeedDetails { get; private set; }
     public IRepository<AuditLog> AuditLogs { get; private set; }
+    public IStockExitRepository StockExits { get; private set; }
 
     public async Task<int> CompleteAsync()
     {

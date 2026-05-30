@@ -54,6 +54,11 @@
                             Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
                             CommandParameter="NeedsHistory"/>
+
+                    <Button Content="Sortie des besoins" 
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="StockExits"/>
                 </StackPanel>
 
                 <!-- Footer (User info & Logout) -->

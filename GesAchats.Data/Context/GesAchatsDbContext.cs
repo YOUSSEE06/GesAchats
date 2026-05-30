@@ -26,6 +26,7 @@ public class GesAchatsDbContext : DbContext
     public DbSet<NeedDetail> NeedDetails => Set<NeedDetail>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Magasin> Magasins => Set<Magasin>();
+    public DbSet<StockExit> StockExits => Set<StockExit>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -82,6 +83,15 @@ public class GesAchatsDbContext : DbContext
 
         modelBuilder.Entity<PurchaseOrderDetail>()
             .Property(p => p.Quantity)
+            .HasPrecision(18, 2);
+
+        // StockExits
+        modelBuilder.Entity<StockExit>()
+            .Property(s => s.Quantity)
+            .HasPrecision(18, 2);
+        
+        modelBuilder.Entity<StockExit>()
+            .Property(s => s.StockAfterExit)
             .HasPrecision(18, 2);
 
         // DeliveryNotes

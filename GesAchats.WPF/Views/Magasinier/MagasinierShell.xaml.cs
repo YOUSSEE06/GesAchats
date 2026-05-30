@@ -7,6 +7,7 @@ using GesAchats.WPF.Views.Magasinier.Stock;
 using GesAchats.WPF.Views.Magasinier.Livraisons;
 using GesAchats.WPF.Views.Magasinier.NeedsList;
 using GesAchats.WPF.Views.Magasinier.NeedsHistory;
+using GesAchats.WPF.Views.Magasinier.StockExits;
 using GesAchats.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -47,6 +48,7 @@ public partial class MagasinierShell : Window
             "Livraisons" => _serviceProvider.GetRequiredService<LivraisonsPage>(),
             "Needs" => CreateNeedsListPage(),
             "NeedsHistory" => _serviceProvider.GetRequiredService<NeedsHistoryPage>(),
+            "StockExits" => _serviceProvider.GetRequiredService<StockExitPage>(),
             _ => null
         };
 

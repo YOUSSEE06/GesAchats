@@ -1,0 +1,109 @@
+<Window x:Class="GesAchats.WPF.Views.Magasinier.StockExits.StockExitDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Nouvelle sortie de stock" Height="520" Width="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent">
+
+    <Border Background="White" CornerRadius="20" Margin="15" Effect="{StaticResource CardShadow}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header avec dégradé -->
+            <Border Grid.Row="0" Height="80" CornerRadius="20,20,0,0">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#1A3A52" Offset="0"/>
+                        <GradientStop Color="#2A5298" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Margin="25,0">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Sortie de Stock" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Text="Enregistrement d'un retrait de matériel" FontSize="12" Foreground="#A0FFFFFF" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Button HorizontalAlignment="Right" VerticalAlignment="Center" 
+                            Click="Cancel_Click" Style="{StaticResource ModernIconButton}" Foreground="White">
+                        <TextBlock Text="✕" FontSize="18"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="30,25">
+                    <!-- Article Selector -->
+                    <TextBlock Text="ARTICLE À SORTIR" FontSize="11" FontWeight="Bold" Foreground="#757575" Margin="0,0,0,8"/>
+                    <ComboBox ItemsSource="{Binding Products}" 
+                              SelectedItem="{Binding SelectedProduct}" 
+                              DisplayMemberPath="Designation"
+                              Style="{StaticResource ModernComboBox}"
+                              Height="45" Margin="0,0,0,5"/>
+                    <Border Background="#F0F7FF" CornerRadius="6" Padding="12,8" Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📦" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Stock disponible : " Foreground="#5C6B8A" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedProduct.CurrentStock, Mode=OneWay, StringFormat={}{0:N2}}" 
+                                       FontWeight="Bold" Foreground="#1A3A52" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedProduct.Unit, Mode=OneWay}" 
+                                       Foreground="#5C6B8A" FontSize="12" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Quantity -->
+                    <TextBlock Text="QUANTITÉ" FontSize="11" FontWeight="Bold" Foreground="#757575" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource ModernTextBox}"
+                             Height="45" Margin="0,0,0,20" Tag="0.00"/>
+
+                    <!-- Date & Motif -->
+                    <TextBlock Text="DATE" FontSize="11" FontWeight="Bold" Foreground="#757575" Margin="0,0,0,8"/>
+                    <DatePicker SelectedDate="{Binding ExitDate}" Style="{StaticResource ModernDatePicker}" Height="45" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="MOTIF" FontSize="11" FontWeight="Bold" Foreground="#757575" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource ModernTextBox}" 
+                             Height="80" 
+                             TextWrapping="Wrap" 
+                             AcceptsReturn="True"
+                             VerticalContentAlignment="Top"
+                             Padding="10"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <Border Grid.Row="2" Background="#F8FAFC" Padding="25,20" CornerRadius="0,0,20,20" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Button Content="Annuler" Click="Cancel_Click" 
+                            Foreground="#757575" Background="Transparent" BorderThickness="0" 
+                            FontWeight="SemiBold" Cursor="Hand" VerticalAlignment="Center"/>
+                    
+                    <Button Grid.Column="1" Content="Valider la Sortie" 
+                            Command="{Binding SaveExitCommand}"
+                            Style="{StaticResource ModernPrimaryButton}"
+                            Background="#22C55E"
+                            Height="45" Width="180">
+                        <Button.Effect>
+                            <DropShadowEffect Color="#22C55E" Opacity="0.3" BlurRadius="15" ShadowDepth="2"/>
+                        </Button.Effect>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
