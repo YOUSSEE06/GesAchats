@@ -11,8 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Global Header -->
             <RowDefinition Height="Auto"/> <!-- Page Title -->
-            <RowDefinition Height="Auto"/> <!-- Form -->
-            <RowDefinition Height="Auto"/> <!-- Actions -->
+            <RowDefinition Height="Auto"/> <!-- Filters -->
             <RowDefinition Height="*"/>    <!-- Table -->
         </Grid.RowDefinitions>
 
@@ -25,48 +24,56 @@
         <TextBlock Grid.Row="1" Text="Réception des Bons de Livraison (BL)" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
-        <!-- 3.1 Formulaire de saisie -->
+        <!-- 3.2 Zone de filtrage -->
         <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,10">
-            <StackPanel Margin="5">
+            <StackPanel Margin="15">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Margin="10">
-                        <TextBlock Text="N° Bon de Livraison" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBox Text="{Binding DeliveryNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Recherche" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Margin="10">
+                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
                         <TextBlock Text="Fournisseur" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <ComboBox ItemsSource="{Binding Suppliers}" 
-                                  SelectedItem="{Binding SelectedSupplier}"
-                                  DisplayMemberPath="CompanyName"
+                        <ComboBox ItemsSource="{Binding SupplierOptions}" 
+                                  SelectedItem="{Binding SelectedFilterSupplier}"
                                   Style="{StaticResource ModernComboBox}"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" Margin="10">
-                        <TextBlock Text="N° Bon de Commande" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBox Text="{Binding PurchaseOrderNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                        <TextBlock Text="Statut" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <ComboBox ItemsSource="{Binding StatusOptions}" 
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  Style="{StaticResource ModernComboBox}"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="3" Margin="10">
+                    <StackPanel Grid.Column="3" Margin="0,0,10,0">
                         <TextBlock Text="Date de réception" Margin="0,0,0,5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <DatePicker SelectedDate="{Binding ReceptionDate}" Style="{StaticResource ModernDatePicker}"/>
+                        <DatePicker SelectedDate="{Binding FilterReceptionDate}" Style="{StaticResource ModernDatePicker}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" Margin="0,0,0,0">
+                        <TextBlock Text=" " Margin="0,0,0,5" Foreground="White"/>
+                        <Button Command="{Binding ResetFiltersCommand}" 
+                                Content="Réinitialiser" 
+                                Style="{StaticResource ModernIconButton}"
+                                Foreground="{StaticResource DangerBrush}"
+                                FontWeight="SemiBold"/>
                     </StackPanel>
                 </Grid>
             </StackPanel>
         </Border>
 
-        <!-- 3.3 Boutons globaux -->
-        <!-- Supprimés selon la demande de l'utilisateur -->
-
         <!-- 3.2 Tableau des BL -->
-        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding DeliveryNotes}" 
                       Style="{StaticResource ModernDataGrid}"
                       HeadersVisibility="Column"
@@ -80,6 +87,22 @@
                     <DataGridTextColumn Header="N° Bon de Livraison" Binding="{Binding NumeroBL}" Width="180" FontWeight="SemiBold"/>
                     <DataGridTextColumn Header="Fournisseur (Société)" Binding="{Binding Fournisseur}" Width="*"/>
                     <DataGridTextColumn Header="BC correspondant" Binding="{Binding BCCorrespondant}" Width="180"/>
+                    
+                    <DataGridTemplateColumn Header="Statut" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding StatusColor}" 
+                                        CornerRadius="12" 
+                                        Padding="10,4" 
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding StatusText}" 
+                                               Foreground="White" 
+                                               FontWeight="SemiBold" 
+                                               FontSize="11"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     
                     <DataGridTemplateColumn Header="Actions" Width="200">
                         <DataGridTemplateColumn.CellTemplate>

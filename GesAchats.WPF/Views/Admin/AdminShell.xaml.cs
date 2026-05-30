@@ -41,6 +41,7 @@ public partial class AdminShell : Window
             "NeedsHistory" => _serviceProvider.GetRequiredService<NeedsHistory.AdminNeedsHistoryPage>(),
             "DeliveryNotes" => _serviceProvider.GetRequiredService<DeliveryNotes.AdminDeliveryNotesPage>(),
             "PriceAnalysis" => _serviceProvider.GetRequiredService<Acheteur.Analyses.PurchaseHistoryPage>(),
+            "Historique" => _serviceProvider.GetRequiredService<Acheteur.Analyses.PurchaseHistoryPage>(), // Pour le bouton retour depuis ProductStats
             "Invoices" => _serviceProvider.GetRequiredService<Comptable.Factures.InvoicePaymentTrackingPage>(),
             "Payments" => _serviceProvider.GetRequiredService<Comptable.Reglements.ReglementsPage>(),
             "ProductStats" => _serviceProvider.GetRequiredService<Acheteur.Analyses.ProductStatsPage>(),

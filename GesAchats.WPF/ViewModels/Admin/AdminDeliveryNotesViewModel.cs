@@ -7,7 +7,6 @@ using System.Windows.Input;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
@@ -18,6 +17,18 @@ public class AdminDeliveryNoteItemViewModel : BaseViewModel
     public string NumeroBL => DeliveryNote.DeliveryNumber;
     public string Fournisseur => DeliveryNote.Supplier?.CompanyName ?? "Inconnu";
     public string BCCorrespondant => DeliveryNote.PurchaseOrder?.OrderNumber ?? "Aucun";
+    public string StatusText => DeliveryNote.Status switch
+    {
+        "EnAttente" => "En attente",
+        "Valide" => "Validé",
+        _ => DeliveryNote.Status
+    };
+    public string StatusColor => DeliveryNote.Status switch
+    {
+        "EnAttente" => "#FFC107",
+        "Valide" => "#4CAF50",
+        _ => "#9E9E9E"
+    };
 
     public AdminDeliveryNoteItemViewModel(DeliveryNote deliveryNote)
     {
@@ -30,42 +41,62 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
 
-    private string _deliveryNumber = string.Empty;
-    private Supplier? _selectedSupplier;
-    private string _purchaseOrderNumber = string.Empty;
-    private DateTime? _receptionDate = DateTime.Today;
+    // Filter properties
+    private string _searchText = string.Empty;
+    private string _selectedFilterSupplier = "Tous";
+    private string _selectedStatus = "Tous";
+    private DateTime? _filterReceptionDate;
 
-    public string DeliveryNumber
+    private List<DeliveryNote> _allDeliveryNotes = new();
+
+    public string SearchText
     {
-        get => _deliveryNumber;
-        set => SetProperty(ref _deliveryNumber, value);
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+                FilterDeliveryNotes();
+        }
     }
 
-    public Supplier? SelectedSupplier
+    public string SelectedFilterSupplier
     {
-        get => _selectedSupplier;
-        set => SetProperty(ref _selectedSupplier, value);
+        get => _selectedFilterSupplier;
+        set
+        {
+            if (SetProperty(ref _selectedFilterSupplier, value))
+                FilterDeliveryNotes();
+        }
     }
 
-    public string PurchaseOrderNumber
+    public string SelectedStatus
     {
-        get => _purchaseOrderNumber;
-        set => SetProperty(ref _purchaseOrderNumber, value);
+        get => _selectedStatus;
+        set
+        {
+            if (SetProperty(ref _selectedStatus, value))
+                FilterDeliveryNotes();
+        }
     }
 
-    public DateTime? ReceptionDate
+    public DateTime? FilterReceptionDate
     {
-        get => _receptionDate;
-        set => SetProperty(ref _receptionDate, value);
+        get => _filterReceptionDate;
+        set
+        {
+            if (SetProperty(ref _filterReceptionDate, value))
+                FilterDeliveryNotes();
+        }
     }
 
-    public ObservableCollection<Supplier> Suppliers { get; } = new();
+    public ObservableCollection<string> SupplierOptions { get; } = new();
+    public ObservableCollection<string> StatusOptions { get; } = new() { "Tous", "En attente", "Validé" };
     public ObservableCollection<AdminDeliveryNoteItemViewModel> DeliveryNotes { get; } = new();
 
     public ICommand RefreshCommand { get; }
-    public ICommand AddDeliveryNoteCommand { get; }
     public ICommand ViewDetailsCommand { get; }
     public ICommand ViewJustificatifCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public AdminDeliveryNotesViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
@@ -74,9 +105,9 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         Title = "Réception des Bons de Livraison (BL)";
 
         RefreshCommand = new RelayCommand(async _ => await LoadData());
-        AddDeliveryNoteCommand = new RelayCommand(async _ => await ExecuteAddDeliveryNote(), _ => CanAdd());
         ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as AdminDeliveryNoteItemViewModel));
         ViewJustificatifCommand = new RelayCommand(p => ExecuteViewJustificatif(p as AdminDeliveryNoteItemViewModel));
+        ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
 
         _ = LoadInitialData();
     }
@@ -90,10 +121,12 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     private async Task LoadSuppliers()
     {
         var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-        Suppliers.Clear();
+        SupplierOptions.Clear();
+        SupplierOptions.Add("Tous");
         foreach (var s in suppliers.OrderBy(x => x.CompanyName))
         {
-            Suppliers.Add(s);
+            if (!SupplierOptions.Contains(s.CompanyName))
+                SupplierOptions.Add(s.CompanyName);
         }
     }
 
@@ -103,11 +136,8 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         try
         {
             var notes = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
-            DeliveryNotes.Clear();
-            foreach (var note in notes.OrderByDescending(n => n.ReceptionDate))
-            {
-                DeliveryNotes.Add(new AdminDeliveryNoteItemViewModel(note));
-            }
+            _allDeliveryNotes = notes.OrderByDescending(n => n.ReceptionDate).ToList();
+            FilterDeliveryNotes();
         }
         finally
         {
@@ -115,57 +145,52 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         }
     }
 
-    private bool CanAdd()
+    private void FilterDeliveryNotes()
     {
-        return !string.IsNullOrWhiteSpace(DeliveryNumber) && 
-               SelectedSupplier != null && 
-               ReceptionDate.HasValue;
+        var filtered = _allDeliveryNotes.AsEnumerable();
+
+        // Search filter: BL number OR PO number
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            filtered = filtered.Where(d =>
+                d.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                (d.PurchaseOrder != null && d.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        // Supplier filter
+        if (SelectedFilterSupplier != "Tous")
+        {
+            filtered = filtered.Where(d => d.Supplier != null && d.Supplier.CompanyName == SelectedFilterSupplier);
+        }
+
+        // Status filter
+        if (SelectedStatus != "Tous")
+        {
+            if (SelectedStatus == "En attente")
+                filtered = filtered.Where(d => d.Status == "EnAttente");
+            else if (SelectedStatus == "Validé")
+                filtered = filtered.Where(d => d.Status == "Valide");
+        }
+
+        // Date filter
+        if (FilterReceptionDate.HasValue)
+        {
+            filtered = filtered.Where(d => d.ReceptionDate.Date == FilterReceptionDate.Value.Date);
+        }
+
+        DeliveryNotes.Clear();
+        foreach (var note in filtered)
+        {
+            DeliveryNotes.Add(new AdminDeliveryNoteItemViewModel(note));
+        }
     }
 
-    private async Task ExecuteAddDeliveryNote()
+    private void ExecuteResetFilters()
     {
-        try
-        {
-            // Simple validation for PO if provided
-            PurchaseOrder? po = null;
-            if (!string.IsNullOrWhiteSpace(PurchaseOrderNumber))
-            {
-                var allPos = await _unitOfWork.PurchaseOrders.GetAllAsync();
-                po = allPos.FirstOrDefault(p => p.OrderNumber == PurchaseOrderNumber);
-                if (po == null)
-                {
-                    MessageBox.Show("Le numéro de bon de commande est introuvable.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-            }
-
-            var newNote = new DeliveryNote
-            {
-                DeliveryNumber = DeliveryNumber,
-                SupplierId = SelectedSupplier!.Id,
-                ReceptionDate = ReceptionDate!.Value,
-                PurchaseOrderId = po?.Id ?? 0, // In real scenario, we might need a default PO or allow 0
-                Status = "Recu",
-                CreatedAt = DateTime.UtcNow,
-                ReceivedById = 1 // Admin
-            };
-
-            await _unitOfWork.DeliveryNotes.AddAsync(newNote);
-            await _unitOfWork.CompleteAsync();
-
-            // Reset form
-            DeliveryNumber = string.Empty;
-            PurchaseOrderNumber = string.Empty;
-            SelectedSupplier = null;
-            ReceptionDate = DateTime.Today;
-
-            await LoadData();
-            MessageBox.Show("Bon de livraison ajouté avec succès.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Erreur lors de l'ajout : {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        SearchText = string.Empty;
+        SelectedFilterSupplier = "Tous";
+        SelectedStatus = "Tous";
+        FilterReceptionDate = null;
     }
 
     private void ExecuteViewDetails(AdminDeliveryNoteItemViewModel? item)

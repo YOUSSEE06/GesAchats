@@ -28,15 +28,8 @@ public class AdminNeedHistoryItemViewModel : BaseViewModel
         
         (StatusText, StatusColor) = need.Status switch
         {
-            NeedStatus.Draft => ("En attente", "#9E9E9E"),
-            NeedStatus.ToValidate => ("À Valider", "#FF9800"),
             NeedStatus.TransmittedToPurchasing => ("Transmis", "#2196F3"),
-            NeedStatus.InPurchase => ("En cours", "#3B82F6"),
-            NeedStatus.Validated => ("Complété", "#4CAF50"),
-            NeedStatus.Cancelled => ("Annulé", "#9E9E9E"),
-            NeedStatus.Rejected => ("Rejeté", "#F44336"),
-            NeedStatus.Relaunched => ("Relancé", "#673AB7"),
-            _ => (need.Status.ToString(), "#000000")
+            _ => ("En cours", "#3B82F6")
         };
     }
 }
@@ -52,7 +45,7 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
 
     public ObservableCollection<string> StatusOptions { get; } = new() 
     { 
-        "Tous", "En attente", "À Valider", "Transmis", "En cours", "Complété", "Annulé", "Rejeté", "Relancé" 
+        "Tous", "En cours", "Transmis" 
     };
 
     public string SearchNumero
@@ -123,15 +116,9 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
             {
                 var statusText = n.Status switch
                 {
-                    NeedStatus.Draft => "En attente",
-                    NeedStatus.ToValidate => "À Valider",
-                    NeedStatus.TransmittedToPurchasing => "Transmis",
                     NeedStatus.InPurchase => "En cours",
-                    NeedStatus.Validated => "Complété",
-                    NeedStatus.Cancelled => "Annulé",
-                    NeedStatus.Rejected => "Rejeté",
-                    NeedStatus.Relaunched => "Relancé",
-                    _ => n.Status.ToString()
+                    NeedStatus.TransmittedToPurchasing => "Transmis",
+                    _ => "En cours" // Map other statuses to "En cours" for filter? Or keep them as is?
                 };
                 return statusText == SelectedStatus;
             });

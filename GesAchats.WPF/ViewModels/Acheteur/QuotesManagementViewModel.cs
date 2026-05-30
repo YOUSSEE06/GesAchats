@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Threading;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.Services;
@@ -69,6 +70,19 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private int? _filterSupplierId;
     private string _filterSupplierName = string.Empty;
     private string _filterStatus = "Tous";
+    
+    // Debouncing
+    private readonly DispatcherTimer? _filterDebounceTimer;
+    private const int FilterDebounceMs = 300;
+    
+    // Pagination
+    private List<Quotation> _allFilteredQuotations = new List<Quotation>();
+    private int _currentPage = 1;
+    private int _itemsPerPage = 20;
+    private int _totalPages = 1;
+    
+    // Statistics loading
+    private bool _isLoadingStats = false;
 
     public ObservableCollection<Need> PendingNeeds { get; } = new ObservableCollection<Need>();
     public ObservableCollection<ArticleSelectionViewModel> ArticlesToQuote { get; } = new ObservableCollection<ArticleSelectionViewModel>();
@@ -128,7 +142,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         {
             if (SetProperty(ref _filterReference, value))
             {
-                ApplyFilters();
+                DebounceApplyFilters();
             }
         }
     }
@@ -164,11 +178,12 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         {
             if (SetProperty(ref _filterSupplierName, value))
             {
-                ApplyFilters();
+                DebounceApplyFilters();
             }
         }
     }
 
+    // Statistics properties
     private int _totalDevis;
     public int TotalDevis
     {
@@ -224,7 +239,48 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         get => _fournisseurPlusSollicite;
         set => SetProperty(ref _fournisseurPlusSollicite, value);
     }
+    
+    // New properties for stats loading and pagination
+    public bool IsLoadingStats
+    {
+        get => _isLoadingStats;
+        set => SetProperty(ref _isLoadingStats, value);
+    }
+    
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                UpdatePagedQuotations();
+            }
+        }
+    }
+    
+    public int ItemsPerPage
+    {
+        get => _itemsPerPage;
+        set
+        {
+            if (SetProperty(ref _itemsPerPage, value))
+            {
+                CalculateTotalPages();
+                CurrentPage = 1;
+            }
+        }
+    }
+    
+    public int TotalPages
+    {
+        get => _totalPages;
+        set => SetProperty(ref _totalPages, value);
+    }
+    
+    public ObservableCollection<int> ItemsPerPageOptions { get; } = new ObservableCollection<int> {10, 20, 50, 100};
 
+    // Commands
     public ICommand RefreshCommand { get; }
     public ICommand OpenCreateDialogCommand { get; }
     public ICommand CloseCreateDialogCommand { get; }
@@ -236,6 +292,10 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     public ICommand ChiffrerCommand { get; }
     public ICommand NavigateToDashboardCommand { get; }
     public ICommand ClearFiltersCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand LastPageCommand { get; }
 
     public QuotesManagementViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService, INavigationService navigationService)
     {
@@ -244,7 +304,16 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         _pdfService = pdfService;
         _navigationService = navigationService;
         Title = "Gestion des Devis";
+        
+        // Initialize debounce timer
+        _filterDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(FilterDebounceMs) };
+        _filterDebounceTimer.Tick += (s, e) =>
+        {
+            _filterDebounceTimer.Stop();
+            ApplyFilters();
+        };
 
+        // Initialize commands
         RefreshCommand = new RelayCommand(async _ => await LoadInitialData());
         OpenCreateDialogCommand = new RelayCommand(_ => OpenCreateDialog());
         CloseCreateDialogCommand = new RelayCommand(_ => CloseCreateDialog());
@@ -256,6 +325,10 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         ChiffrerCommand = new RelayCommand(p => ExecuteChiffrer(p as Quotation));
         NavigateToDashboardCommand = new RelayCommand(_ => _navigationService.NavigateTo("Dashboard"));
         ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
+        NextPageCommand = new RelayCommand(_ => { if (CurrentPage < TotalPages) CurrentPage++; }, _ => CurrentPage < TotalPages);
+        PreviousPageCommand = new RelayCommand(_ => { if (CurrentPage > 1) CurrentPage--; }, _ => CurrentPage > 1);
+        FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
+        LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
 
         _ = LoadInitialData();
     }
@@ -448,8 +521,12 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
 
             SelectedFilterSupplier = "Tous";
             FilterStatus = "Tous";
-            CalculateStatistics();
+            
+            // Apply filters and load page first
             ApplyFilters();
+            
+            // Calculate stats in background
+            _ = CalculateStatisticsAsync();
         }
         finally
         {
@@ -457,37 +534,64 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
     }
 
+    private async Task CalculateStatisticsAsync()
+    {
+        IsLoadingStats = true;
+        await Task.Run(() =>
+        {
+            // Calculate statistics on background thread
+            var total = AllQuotations.Count;
+            var envoyes = AllQuotations.Count;
+            var reponse = AllQuotations.Count(q => q.ResponseDate.HasValue);
+            var acceptes = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
+            var valides = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
+            var montant = AllQuotations.Sum(q => q.TotalAmountTTC);
+            var moyenne = total > 0 ? montant / total : 0;
+            
+            string fournisseur = "-";
+            if (AllQuotations.Any())
+            {
+                var supplierStats = AllQuotations
+                    .Where(q => q.Supplier != null)
+                    .GroupBy(q => q.Supplier.CompanyName)
+                    .OrderByDescending(g => g.Count())
+                    .FirstOrDefault();
+                
+                fournisseur = supplierStats != null 
+                    ? $"{supplierStats.Key} ({supplierStats.Count()} devis)" 
+                    : "-";
+            }
+
+            // Update on UI thread
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                TotalDevis = total;
+                DevisEnvoyes = envoyes;
+                ReponseRecue = reponse;
+                DevisAcceptes = acceptes;
+                DevisValides = valides;
+                MontantTotal = montant;
+                MoyenneParDevis = moyenne;
+                FournisseurPlusSollicite = fournisseur;
+                IsLoadingStats = false;
+            });
+        });
+    }
+
     private void CalculateStatistics()
     {
-        TotalDevis = AllQuotations.Count;
-        DevisEnvoyes = AllQuotations.Count;
-        ReponseRecue = AllQuotations.Count(q => q.ResponseDate.HasValue);
-        DevisAcceptes = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
-        DevisValides = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
-        MontantTotal = AllQuotations.Sum(q => q.TotalAmountTTC);
-        MoyenneParDevis = TotalDevis > 0 ? MontantTotal / TotalDevis : 0;
-        
-        if (AllQuotations.Any())
-        {
-            var supplierStats = AllQuotations
-                .Where(q => q.Supplier != null)
-                .GroupBy(q => q.Supplier.CompanyName)
-                .OrderByDescending(g => g.Count())
-                .FirstOrDefault();
-            
-            FournisseurPlusSollicite = supplierStats != null 
-                ? $"{supplierStats.Key} ({supplierStats.Count()} devis)" 
-                : "-";
-        }
-        else
-        {
-            FournisseurPlusSollicite = "-";
-        }
+        _ = CalculateStatisticsAsync();
+    }
+    
+    private void DebounceApplyFilters()
+    {
+        _filterDebounceTimer?.Stop();
+        _filterDebounceTimer?.Start();
     }
 
     private void ApplyFilters()
     {
-        FilteredQuotations.Clear();
+        // Store all filtered results first
         var filtered = AllQuotations.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(FilterReference))
@@ -510,10 +614,33 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             filtered = filtered.Where(q => q.Status == FilterStatus);
         }
 
-        foreach (var q in filtered)
+        _allFilteredQuotations = filtered.ToList();
+        
+        // Reset to first page
+        CurrentPage = 1;
+        CalculateTotalPages();
+        UpdatePagedQuotations();
+    }
+    
+    private void CalculateTotalPages()
+    {
+        TotalPages = (int)Math.Ceiling((double)_allFilteredQuotations.Count / ItemsPerPage);
+        if (TotalPages < 1) TotalPages = 1;
+    }
+    
+    private void UpdatePagedQuotations()
+    {
+        FilteredQuotations.Clear();
+        var start = (CurrentPage - 1) * ItemsPerPage;
+        var pageItems = _allFilteredQuotations.Skip(start).Take(ItemsPerPage);
+        
+        foreach (var q in pageItems)
         {
             FilteredQuotations.Add(q);
         }
+        
+        // Notify command can execute changes
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private void ClearFilters()

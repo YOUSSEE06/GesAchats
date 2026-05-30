@@ -26,11 +26,25 @@ public class PurchaseHistoryViewModel : BaseViewModel
     private readonly IPriceAnalysisService _priceService;
     private readonly INavigationService _navigationService;
     private ProductHistoryViewModel? _selectedProduct;
+    private string _searchText = string.Empty;
+    private List<ProductHistoryViewModel> _allProducts = new();
 
     public ObservableCollection<ProductHistoryViewModel> Products { get; } = new ObservableCollection<ProductHistoryViewModel>();
     public ObservableCollection<PurchaseOrderDetail> DetailedHistory { get; } = new ObservableCollection<PurchaseOrderDetail>();
 
     public ICommand NavigateToStatsCommand { get; }
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                FilterProducts();
+            }
+        }
+    }
 
     public ProductHistoryViewModel? SelectedProduct
     {
@@ -66,6 +80,7 @@ public class PurchaseHistoryViewModel : BaseViewModel
         try
         {
             var products = await _unitOfWork.Products.GetAllAsync();
+            _allProducts.Clear();
             Products.Clear();
             foreach (var p in products)
             {
@@ -75,12 +90,30 @@ public class PurchaseHistoryViewModel : BaseViewModel
                     PurchaseCount = history.Count(),
                     AveragePrice = history.Any() ? history.Average(x => x.UnitPriceHT) : 0
                 };
+                _allProducts.Add(vm);
                 Products.Add(vm);
             }
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void FilterProducts()
+    {
+        var filtered = _allProducts.AsEnumerable();
+        
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            filtered = filtered.Where(p => 
+                p.Product.Designation.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+        }
+        
+        Products.Clear();
+        foreach (var p in filtered)
+        {
+            Products.Add(p);
         }
     }
 

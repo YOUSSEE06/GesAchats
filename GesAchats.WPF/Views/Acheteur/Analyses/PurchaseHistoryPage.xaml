@@ -31,10 +31,14 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="ARTICLES" FontWeight="Bold" Foreground="#666" Margin="5,0,0,10"/>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding Products}" 
+                    <TextBox Grid.Row="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                             Margin="5,0,5,10" Padding="8" VerticalContentAlignment="Center" 
+                             Tag="🔍 Rechercher un article..."/>
+                    <ListBox Grid.Row="2" ItemsSource="{Binding Products}" 
                              SelectedItem="{Binding SelectedProduct}"
                              Background="Transparent" BorderThickness="0">
                         <ListBox.ItemTemplate>

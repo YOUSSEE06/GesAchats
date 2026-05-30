@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
+using GesAchats.WPF.Services;
 using GesAchats.WPF.ViewModels.Base;
 
 namespace GesAchats.WPF.ViewModels.Admin;
@@ -44,6 +45,7 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPriceAnalysisService _priceAnalysisService;
+    private readonly INavigationService _navigationService;
 
     private ObservableCollection<ProductPriceSummaryViewModel> _products = new();
     public ObservableCollection<ProductPriceSummaryViewModel> Products
@@ -75,10 +77,11 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
     public ICommand RefreshCommand { get; }
     public ICommand ViewStatsCommand { get; }
 
-    public AdminPriceAnalysisViewModel(IUnitOfWork unitOfWork, IPriceAnalysisService priceAnalysisService)
+    public AdminPriceAnalysisViewModel(IUnitOfWork unitOfWork, IPriceAnalysisService priceAnalysisService, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
         _priceAnalysisService = priceAnalysisService;
+        _navigationService = navigationService;
         Title = "Historique des Prix et Achats";
 
         RefreshCommand = new RelayCommand(async _ => await LoadData());
@@ -147,6 +150,6 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
     private void ExecuteViewStats()
     {
         if (SelectedProduct == null) return;
-        MessageBox.Show($"Statistiques détaillées pour {SelectedProduct.Name} à implémenter.", "Statistiques", MessageBoxButton.OK, MessageBoxImage.Information);
+        _navigationService.NavigateTo("ProductStats", SelectedProduct.Product);
     }
 }

@@ -254,7 +254,8 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         {
             string searchInv = SearchInvoiceNumber.ToLower();
             filtered = filtered.Where(p => 
-                p.Invoice != null && p.Invoice.ExternalInvoiceNumber != null && p.Invoice.ExternalInvoiceNumber.ToLower().Contains(searchInv)
+                (p.Invoice != null && p.Invoice.ExternalInvoiceNumber != null && p.Invoice.ExternalInvoiceNumber.ToLower().Contains(searchInv)) ||
+                (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(searchInv))
             );
         }
 
