@@ -55,7 +55,6 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
         set => SetProperty(ref _selectedSuppliers, value);
     }
 
-    public ICommand RefreshCommand { get; }
     public ICommand CompareCommand { get; }
     public ICommand GenerateOrderCommand { get; }
 
@@ -65,7 +64,6 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
         _navigationService = navigationService;
         Title = "Analyse Comparative Avancée";
 
-        RefreshCommand = new RelayCommand(async _ => await LoadQuotations());
         CompareCommand = new RelayCommand(_ => ExecuteComparison());
         GenerateOrderCommand = new RelayCommand(p => ExecuteGenerateOrder(p as Quotation));
 

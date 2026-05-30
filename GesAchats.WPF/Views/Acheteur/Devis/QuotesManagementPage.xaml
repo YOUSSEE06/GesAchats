@@ -179,8 +179,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Margin="0,0,16,0">
-                            <TextBlock Text="Référence Devis" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding FilterReference, UpdateSourceTrigger=PropertyChanged}" 
+                            <TextBlock Text="Rechercher " FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource ModernTextBox}"
                                      Height="36"
                                      Background="White"
@@ -216,12 +216,11 @@
                             </ComboBox>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="0,0,16,0">
-                            <TextBlock Text="Rechercher fournisseur" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding FilterSupplierName, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource ModernTextBox}"
-                                     Height="36"
-                                     Background="White"
-                                     Foreground="Black"/>
+                            <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>
+                            <DatePicker SelectedDate="{Binding FilterDate, UpdateSourceTrigger=PropertyChanged}"
+                                        Height="36"
+                                        Background="White"
+                                        Foreground="Black"/>
                         </StackPanel>
                         <StackPanel Grid.Column="3" Margin="0,0,16,0">
                             <TextBlock Text="Statut" FontSize="12" FontWeight="SemiBold" Foreground="#757575" Margin="0,0,0,4"/>

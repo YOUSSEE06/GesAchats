@@ -100,6 +100,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -123,7 +124,12 @@
                     <DatePicker SelectedDate="{Binding SelectedDate}" Padding="8,5"/>
                 </StackPanel>
 
-                <Button Grid.Column="3" Content="🔄 Réinitialiser" Command="{Binding ResetFiltersCommand}" Padding="15,8" Background="#1A3A52" Foreground="White" FontSize="14" FontWeight="SemiBold" Height="40" VerticalAlignment="Bottom"/>
+                <StackPanel Grid.Column="3" Margin="10,0">
+                    <TextBlock Text="Recherche" FontSize="12" Foreground="#616161"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5"/>
+                </StackPanel>
+
+                <Button Grid.Column="4" Content="🔄 Réinitialiser" Command="{Binding ResetFiltersCommand}" Padding="15,8" Background="#1A3A52" Foreground="White" FontSize="14" FontWeight="SemiBold" Height="40" VerticalAlignment="Bottom"/>
             </Grid>
         </Border>
 

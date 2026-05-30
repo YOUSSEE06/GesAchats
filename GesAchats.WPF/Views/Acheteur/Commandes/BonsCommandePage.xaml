@@ -26,8 +26,6 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" 
-                            Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3" Margin="0,0,10,0"/>
                     <Button Command="{Binding ShowAddFormCommand}" Content="&#x2795; Ajouter un Bon de Commande" 
                             Padding="15,8" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"
                             Visibility="{Binding IsHistoryView, Converter={StaticResource BooleanToVisibilityConverter}}"/>

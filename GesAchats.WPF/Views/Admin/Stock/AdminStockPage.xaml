@@ -76,11 +76,6 @@
                           SelectedItem="{Binding SelectedStatus}"
                           Width="150" Padding="8"/>
             </StackPanel>
-
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                <Button Content="🔄 Actualiser" Command="{Binding RefreshCommand}" 
-                        Padding="15,8" Background="Transparent"/>
-            </StackPanel>
         </DockPanel>
 
         <!-- Stock Table -->

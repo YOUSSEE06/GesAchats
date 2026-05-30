@@ -22,15 +22,10 @@
         <!-- Header -->
         <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#x1f4b5;" FontSize="24" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <TextBlock Text="Saisie des Prix Fournisseurs" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
-                <Button Grid.Column="1" Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3"/>
             </Grid>
         </Border>
 
