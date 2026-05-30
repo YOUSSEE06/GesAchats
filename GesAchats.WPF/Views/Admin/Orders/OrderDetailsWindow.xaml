@@ -62,9 +62,10 @@
                     <DataGridTextColumn Header="Produit" Binding="{Binding Product.Designation}" Width="*"/>
                     <DataGridTextColumn Header="Quantité" Binding="{Binding Quantity}" Width="100"/>
                     <DataGridTextColumn Header="P.U. HT" Binding="{Binding UnitPriceHT, StringFormat='N2'}" Width="120"/>
+                    <DataGridTextColumn Header="Total HT" Binding="{Binding TotalHT, StringFormat='N2'}" Width="120"/>
                     <DataGridTextColumn Header="TVA" Binding="{Binding Path=., Converter={StaticResource StaticValueConverter}, ConverterParameter='20%'}" Width="80"/>
                     <DataGridTextColumn Header="P.U. TTC" Binding="{Binding UnitPriceTTC, StringFormat='N2'}" Width="120"/>
-                    <DataGridTextColumn Header="Total TTC" Binding="{Binding UnitPriceTTC, StringFormat='N2'}" Width="120"/> <!-- À corriger si Total existait par ligne -->
+                    <DataGridTextColumn Header="Total TTC" Binding="{Binding TotalTTC, StringFormat='N2'}" Width="120"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

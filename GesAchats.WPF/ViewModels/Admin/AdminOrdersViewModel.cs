@@ -20,6 +20,7 @@ public class AdminOrderItemViewModel : BaseViewModel
     public string SupplierName => PurchaseOrder.Supplier?.CompanyName ?? "Inconnu";
     public string QuotationRef => PurchaseOrder.Quotation?.ReferenceNumber ?? "N/A";
     public string TotalTTC => $"{PurchaseOrder.TotalAmountTTC:N2} MAD";
+    public string Status => PurchaseOrder.Status;
 
     public AdminOrderItemViewModel(PurchaseOrder po)
     {
@@ -32,27 +33,27 @@ public class AdminOrdersViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
 
-    private string _searchOrderNumber = string.Empty;
-    private string _searchSupplier = string.Empty;
-    private string _searchQuotationRef = string.Empty;
+    private string _searchText = string.Empty;
+    private string _selectedSupplier = string.Empty;
+    private string _selectedStatus = string.Empty;
     private DateTime? _searchDate;
 
-    public string SearchOrderNumber
+    public string SearchText
     {
-        get => _searchOrderNumber;
-        set { SetProperty(ref _searchOrderNumber, value); FilterData(); }
+        get => _searchText;
+        set { SetProperty(ref _searchText, value); FilterData(); }
     }
 
-    public string SearchSupplier
+    public string SelectedSupplier
     {
-        get => _searchSupplier;
-        set { SetProperty(ref _searchSupplier, value); FilterData(); }
+        get => _selectedSupplier;
+        set { SetProperty(ref _selectedSupplier, value); FilterData(); }
     }
 
-    public string SearchQuotationRef
+    public string SelectedStatus
     {
-        get => _searchQuotationRef;
-        set { SetProperty(ref _searchQuotationRef, value); FilterData(); }
+        get => _selectedStatus;
+        set { SetProperty(ref _selectedStatus, value); FilterData(); }
     }
 
     public DateTime? SearchDate
@@ -61,13 +62,23 @@ public class AdminOrdersViewModel : BaseViewModel
         set { SetProperty(ref _searchDate, value); FilterData(); }
     }
 
+    public ObservableCollection<string> Statuses { get; } = new()
+    {
+        "", // Tous les statuts
+        PurchaseOrderStatus.Pending,
+        PurchaseOrderStatus.Validated,
+        PurchaseOrderStatus.Cancelled
+    };
+
+    public ObservableCollection<string> Suppliers { get; } = new();
+
+
     private ObservableCollection<AdminOrderItemViewModel> _allOrders = new();
     public ObservableCollection<AdminOrderItemViewModel> Orders { get; } = new();
 
-    public ICommand RefreshCommand { get; }
-    public ICommand AddOrderCommand { get; }
     public ICommand InspectCommand { get; }
     public ICommand PrintPdfCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public AdminOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
@@ -75,10 +86,9 @@ public class AdminOrdersViewModel : BaseViewModel
         _serviceProvider = serviceProvider;
         Title = "Gestion des Bons de Commande";
 
-        RefreshCommand = new RelayCommand(async _ => await LoadData());
-        AddOrderCommand = new RelayCommand(_ => ExecuteAddOrder());
         InspectCommand = new RelayCommand(p => ExecuteInspect(p as AdminOrderItemViewModel));
         PrintPdfCommand = new RelayCommand(p => ExecutePrintPdf(p as AdminOrderItemViewModel));
+        ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
 
         _ = LoadData();
     }
@@ -94,6 +104,20 @@ public class AdminOrdersViewModel : BaseViewModel
             {
                 _allOrders.Add(new AdminOrderItemViewModel(po));
             }
+
+            // Populate unique suppliers
+            Suppliers.Clear();
+            Suppliers.Add(""); // Tous les fournisseurs
+            var uniqueSuppliers = _allOrders
+                .Select(x => x.SupplierName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .OrderBy(x => x);
+            foreach (var supplier in uniqueSuppliers)
+            {
+                Suppliers.Add(supplier);
+            }
+
             FilterData();
         }
         finally
@@ -106,15 +130,23 @@ public class AdminOrdersViewModel : BaseViewModel
     {
         var filtered = _allOrders.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(SearchOrderNumber))
-            filtered = filtered.Where(x => x.OrderNumber.Contains(SearchOrderNumber, StringComparison.OrdinalIgnoreCase));
+        // Filtre par texte (N° BC / Réf. Devis)
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            filtered = filtered.Where(x => 
+                x.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || 
+                x.QuotationRef.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+        }
 
-        if (!string.IsNullOrWhiteSpace(SearchSupplier))
-            filtered = filtered.Where(x => x.SupplierName.Contains(SearchSupplier, StringComparison.OrdinalIgnoreCase));
+        // Filtre par fournisseur
+        if (!string.IsNullOrWhiteSpace(SelectedSupplier))
+            filtered = filtered.Where(x => x.SupplierName == SelectedSupplier);
 
-        if (!string.IsNullOrWhiteSpace(SearchQuotationRef))
-            filtered = filtered.Where(x => x.QuotationRef.Contains(SearchQuotationRef, StringComparison.OrdinalIgnoreCase));
+        // Filtre par statut
+        if (!string.IsNullOrWhiteSpace(SelectedStatus))
+            filtered = filtered.Where(x => x.Status == SelectedStatus);
 
+        // Filtre par date
         if (SearchDate.HasValue)
             filtered = filtered.Where(x => x.PurchaseOrder.OrderDate.Date == SearchDate.Value.Date);
 
@@ -125,9 +157,12 @@ public class AdminOrdersViewModel : BaseViewModel
         }
     }
 
-    private void ExecuteAddOrder()
+    private void ResetFilters()
     {
-        MessageBox.Show("Fonctionnalité d'ajout de Bon de Commande (Admin) à implémenter.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        SearchText = string.Empty;
+        SelectedSupplier = string.Empty;
+        SelectedStatus = string.Empty;
+        SearchDate = null;
     }
 
     private async void ExecuteInspect(AdminOrderItemViewModel? item)

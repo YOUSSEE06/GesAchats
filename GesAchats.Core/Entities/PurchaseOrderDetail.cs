@@ -26,4 +26,10 @@ public class PurchaseOrderDetail
     public decimal UnitPriceHT { get; set; }
 
     public decimal UnitPriceTTC { get; set; }
+
+    [NotMapped]
+    public decimal TotalHT => Quantity * UnitPriceHT;
+
+    [NotMapped]
+    public decimal TotalTTC => Quantity * UnitPriceTTC;
 }
