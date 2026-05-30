@@ -179,8 +179,6 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
                 (i.Invoice.InvoiceNumber != null && i.Invoice.InvoiceNumber.ToLower().Contains(search))
             );
         }
-            );
-        }
 
         FilteredInvoices.Clear();
         foreach (var invoice in filtered)
