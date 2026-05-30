@@ -26,8 +26,6 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Command="{Binding RefreshCommand}" Content="&#x21bb; Actualiser" 
-                            Padding="15,8" Background="White" BorderBrush="#2196F3" BorderThickness="1" Foreground="#2196F3" Margin="0,0,10,0"/>
                     <Button Command="{Binding ShowAddFormCommand}" Content="&#x2795; Ajouter un Bon de Livraison" 
                             Padding="15,8" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"
                             Visibility="{Binding IsHistoryView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -52,23 +50,28 @@
                 <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
                         <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="N° Bon de Livraison" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="150" Text="{Binding SearchBLNumber, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                            <TextBlock Text="Recherche" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                            <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
                         </StackPanel>
                         
                         <StackPanel Margin="0,0,20,0">
                             <TextBlock Text="Fournisseur" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="150" Text="{Binding SearchSupplier, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                            <ComboBox ItemsSource="{Binding SupplierOptions}" SelectedItem="{Binding SelectedSupplier}" Width="180" Padding="5"/>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="N° Bon de Commande" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                            <TextBox Width="150" Text="{Binding SearchBCNumber, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                            <TextBlock Text="Statut" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                            <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="150" Padding="5"/>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,20,0">
                             <TextBlock Text="Date de réception" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
                             <DatePicker SelectedDate="{Binding SearchDate}" Width="150"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,0">
+                            <TextBlock Text=" " FontSize="11" Foreground="White" Margin="0,0,0,3"/>
+                            <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="15,6" Background="#757575" Foreground="White" BorderThickness="0"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -82,6 +85,40 @@
                             <DataGridTextColumn Header="N° Bon de Livraison" Binding="{Binding DeliveryNumber}" Width="*"/>
                             <DataGridTextColumn Header="Fournisseur (Société)" Binding="{Binding Supplier.CompanyName}" Width="1.5*"/>
                             <DataGridTextColumn Header="BC correspondant" Binding="{Binding PurchaseOrder.OrderNumber}" Width="*"/>
+                            <DataGridTemplateColumn Header="Statut" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="EnAttente">
+                                                            <Setter Property="Background" Value="#FFC107"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Valide">
+                                                            <Setter Property="Background" Value="#4CAF50"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Foreground="White" FontWeight="SemiBold" FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="EnAttente">
+                                                                <Setter Property="Text" Value="En attente"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Valide">
+                                                                <Setter Property="Text" Value="Validé"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Actions" Width="135">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>

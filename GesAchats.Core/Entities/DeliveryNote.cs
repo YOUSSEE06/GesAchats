@@ -38,7 +38,7 @@ public class DeliveryNote
     public string? Observations { get; set; }
 
     [MaxLength(50)]
-    public string Status { get; set; } = "Recu"; // EnAttente, Recu, Partiel, Incomplet
+    public string Status { get; set; } = "EnAttente"; // EnAttente (waiting for invoice), Valide (invoice created)
 
     public string? FilePath { get; set; } // Chemin du PDF/IMG du BL
 

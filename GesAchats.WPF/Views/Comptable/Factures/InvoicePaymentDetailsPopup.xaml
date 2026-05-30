@@ -148,33 +148,41 @@
         </Border>
 
         <!-- Payments Table -->
-        <Border Grid.Row="1" Background="White" CornerRadius="12" Margin="0,25,0,0" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
+        <Border Grid.Row="1" Background="#4A919E" CornerRadius="12" Margin="0,25,0,0" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Padding="20,15" Background="#FAFAFA" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0">
-                    <TextBlock Text="📋 Règlements Associés" FontSize="18" FontWeight="SemiBold" Foreground="#1A3A52"/>
+                <Border Padding="20,15" Background="#3A717E" BorderBrush="#4A919E" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0">
+                    <TextBlock Text="📋 Règlements Associés" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
                 </Border>
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding Payments}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="15"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0" Background="Transparent" HeadersVisibility="Column">
                     <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="#FAFAFA"/>
-                            <Setter Property="Foreground" Value="#616161"/>
+                            <Setter Property="Background" Value="#3A717E"/>
+                            <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                             <Setter Property="FontSize" Value="13"/>
                             <Setter Property="Padding" Value="10,12"/>
-                            <Setter Property="BorderBrush" Value="#F0F0F0"/>
+                            <Setter Property="BorderBrush" Value="#4A919E"/>
                             <Setter Property="BorderThickness" Value="0,0,0,1"/>
                         </Style>
                     </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="#5AA1AE"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="White"/>
                             <Setter Property="Padding" Value="10,12"/>
                             <Setter Property="BorderThickness" Value="0"/>
                         </Style>

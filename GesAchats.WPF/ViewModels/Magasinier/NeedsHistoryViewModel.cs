@@ -55,8 +55,8 @@ public class NeedHistoryItemViewModel : BaseViewModel
         {
             NeedStatus.Draft => ("En attente", "#9E9E9E"),
             NeedStatus.ToValidate => ("À Valider", "#607D8B"),
-            NeedStatus.TransmittedToPurchasing => ("Transmis", "#2196F3"),
-            NeedStatus.InPurchase => ("En cours", "#FFC107"),
+            NeedStatus.TransmittedToPurchasing => ("transmit", "#2196F3"),
+            NeedStatus.InPurchase => ("encours", "#FFC107"),
             NeedStatus.Validated => ("Complété", "#4CAF50"),
             NeedStatus.Cancelled => ("Annulé", "#F44336"),
             NeedStatus.Rejected => ("Annulé", "#F44336"),
@@ -88,7 +88,7 @@ public class NeedsHistoryViewModel : BaseViewModel
     private DateTime? _exactDate = null;
 
     public ObservableCollection<NeedHistoryItemViewModel> Needs { get; } = new ObservableCollection<NeedHistoryItemViewModel>();
-    public ObservableCollection<string> StatusFilterOptions { get; } = new ObservableCollection<string> { "Tous", "Transmis", "En cours", "Annulé" };
+    public ObservableCollection<string> StatusFilterOptions { get; } = new ObservableCollection<string> { "Tous", "transmit", "encours", "Annulé" };
 
     public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterNeeds(); } }
     public string SelectedStatus { get => _selectedStatus; set { if (SetProperty(ref _selectedStatus, value)) FilterNeeds(); } }
@@ -152,8 +152,8 @@ public class NeedsHistoryViewModel : BaseViewModel
         {
             var targetStatus = SelectedStatus switch
             {
-                "Transmis" => new[] { NeedStatus.TransmittedToPurchasing },
-                "En cours" => new[] { NeedStatus.InPurchase },
+                "transmit" => new[] { NeedStatus.TransmittedToPurchasing },
+                "encours" => new[] { NeedStatus.InPurchase },
                 "Annulé" => new[] { NeedStatus.Cancelled, NeedStatus.Rejected },
                 _ => Array.Empty<NeedStatus>()
             };

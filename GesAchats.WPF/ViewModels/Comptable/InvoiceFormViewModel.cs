@@ -223,6 +223,18 @@ public class InvoiceFormViewModel : BaseViewModel
             }
 
             await _unitOfWork.Invoices.AddAsync(Invoice);
+            
+            // Update BL status to Valide
+            if (SelectedDeliveryNote != null)
+            {
+                var blToUpdate = await _unitOfWork.DeliveryNotes.GetByIdAsync(SelectedDeliveryNote.Id);
+                if (blToUpdate != null)
+                {
+                    blToUpdate.Status = "Valide";
+                    blToUpdate.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+            
             await _unitOfWork.CompleteAsync();
             
             _navigationService.NavigateTo("Factures");

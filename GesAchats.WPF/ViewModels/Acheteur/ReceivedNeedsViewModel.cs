@@ -25,10 +25,28 @@ public class ReceivedNeedItemViewModel : BaseViewModel
 
     public string StatusColor => Need.Status switch
     {
+        NeedStatus.Draft => "#9E9E9E",
+        NeedStatus.ToValidate => "#FF9800",
         NeedStatus.TransmittedToPurchasing => "#2196F3",
-        NeedStatus.InPurchase => "#FFC107",
         NeedStatus.Validated => "#4CAF50",
+        NeedStatus.InPurchase => "#FFC107",
+        NeedStatus.Cancelled => "#F44336",
+        NeedStatus.Rejected => "#F44336",
+        NeedStatus.Relaunched => "#E91E63",
         _ => "#9E9E9E"
+    };
+
+    public string StatusText => Need.Status switch
+    {
+        NeedStatus.Draft => "Brouillon",
+        NeedStatus.ToValidate => "À valider",
+        NeedStatus.TransmittedToPurchasing => "transmit",
+        NeedStatus.Validated => "Validé",
+        NeedStatus.InPurchase => "encours",
+        NeedStatus.Cancelled => "Annulé",
+        NeedStatus.Rejected => "Rejeté",
+        NeedStatus.Relaunched => "Relancé",
+        _ => "Inconnu"
     };
 }
 
@@ -41,6 +59,7 @@ public class ReceivedNeedsViewModel : BaseViewModel
     private List<ReceivedNeedItemViewModel> _allNeeds = new List<ReceivedNeedItemViewModel>();
 
     public ObservableCollection<ReceivedNeedItemViewModel> Needs { get; } = new ObservableCollection<ReceivedNeedItemViewModel>();
+    public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "encours", "transmit" };
 
     private string _searchNumeroDemande = string.Empty;
     public string SearchNumeroDemande
@@ -62,6 +81,19 @@ public class ReceivedNeedsViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _searchDate, value))
+            {
+                FilterNeeds();
+            }
+        }
+    }
+
+    private string _selectedStatus = "Tous";
+    public string SelectedStatus
+    {
+        get => _selectedStatus;
+        set
+        {
+            if (SetProperty(ref _selectedStatus, value))
             {
                 FilterNeeds();
             }
@@ -127,6 +159,13 @@ public class ReceivedNeedsViewModel : BaseViewModel
                 n.Need.DateTransmission.HasValue && 
                 n.Need.DateTransmission.Value.Date == SearchDate.Value.Date);
         }
+
+        if (SelectedStatus != "Tous")
+        {
+            filtered = filtered.Where(n => 
+                (SelectedStatus == "encours" && n.Need.Status == NeedStatus.InPurchase) || 
+                (SelectedStatus == "transmit" && n.Need.Status == NeedStatus.TransmittedToPurchasing));
+        }
         
         Needs.Clear();
         foreach (var n in filtered)
@@ -139,6 +178,7 @@ public class ReceivedNeedsViewModel : BaseViewModel
     {
         SearchNumeroDemande = string.Empty;
         SearchDate = null;
+        SelectedStatus = "Tous";
     }
 
     private void ExecuteViewDetails(ReceivedNeedItemViewModel? item)

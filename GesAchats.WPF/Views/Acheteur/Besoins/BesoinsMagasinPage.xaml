@@ -55,6 +55,11 @@
                     <DatePicker SelectedDate="{Binding SearchDate}" Width="150"/>
                 </StackPanel>
                 
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Statut" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="150" Style="{StaticResource ModernComboBox}"/>
+                </StackPanel>
+                
                 <StackPanel Margin="0,0,0,0">
                     <TextBlock Text="" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
                     <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="15,5" Background="#757575" Foreground="White" BorderThickness="0"/>
@@ -70,6 +75,23 @@
                 <DataGridTextColumn Header="Date" Binding="{Binding Need.DateTransmission, StringFormat=d}" Width="120"/>
                 <DataGridTextColumn Header="Demandeur" Binding="{Binding Need.RequestedBy.FullName}" Width="*"/>
                 <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
+                
+                <DataGridTemplateColumn Header="Statut" Width="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Background="{Binding StatusColor}"
+                                    CornerRadius="8"
+                                    Padding="10,4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding StatusText}"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <DataGridTemplateColumn Header="Actions" Width="220">
                     <DataGridTemplateColumn.CellTemplate>

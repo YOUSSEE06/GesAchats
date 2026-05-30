@@ -107,10 +107,9 @@ public class NeedsListViewModel : BaseViewModel
             {
                 NumeroBesoin = $"BES-{DateTime.Now:yyyyMMddHHmmss}",
                 Description = $"Demande groupée de {selectedItems.Count} article(s)",
-                Status = NeedStatus.TransmittedToPurchasing,
+                Status = NeedStatus.InPurchase,
                 RequestedById = _userSession.CurrentUser?.Id ?? 1,
                 RequestedAt = DateTime.UtcNow,
-                DateTransmission = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 // On peut mettre le premier produit comme référence principale si nécessaire pour la compatibilité
                 ProductId = selectedItems.First().Product.Id, 

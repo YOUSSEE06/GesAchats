@@ -618,9 +618,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                 }
             }
 
-            if (SelectedNeed!.Status == NeedStatus.TransmittedToPurchasing)
+            if (SelectedNeed!.Status == NeedStatus.InPurchase)
             {
-                SelectedNeed.Status = NeedStatus.InPurchase;
+                SelectedNeed.Status = NeedStatus.TransmittedToPurchasing;
+                SelectedNeed.DateTransmission = DateTime.UtcNow;
+                SelectedNeed.UpdatedAt = DateTime.UtcNow;
                 _unitOfWork.Needs.Update(SelectedNeed);
             }
 

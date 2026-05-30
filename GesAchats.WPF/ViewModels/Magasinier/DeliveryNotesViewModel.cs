@@ -23,10 +23,12 @@ public class DeliveryNotesViewModel : BaseViewModel
     private bool _isInspectView = false;
 
     // Filter properties
-    private string _searchBLNumber = string.Empty;
-    private string _searchSupplier = string.Empty;
-    private string _searchBCNumber = string.Empty;
+    private string _searchText = string.Empty;
+    private string _selectedSupplier = "Tous";
+    private string _selectedStatus = "Tous";
     private DateTime? _searchDate;
+    public ObservableCollection<string> SupplierOptions { get; } = new ObservableCollection<string>();
+    public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "En attente", "Validé" };
 
     // Form properties
     private DateTime _receptionDate = DateTime.Today;
@@ -45,9 +47,36 @@ public class DeliveryNotesViewModel : BaseViewModel
     public bool IsInspectView { get => _isInspectView; set => SetProperty(ref _isInspectView, value); }
 
     // Filter Accessors
-    public string SearchBLNumber { get => _searchBLNumber; set { if (SetProperty(ref _searchBLNumber, value)) FilterDeliveries(); } }
-    public string SearchSupplier { get => _searchSupplier; set { if (SetProperty(ref _searchSupplier, value)) FilterDeliveries(); } }
-    public string SearchBCNumber { get => _searchBCNumber; set { if (SetProperty(ref _searchBCNumber, value)) FilterDeliveries(); } }
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+                FilterDeliveries();
+        }
+    }
+
+    public string SelectedSupplier
+    {
+        get => _selectedSupplier;
+        set
+        {
+            if (SetProperty(ref _selectedSupplier, value))
+                FilterDeliveries();
+        }
+    }
+
+    public string SelectedStatus
+    {
+        get => _selectedStatus;
+        set
+        {
+            if (SetProperty(ref _selectedStatus, value))
+                FilterDeliveries();
+        }
+    }
+
     public DateTime? SearchDate { get => _searchDate; set { if (SetProperty(ref _searchDate, value)) FilterDeliveries(); } }
 
     // Form Accessors
@@ -86,6 +115,7 @@ public class DeliveryNotesViewModel : BaseViewModel
     public ICommand BackToListCommand { get; }
     public ICommand InspectCommand { get; }
     public ICommand PrintPdfCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public DeliveryNotesViewModel(IUnitOfWork unitOfWork, IUserSession userSession)
     {
@@ -100,8 +130,17 @@ public class DeliveryNotesViewModel : BaseViewModel
         BackToListCommand = new RelayCommand(_ => ExecuteBackToList());
         InspectCommand = new RelayCommand(async p => await ExecuteInspect(p as DeliveryNote));
         PrintPdfCommand = new RelayCommand(p => ExecuteOpenOriginalFile(p as DeliveryNote));
+        ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
 
         _ = LoadInitialData();
+    }
+
+    private void ExecuteResetFilters()
+    {
+        SearchText = string.Empty;
+        SelectedSupplier = "Tous";
+        SelectedStatus = "Tous";
+        SearchDate = null;
     }
 
     private async Task LoadInitialData()
@@ -121,6 +160,19 @@ public class DeliveryNotesViewModel : BaseViewModel
                 if (d.PurchaseOrder == null) d.PurchaseOrder = (await _unitOfWork.PurchaseOrders.GetByIdAsync(d.PurchaseOrderId))!;
             }
 
+            // Load suppliers for filter options
+            var allSuppliers = await _unitOfWork.Suppliers.GetAllAsync();
+            SupplierOptions.Clear();
+            SupplierOptions.Add("Tous");
+            var uniqueSupplierNames = allSuppliers
+                .Select(s => s.CompanyName)
+                .Distinct()
+                .OrderBy(n => n);
+            foreach (var name in uniqueSupplierNames)
+            {
+                SupplierOptions.Add(name);
+            }
+
             FilterDeliveries();
         }
         finally
@@ -133,17 +185,35 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         var filtered = _allDeliveries.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(SearchBLNumber))
-            filtered = filtered.Where(d => d.DeliveryNumber.Contains(SearchBLNumber, StringComparison.OrdinalIgnoreCase));
+        // Search filter: BL number OR Purchase Order number
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            filtered = filtered.Where(d => 
+                d.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                (d.PurchaseOrder != null && d.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+            );
+        }
 
-        if (!string.IsNullOrWhiteSpace(SearchSupplier))
-            filtered = filtered.Where(d => d.Supplier != null && d.Supplier.CompanyName.Contains(SearchSupplier, StringComparison.OrdinalIgnoreCase));
+        // Supplier filter
+        if (SelectedSupplier != "Tous")
+        {
+            filtered = filtered.Where(d => d.Supplier != null && d.Supplier.CompanyName == SelectedSupplier);
+        }
 
-        if (!string.IsNullOrWhiteSpace(SearchBCNumber))
-            filtered = filtered.Where(d => d.PurchaseOrder != null && d.PurchaseOrder.OrderNumber.Contains(SearchBCNumber, StringComparison.OrdinalIgnoreCase));
+        // Status filter
+        if (SelectedStatus != "Tous")
+        {
+            if (SelectedStatus == "En attente")
+                filtered = filtered.Where(d => d.Status == "EnAttente");
+            else if (SelectedStatus == "Validé")
+                filtered = filtered.Where(d => d.Status == "Valide");
+        }
 
+        // Date filter
         if (SearchDate.HasValue)
+        {
             filtered = filtered.Where(d => d.ReceptionDate.Date == SearchDate.Value.Date);
+        }
 
         DeliveriesHistory.Clear();
         foreach (var d in filtered)
@@ -359,7 +429,7 @@ public class DeliveryNotesViewModel : BaseViewModel
                 PurchaseOrderId = SelectedPurchaseOrder!.Id,
                 Observations = Observations,
                 FilePath = finalFilePath,
-                Status = DeliveryItems.All(i => i.IsValidated) ? "FullyReceived" : "PartiallyReceived",
+                Status = "EnAttente",
                 ReceivedById = _userSession.CurrentUser?.Id ?? 1,
                 ReceivedQuantity = DeliveryItems.Sum(i => i.QuantityReceived),
                 CompliantQuantity = DeliveryItems.Where(i => i.IsValidated).Sum(i => i.QuantityReceived),
