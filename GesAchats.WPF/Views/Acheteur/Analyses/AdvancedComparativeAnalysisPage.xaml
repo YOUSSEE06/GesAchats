@@ -94,7 +94,6 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
@@ -135,26 +134,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!-- Footer Actions -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                        <TextBlock Text="Générer Bon de Commande pour :" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#666"/>
-                        <ItemsControl ItemsSource="{Binding SelectedSuppliers}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Content="{Binding Supplier.CompanyName}" 
-                                            Command="{Binding DataContext.GenerateOrderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                            CommandParameter="{Binding}"
-                                            Margin="5,0" Padding="15,8" 
-                                            Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+
                 </Grid>
             </Border>
         </Grid>

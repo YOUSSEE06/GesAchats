@@ -213,7 +213,8 @@ public class DeliveryNotesViewModel : BaseViewModel
             
             var invoices = await _unitOfWork.Invoices.GetAllAsync();
             var invoiceMap = invoices.Where(i => i.DeliveryNoteId.HasValue)
-                                    .ToDictionary(i => i.DeliveryNoteId!.Value, i => i.ExternalInvoiceNumber ?? i.InvoiceNumber);
+                                    .GroupBy(i => i.DeliveryNoteId!.Value)
+                                    .ToDictionary(g => g.Key, g => g.First().ExternalInvoiceNumber ?? g.First().InvoiceNumber);
 
             var newDeliveries = new List<DeliveryNoteListItemViewModel>();
             

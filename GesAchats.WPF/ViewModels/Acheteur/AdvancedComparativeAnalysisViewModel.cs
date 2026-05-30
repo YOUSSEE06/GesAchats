@@ -79,7 +79,9 @@ public class AdvancedComparativeAnalysisViewModel : BaseViewModel
         {
             // Charger tous les devis avec leurs détails
             var allQuotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
-            var quotes = allQuotes.Where(q => q.Status == "En attente" || q.Status == "Validé");
+            var quotes = allQuotes.Where(q => 
+                (q.Status == QuotationStatus.Pending || q.Status == QuotationStatus.Validated) 
+                && q.TotalAmountHT > 0); // Seulement les devis chiffrés
             
             AvailableQuotations.Clear();
             ComparisonData.Clear();
