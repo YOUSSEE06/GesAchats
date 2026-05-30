@@ -5,6 +5,8 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Reglements"
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Suivi des Règlements">
@@ -20,6 +22,7 @@
 
     <Grid Background="#F5F6F7">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -81,17 +84,58 @@
                         <TextBlock Text="Mode de paiement" Foreground="#757575" FontSize="12"/>
                         <ComboBox Width="140" ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}"/>
                     </StackPanel>
-                    <StackPanel>
-                        <TextBlock Text="Recherche" Foreground="#757575" FontSize="12"/>
-                        <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
+                    <StackPanel Margin="0,0,15,0">
+                        <TextBlock Text="N° Facture" Foreground="#757575" FontSize="12"/>
+                        <TextBox Width="140" Text="{Binding SearchInvoiceNumber, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="26"/>
                     </StackPanel>
                 </StackPanel>
-                <Button Content="🔄 Réinitialiser" Command="{Binding ResetFiltersCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4" Grid.Column="1"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding ToggleChartsCommand}" 
+                            Style="{StaticResource MaterialDesignOutlinedButton}" 
+                            Padding="10,4" Margin="0,0,10,0"
+                            BorderBrush="#1A3A52" Foreground="#1A3A52">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding ShowCharts, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='Masquer les graphes|Afficher les graphes'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="🔄 Réinitialiser" Command="{Binding ResetFiltersCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Padding="10,4"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Charts Section -->
+        <Border Grid.Row="3" Margin="20,15,20,0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15"
+                Visibility="{Binding ShowCharts, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="1.5*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Distribution Fournisseur -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="📊 Distribution par fournisseur" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                    <lvc:PieChart Series="{Binding SupplierDistribution}" Height="220" LegendPosition="Bottom" />
+                </StackPanel>
+
+                <!-- Modes de Paiement -->
+                <StackPanel Grid.Column="1" Margin="10,0,10,0">
+                    <TextBlock Text="💳 Modes de paiement" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                    <lvc:CartesianChart Series="{Binding PaymentMethodsDistribution}" XAxes="{Binding XAxesMethods}" Height="220" />
+                </StackPanel>
+
+                <!-- Évolution par date -->
+                <StackPanel Grid.Column="2" Margin="10,0,0,0">
+                    <TextBlock Text="📈 Évolution des paiements" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                    <lvc:CartesianChart Series="{Binding PaymentsByDate}" XAxes="{Binding XAxesPayments}" Height="220" />
+                </StackPanel>
             </Grid>
         </Border>
 
         <!-- History Table -->
-        <Border Grid.Row="3" Background="White" Margin="20,15,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="4" Background="White" Margin="20,15,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -101,9 +145,6 @@
                 <Border Padding="15,10" Background="#FAFAFA" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
                     <Grid>
                         <TextBlock Text="HISTORIQUE DES RÈGLEMENTS" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="➕ Nouveau Règlement" Command="{Binding AddPaymentCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Padding="15,8" Background="#1A3A52" Foreground="White"/>
-                        </StackPanel>
                     </Grid>
                 </Border>
 

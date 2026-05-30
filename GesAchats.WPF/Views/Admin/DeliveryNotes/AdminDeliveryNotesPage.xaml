@@ -63,18 +63,7 @@
         </Border>
 
         <!-- 3.3 Boutons globaux -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="25,10" HorizontalAlignment="Right">
-            <Button Content="Actualiser" 
-                    Command="{Binding RefreshCommand}"
-                    Style="{StaticResource ModernPrimaryButton}"
-                    Background="#94A3B8"
-                    Width="120" Margin="0,0,15,0"/>
-            
-            <Button Content="Ajouter un Bon de Livraison" 
-                    Command="{Binding AddDeliveryNoteCommand}"
-                    Style="{StaticResource ModernPrimaryButton}" 
-                    Background="#3B82F6" Width="220"/>
-        </StackPanel>
+        <!-- Supprimés selon la demande de l'utilisateur -->
 
         <!-- 3.2 Tableau des BL -->
         <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">

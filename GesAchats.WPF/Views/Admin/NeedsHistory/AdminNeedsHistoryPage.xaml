@@ -12,6 +12,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Global Header -->
             <RowDefinition Height="Auto"/> <!-- Page Title -->
+            <RowDefinition Height="Auto"/> <!-- Filters Bar -->
             <RowDefinition Height="*"/>    <!-- Data Table -->
         </Grid.RowDefinitions>
 
@@ -24,27 +25,67 @@
         <TextBlock Grid.Row="1" Text="HISTORIQUE DES BESOINS" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
-        <!-- 3. Zone principale - Tableau -->
-        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <!-- 3.1 Filtres -->
+        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,5,25,10" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <!-- Search Icon -->
+                    <ColumnDefinition Width="Auto"/> <!-- Numero Filter -->
+                    <ColumnDefinition Width="Auto"/> <!-- Date Filter -->
+                    <ColumnDefinition Width="*"/>    <!-- Spacer -->
+                    <ColumnDefinition Width="Auto"/> <!-- Buttons -->
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="16"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,25,0">
+                    <TextBlock Text="N° Demande:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding SearchNumero, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource ModernTextBox}" 
+                             Width="200"
+                             Tag="Rechercher par numéro..."/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,25,0">
+                    <TextBlock Text="Filtrer par Date:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                    <DatePicker SelectedDate="{Binding SearchDate}" 
+                                Style="{StaticResource ModernDatePicker}" 
+                                Width="160"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,25,0">
+                    <TextBlock Text="Statut:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding StatusOptions}"
+                              SelectedItem="{Binding SelectedStatus}"
+                              Style="{StaticResource ModernComboBox}"
+                              Width="150"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <Button Content="Réinitialiser" 
+                            Command="{Binding ClearFiltersCommand}"
+                            Style="{StaticResource ModernIconButton}"
+                            Foreground="{StaticResource DangerBrush}"
+                            FontWeight="SemiBold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 3.2 Zone principale - Tableau -->
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding Needs}" 
-                      Style="{StaticResource ModernDataGrid}"
-                      HeadersVisibility="Column"
-                      BorderThickness="0"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#EEEEEE"
-                      RowBackground="White"
-                      AlternatingRowBackground="#FAFAFA">
+                      Style="{StaticResource ModernDataGrid}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="N° Demande" Binding="{Binding NumeroBesoin}" Width="180" FontWeight="SemiBold"/>
-                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="120"/>
-                    <DataGridTextColumn Header="Demandeur" Binding="{Binding Demandeur}" Width="180"/>
-                    <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="100"/>
-                    
-                    <DataGridTemplateColumn Header="Statut" Width="130">
+                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="150"/>
+                    <DataGridTextColumn Header="Demandeur" Binding="{Binding Demandeur}" Width="*"/>
+                    <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120"/>
+
+                    <DataGridTemplateColumn Header="Statut" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding StatusText}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

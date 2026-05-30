@@ -35,6 +35,7 @@ public class AdminNeedHistoryItemViewModel : BaseViewModel
             NeedStatus.Validated => ("Complété", "#4CAF50"),
             NeedStatus.Cancelled => ("Annulé", "#9E9E9E"),
             NeedStatus.Rejected => ("Rejeté", "#F44336"),
+            NeedStatus.Relaunched => ("Relancé", "#673AB7"),
             _ => (need.Status.ToString(), "#000000")
         };
     }
@@ -44,11 +45,39 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
+    private List<Need> _allNeeds = new();
+    private string _searchNumero = string.Empty;
+    private DateTime? _searchDate;
+    private string _selectedStatus = "Tous";
+
+    public ObservableCollection<string> StatusOptions { get; } = new() 
+    { 
+        "Tous", "En attente", "À Valider", "Transmis", "En cours", "Complété", "Annulé", "Rejeté", "Relancé" 
+    };
+
+    public string SearchNumero
+    {
+        get => _searchNumero;
+        set { if (SetProperty(ref _searchNumero, value)) FilterNeeds(); }
+    }
+
+    public DateTime? SearchDate
+    {
+        get => _searchDate;
+        set { if (SetProperty(ref _searchDate, value)) FilterNeeds(); }
+    }
+
+    public string SelectedStatus
+    {
+        get => _selectedStatus;
+        set { if (SetProperty(ref _selectedStatus, value)) FilterNeeds(); }
+    }
 
     public ObservableCollection<AdminNeedHistoryItemViewModel> Needs { get; } = new();
 
     public ICommand ViewDetailsCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand ClearFiltersCommand { get; }
 
     public AdminNeedsHistoryViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
@@ -58,6 +87,7 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
 
         ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as AdminNeedHistoryItemViewModel));
         RefreshCommand = new RelayCommand(async _ => await LoadData());
+        ClearFiltersCommand = new RelayCommand(_ => { SearchNumero = string.Empty; SearchDate = null; SelectedStatus = "Tous"; });
 
         _ = LoadData();
     }
@@ -68,19 +98,51 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         try
         {
             var needs = await _unitOfWork.Needs.GetAllWithDetailsAsync();
-            
-            // Admin sees all needs
-            var sortedNeeds = needs.OrderByDescending(n => n.RequestedAt).ToList();
-            
-            Needs.Clear();
-            foreach (var n in sortedNeeds)
-            {
-                Needs.Add(new AdminNeedHistoryItemViewModel(n));
-            }
+            _allNeeds = needs.ToList();
+            FilterNeeds();
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void FilterNeeds()
+    {
+        var filtered = _allNeeds.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchNumero))
+            filtered = filtered.Where(n => n.NumeroBesoin.Contains(SearchNumero, StringComparison.OrdinalIgnoreCase));
+
+        if (SearchDate.HasValue)
+            filtered = filtered.Where(n => n.RequestedAt.Date == SearchDate.Value.Date);
+
+        if (SelectedStatus != "Tous")
+        {
+            filtered = filtered.Where(n => 
+            {
+                var statusText = n.Status switch
+                {
+                    NeedStatus.Draft => "En attente",
+                    NeedStatus.ToValidate => "À Valider",
+                    NeedStatus.TransmittedToPurchasing => "Transmis",
+                    NeedStatus.InPurchase => "En cours",
+                    NeedStatus.Validated => "Complété",
+                    NeedStatus.Cancelled => "Annulé",
+                    NeedStatus.Rejected => "Rejeté",
+                    NeedStatus.Relaunched => "Relancé",
+                    _ => n.Status.ToString()
+                };
+                return statusText == SelectedStatus;
+            });
+        }
+
+        var sortedNeeds = filtered.OrderByDescending(n => n.RequestedAt).ToList();
+        
+        Needs.Clear();
+        foreach (var n in sortedNeeds)
+        {
+            Needs.Add(new AdminNeedHistoryItemViewModel(n));
         }
     }
 

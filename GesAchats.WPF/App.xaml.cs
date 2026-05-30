@@ -266,6 +266,8 @@ public partial class App : Application
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminNeedsHistoryViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminDeliveryNotesViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminPriceAnalysisViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Acheteur.PurchaseHistoryViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Acheteur.ProductStatsViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminOrdersViewModel>();
 
         // ViewModels - Focus Comptable
@@ -313,6 +315,7 @@ public partial class App : Application
          services.AddTransient<GesAchats.WPF.Views.Admin.Orders.OrderManagementPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.Stock.AdminStockPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.PriceAnalysis.PriceAnalysisPage>();
+         services.AddTransient<GesAchats.WPF.Views.Acheteur.Analyses.ProductStatsPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.NeedsHistory.AdminNeedsHistoryPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.DeliveryNotes.AdminDeliveryNotesPage>();
 

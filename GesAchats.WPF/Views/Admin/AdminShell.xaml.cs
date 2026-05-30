@@ -40,7 +40,10 @@ public partial class AdminShell : Window
             "StockGlobal" => _serviceProvider.GetRequiredService<Stock.AdminStockPage>(),
             "NeedsHistory" => _serviceProvider.GetRequiredService<NeedsHistory.AdminNeedsHistoryPage>(),
             "DeliveryNotes" => _serviceProvider.GetRequiredService<DeliveryNotes.AdminDeliveryNotesPage>(),
-            "PriceAnalysis" => _serviceProvider.GetRequiredService<PriceAnalysis.PriceAnalysisPage>(),
+            "PriceAnalysis" => _serviceProvider.GetRequiredService<Acheteur.Analyses.PurchaseHistoryPage>(),
+            "Invoices" => _serviceProvider.GetRequiredService<Comptable.Factures.InvoicePaymentTrackingPage>(),
+            "Payments" => _serviceProvider.GetRequiredService<Comptable.Reglements.ReglementsPage>(),
+            "ProductStats" => _serviceProvider.GetRequiredService<Acheteur.Analyses.ProductStatsPage>(),
             "Employees" => _serviceProvider.GetRequiredService<Employees.EmployeeManagementPage>(),
             "Orders" => _serviceProvider.GetRequiredService<Orders.OrderManagementPage>(),
             _ => null

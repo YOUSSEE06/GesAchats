@@ -6,6 +6,10 @@ using GesAchats.WPF.ViewModels.Base;
 using GesAchats.WPF.Services;
 using System.Diagnostics;
 using System.Windows;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -74,6 +78,17 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         }
     }
 
+    private string _searchInvoiceNumber = string.Empty;
+    public string SearchInvoiceNumber
+    {
+        get => _searchInvoiceNumber;
+        set
+        {
+            if (SetProperty(ref _searchInvoiceNumber, value))
+                ApplyFilters();
+        }
+    }
+
     public ObservableCollection<string> PaymentMethods { get; set; } = new()
     {
         "Tous", "Virement", "Chèque", "Lettre de change"
@@ -86,11 +101,55 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalPaidMonth, value);
     }
 
+    // Chart Properties
+    private ISeries[] _supplierDistribution = Array.Empty<ISeries>();
+    public ISeries[] SupplierDistribution
+    {
+        get => _supplierDistribution;
+        set => SetProperty(ref _supplierDistribution, value);
+    }
+
+    private ISeries[] _paymentsByDate = Array.Empty<ISeries>();
+    public ISeries[] PaymentsByDate
+    {
+        get => _paymentsByDate;
+        set => SetProperty(ref _paymentsByDate, value);
+    }
+
+    private ISeries[] _paymentMethodsDistribution = Array.Empty<ISeries>();
+    public ISeries[] PaymentMethodsDistribution
+    {
+        get => _paymentMethodsDistribution;
+        set => SetProperty(ref _paymentMethodsDistribution, value);
+    }
+
+    private Axis[] _xAxesPayments = Array.Empty<Axis>();
+    public Axis[] XAxesPayments
+    {
+        get => _xAxesPayments;
+        set => SetProperty(ref _xAxesPayments, value);
+    }
+
+    private Axis[] _xAxesMethods = Array.Empty<Axis>();
+    public Axis[] XAxesMethods
+    {
+        get => _xAxesMethods;
+        set => SetProperty(ref _xAxesMethods, value);
+    }
+
     public ICommand LoadPaymentsCommand { get; }
     public ICommand ExportExcelCommand { get; }
     public ICommand AddPaymentCommand { get; }
     public ICommand ViewProofCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand ToggleChartsCommand { get; }
+
+    private bool _showCharts = true;
+    public bool ShowCharts
+    {
+        get => _showCharts;
+        set => SetProperty(ref _showCharts, value);
+    }
 
     public PaymentHistoryViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService)
     {
@@ -104,6 +163,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         AddPaymentCommand = new RelayCommand(_ => _navigationService.NavigateTo("PaymentForm"));
         ViewProofCommand = new RelayCommand(p => ViewProof(p as Payment));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
+        ToggleChartsCommand = new RelayCommand(_ => ShowCharts = !ShowCharts);
 
         SelectedPaymentMethod = "Tous";
 
@@ -116,6 +176,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         SelectedDate = null;
         SelectedPaymentMethod = "Tous";
         SearchText = string.Empty;
+        SearchInvoiceNumber = string.Empty;
     }
 
     public void OnNavigatedTo(object parameter)
@@ -189,16 +250,106 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         if (!string.IsNullOrEmpty(SelectedPaymentMethod) && SelectedPaymentMethod != "Tous")
             filtered = filtered.Where(p => p.PaymentMethod == SelectedPaymentMethod);
 
+        if (!string.IsNullOrWhiteSpace(SearchInvoiceNumber))
+        {
+            string searchInv = SearchInvoiceNumber.ToLower();
+            filtered = filtered.Where(p => 
+                p.Invoice != null && p.Invoice.ExternalInvoiceNumber != null && p.Invoice.ExternalInvoiceNumber.ToLower().Contains(searchInv)
+            );
+        }
+
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             string search = SearchText.ToLower();
             filtered = filtered.Where(p => 
-                (p.Invoice != null && p.Invoice.ExternalInvoiceNumber != null && p.Invoice.ExternalInvoiceNumber.ToLower().Contains(search)) ||
-                (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(search))
+                (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(search)) ||
+                (p.PaymentNumber != null && p.PaymentNumber.ToLower().Contains(search))
             );
         }
 
         Payments = new ObservableCollection<Payment>(filtered);
+        UpdateCharts();
+    }
+
+    private void UpdateCharts()
+    {
+        if (Payments == null || !Payments.Any())
+        {
+            SupplierDistribution = Array.Empty<ISeries>();
+            PaymentsByDate = Array.Empty<ISeries>();
+            PaymentMethodsDistribution = Array.Empty<ISeries>();
+            return;
+        }
+
+        // 1. Distribution par fournisseur (Pie Chart)
+        var supplierData = Payments
+            .GroupBy(p => p.Supplier?.CompanyName ?? "Inconnu")
+            .Select(g => new { Name = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
+            .OrderByDescending(x => x.Total)
+            .Take(5) // Top 5
+            .ToList();
+
+        SupplierDistribution = supplierData.Select(s => new PieSeries<double>
+        {
+            Values = new double[] { s.Total },
+            Name = s.Name,
+            DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
+            DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:N2} MAD"
+        }).ToArray();
+
+        // 2. Modes de paiement (Bar Chart)
+        var methodData = Payments
+            .GroupBy(p => p.PaymentMethod ?? "Non spécifié")
+            .Select(g => new { Method = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
+            .ToList();
+
+        PaymentMethodsDistribution = new ISeries[]
+        {
+            new ColumnSeries<double>
+            {
+                Values = methodData.Select(x => x.Total).ToArray(),
+                Name = "Montant par Mode",
+                Fill = new SolidColorPaint(SKColors.MidnightBlue),
+                Padding = 20
+            }
+        };
+
+        XAxesMethods = new Axis[]
+        {
+            new Axis
+            {
+                Labels = methodData.Select(x => x.Method).ToArray(),
+                LabelsRotation = -45
+            }
+        };
+
+        // 3. Évolution des paiements par date (Line Chart)
+        var dateData = Payments
+            .GroupBy(p => p.PaymentDate.Date)
+            .Select(g => new { Date = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
+            .OrderBy(x => x.Date)
+            .ToList();
+
+        PaymentsByDate = new ISeries[]
+        {
+            new LineSeries<double>
+            {
+                Values = dateData.Select(x => x.Total).ToArray(),
+                Name = "Paiements (MAD)",
+                Fill = new SolidColorPaint(SKColors.DeepSkyBlue.WithAlpha(50)),
+                Stroke = new SolidColorPaint(SKColors.DeepSkyBlue, 3),
+                GeometrySize = 10,
+                LineSmoothness = 1
+            }
+        };
+
+        XAxesPayments = new Axis[]
+        {
+            new Axis
+            {
+                Labels = dateData.Select(x => x.Date.ToString("dd/MM")).ToArray()
+            }
+        };
     }
 
     private void ExportToExcel()
