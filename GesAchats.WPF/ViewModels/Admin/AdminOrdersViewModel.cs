@@ -73,7 +73,7 @@ public class AdminOrdersViewModel : BaseViewModel
     public ObservableCollection<string> Suppliers { get; } = new();
 
 
-    private ObservableCollection<AdminOrderItemViewModel> _allOrders = new();
+    protected ObservableCollection<AdminOrderItemViewModel> _allOrders = new();
     public ObservableCollection<AdminOrderItemViewModel> Orders { get; } = new();
 
     public ICommand InspectCommand { get; }
@@ -93,7 +93,7 @@ public class AdminOrdersViewModel : BaseViewModel
         _ = LoadData();
     }
 
-    private async Task LoadData()
+    protected virtual async Task LoadData()
     {
         IsBusy = true;
         try
@@ -126,7 +126,7 @@ public class AdminOrdersViewModel : BaseViewModel
         }
     }
 
-    private void FilterData()
+    protected virtual void FilterData()
     {
         var filtered = _allOrders.AsEnumerable();
 

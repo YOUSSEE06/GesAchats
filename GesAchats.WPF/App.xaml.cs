@@ -245,6 +245,7 @@ public partial class App : Application
         services.AddSingleton<IUserSession, UserSession>();
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IStockService, StockService>();
+        services.AddTransient<IDashboardService, DashboardService>();
         services.AddTransient<IComparativeAnalysisService, ComparativeAnalysisService>();
         services.AddTransient<IPriceAnalysisService, PriceAnalysisService>();
         services.AddTransient<INeedsAnalyticsService, NeedsAnalyticsService>();
