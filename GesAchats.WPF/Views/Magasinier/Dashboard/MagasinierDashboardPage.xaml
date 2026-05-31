@@ -3,96 +3,272 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d"
-      Title="Dashboard Magasinier">
+      xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+      xmlns:vm="clr-namespace:GesAchats.WPF.ViewModels.Magasinier"
+      mc:Ignorable="d" d:DesignHeight="1200" d:DesignWidth="1200"
+      d:DataContext="{d:DesignInstance Type=vm:MagasinierDashboardViewModel}"
+      Title="Tableau de bord - Espace Magasinier"
+      Background="#F8F9FA">
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Magasinier/MagasinierStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </Page.Resources>
 
-        <!-- KPI Cards -->
-        <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,20">
-            <!-- Stock Total -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="📦 Stock Total" Foreground="{StaticResource SecondaryBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding TotalStockUnits}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="Unités en stock" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
+        <StackPanel>
+            <!-- Header Section -->
+            <Grid Margin="0,0,0,32">
+                <StackPanel>
+                    <TextBlock Text="GesAchats - Espace Magasinier" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" FontWeight="Medium" Margin="0,0,0,4"/>
+                    <TextBlock Text="TABLEAU DE BORD" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="ExtraBold"/>
+                    <TextBlock Text="Vue d’ensemble des statistiques du magasin" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <RadioButton Content="Aujourd'hui" Margin="4,0" Padding="12,6" IsChecked="True"/>
+                    <RadioButton Content="7 jours" Margin="4,0" Padding="12,6"/>
+                    <RadioButton Content="30 jours" Margin="4,0" Padding="12,6"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- KPI Cards Grid -->
+            <UniformGrid Columns="5" Margin="-8,0,-8,32">
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="📦" FontSize="24" Margin="0,0,0,12"/>
+                        <TextBlock Text="Total Articles" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.TotalArticles}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="Bold" Margin="0,4"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="✅" FontSize="24" Margin="0,0,0,12"/>
+                        <TextBlock Text="Stock Normal" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.StockNormalCount}" Foreground="#2E7D32" FontSize="28" FontWeight="Bold" Margin="0,4"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="⚠️" FontSize="24" Margin="0,0,0,12"/>
+                        <TextBlock Text="Sous Minimum" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.StockSousMinimumCount}" Foreground="#EF6C00" FontSize="28" FontWeight="Bold" Margin="0,4"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="🚨" FontSize="24" Margin="0,0,0,12"/>
+                        <TextBlock Text="En Rupture" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.StockEnRuptureCount}" Foreground="#C62828" FontSize="28" FontWeight="Bold" Margin="0,4"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="📥" FontSize="24" Margin="0,0,0,12"/>
+                        <TextBlock Text="BL en attente" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Stats.BlEnAttenteCount}" Foreground="{StaticResource PrimaryBrush}" FontSize="28" FontWeight="Bold" Margin="0,4"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Charts Section -->
+            <Grid Margin="0,0,0,32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="350"/>
+                    <RowDefinition Height="350"/>
+                </Grid.RowDefinitions>
+
+                <!-- Stock Status Donut -->
+                <Border Grid.Column="0" Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="État du stock" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <lvc:PieChart Series="{Binding StockStatusSeries}" Height="260" LegendPosition="Right"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- BL Receptions Bar -->
+                <Border Grid.Column="1" Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="Réceptions BL" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <lvc:CartesianChart Series="{Binding BlReceptionSeries}" Height="260"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- BC Status Bar -->
+                <Border Grid.Column="2" Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="Bons de commande" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <lvc:CartesianChart Series="{Binding BcStatusSeries}" Height="260"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Stock Movements Line Chart -->
+                <Border Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="Mouvements de stock (7 derniers jours)" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <lvc:CartesianChart Series="{Binding StockMovementSeries}" XAxes="{Binding StockMovementXAxes}" Height="260" LegendPosition="Bottom"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Tables Section -->
+            <Grid Margin="0,0,0,32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Critical Products Table -->
+                <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource KpiCard}" Margin="8">
+                    <StackPanel>
+                        <TextBlock Text="Articles critiques" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.CriticalProducts}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Article" Binding="{Binding Name}" Width="2*"/>
+                                <DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock, StringFormat={}{0:N2}}" Width="1*"/>
+                                <DataGridTextColumn Header="Seuil" Binding="{Binding MinimumStock, StringFormat={}{0:N2}}" Width="1*"/>
+                                <DataGridTextColumn Header="Unité" Binding="{Binding Unit}" Width="0.8*"/>
+                                <DataGridTemplateColumn Header="État" Width="1.2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="StatusBadge" Style="{StaticResource BadgeWarning}">
+                                                <TextBlock Text="{Binding Status}"/>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="En rupture">
+                                                    <Setter TargetName="StatusBadge" Property="Style" Value="{StaticResource BadgeDanger}"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent BL Table -->
+                <Border Grid.Column="1" Grid.Row="0" Style="{StaticResource KpiCard}" Margin="8">
+                    <StackPanel>
+                        <TextBlock Text="Derniers Bons de Livraison" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.RecentBls}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
+                                <DataGridTextColumn Header="N° BL" Binding="{Binding Number}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier}" Width="2*"/>
+                                <DataGridTemplateColumn Header="Statut" Width="1.2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="BlBadge" Style="{StaticResource BadgeInfo}">
+                                                <TextBlock Text="{Binding Status}"/>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                    <Setter TargetName="BlBadge" Property="Style" Value="{StaticResource BadgeSuccess}"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Needs Table -->
+                <Border Grid.Column="0" Grid.Row="1" Style="{StaticResource KpiCard}" Margin="8">
+                    <StackPanel>
+                        <TextBlock Text="Derniers Besoins" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.RecentNeeds}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="N° Demande" Binding="{Binding Number}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
+                                <DataGridTextColumn Header="Demandeur" Binding="{Binding Requester}" Width="2*"/>
+                                <DataGridTextColumn Header="Articles" Binding="{Binding ArticleCount}" Width="0.8*"/>
+                                <DataGridTemplateColumn Header="Statut" Width="1.2*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="NeedBadge" Style="{StaticResource BadgeInfo}">
+                                                <TextBlock Text="{Binding Status}"/>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="Transmise">
+                                                    <Setter TargetName="NeedBadge" Property="Style" Value="{StaticResource BadgeSuccess}"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent BC Table -->
+                <Border Grid.Column="1" Grid.Row="1" Style="{StaticResource KpiCard}" Margin="8">
+                    <StackPanel>
+                        <TextBlock Text="Derniers Bons de Commande" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.RecentBcs}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
+                                <DataGridTextColumn Header="N° BC" Binding="{Binding Number}" Width="1.2*"/>
+                                <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier}" Width="2*"/>
+                                <DataGridTextColumn Header="Total TTC" Binding="{Binding TotalTtc, StringFormat={}{0:N2} DH}" Width="1.5*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Quick Actions Section -->
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,0,32">
+                <StackPanel>
+                    <TextBlock Text="Actions rapides" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                    <UniformGrid Columns="4">
+                        <Button Style="{StaticResource QuickActionButton}" Command="{Binding NewProductCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="➕" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Nouveau Produit" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}" Command="{Binding AddBlCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📥" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Ajouter BL" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}" Command="{Binding ViewPendingBcCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Voir BC en attente" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}" Command="{Binding CreateNeedCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✨" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Créer un besoin" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
                 </StackPanel>
             </Border>
-
-            <!-- Articles en Rupture -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="⚠️ Ruptures" Foreground="{StaticResource DangerBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding RuptureCount}" Foreground="{StaticResource DangerBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="Articles à 0" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Sous Minimum -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="🟡 Sous Minimum" Foreground="{StaticResource WarningBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding LowStockCount}" Foreground="{StaticResource WarningBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="Articles à commander" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Demandes en attente -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="⏳ Demandes" Foreground="{StaticResource PrimaryBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding PendingNeedsCount}" Foreground="{StaticResource PrimaryBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="En attente de traitement" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Livraisons de la semaine -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="📥 Réceptions" Foreground="{StaticResource SuccessBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding DeliveryCountThisWeek}" Foreground="{StaticResource SuccessBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="BL reçus cette semaine" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-        </UniformGrid>
-
-        <!-- Alertes Section -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="20" Margin="10">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-            </Border.Effect>
-            <DockPanel>
-                <TextBlock Text="ALERTES RÉCENTES" DockPanel.Dock="Top" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
-                <ItemsControl ItemsSource="{Binding Alerts}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="10,15">
-                                <TextBlock Text="{Binding}" FontSize="14" VerticalAlignment="Center"/>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
-        </Border>
-    </Grid>
+        </StackPanel>
+    </ScrollViewer>
 </Page>
