@@ -167,7 +167,7 @@
                             <Grid Grid.Column="0">
                                 <lvc:PieChart Series="{Binding OrderStatusSeries}" />
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="38" FontSize="24" FontWeight="Bold" Foreground="#0F172A"/>
+                                    <TextBlock Text="{Binding TotalPurchaseOrders}" FontSize="24" FontWeight="Bold" Foreground="#0F172A"/>
                                     <TextBlock Text="Total" FontSize="12" Foreground="#64748B"/>
                                 </StackPanel>
                             </Grid>
@@ -182,7 +182,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0" Width="12" Height="12" Background="#F59E0B" CornerRadius="6"/>
                                     <TextBlock Grid.Column="1" Text="En attente" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
-                                    <TextBlock Grid.Column="2" Text="7 (18%)" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding OrderStatusData[0].DisplayText}" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
                                 </Grid>
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
@@ -192,7 +192,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0" Width="12" Height="12" Background="#22C55E" CornerRadius="6"/>
                                     <TextBlock Grid.Column="1" Text="Validé" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
-                                    <TextBlock Grid.Column="2" Text="23 (61%)" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding OrderStatusData[1].DisplayText}" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
                                 </Grid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -200,9 +200,9 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Width="12" Height="12" Background="#2563EB" CornerRadius="6"/>
+                                    <Border Grid.Column="0" Width="12" Height="12" Background="#EF4444" CornerRadius="6"/>
                                     <TextBlock Grid.Column="1" Text="Annulé" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
-                                    <TextBlock Grid.Column="2" Text="8 (21%)" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding OrderStatusData[2].DisplayText}" Foreground="#64748B" FontSize="13" VerticalAlignment="Center"/>
                                 </Grid>
                             </StackPanel>
                         </Grid>

@@ -255,6 +255,14 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             get => _averageMonthly;
             set => SetProperty(ref _averageMonthly, value);
         }
+
+        // Total bons de commande pour le donut chart
+        private int _totalPurchaseOrders;
+        public int TotalPurchaseOrders
+        {
+            get => _totalPurchaseOrders;
+            set => SetProperty(ref _totalPurchaseOrders, value);
+        }
         
         // ===================== FILTRES & INDICATEURS =====================
 
@@ -448,15 +456,22 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                // Exact sample data
-                int pending = 7;
-                int validated = 23;
-                int cancelled = 8;
+                // Get real data from database
+                var (pending, validated, cancelled) = await _purchaseOrderService.GetPurchaseOrderStatusCountsAsync();
+
+                // Calculate total
+                int total = pending + validated + cancelled;
+                TotalPurchaseOrders = total;
+
+                // Calculate percentages
+                double pendingPercent = total == 0 ? 0 : Math.Round((double)pending / total * 100);
+                double validatedPercent = total == 0 ? 0 : Math.Round((double)validated / total * 100);
+                double cancelledPercent = total == 0 ? 0 : Math.Round((double)cancelled / total * 100);
 
                 OrderStatusData.Clear();
-                OrderStatusData.Add(new OrderStatusData { Status = "En attente", Count = pending, Percentage = 18 });
-                OrderStatusData.Add(new OrderStatusData { Status = "Validé", Count = validated, Percentage = 61 });
-                OrderStatusData.Add(new OrderStatusData { Status = "Annulé", Count = cancelled, Percentage = 21 });
+                OrderStatusData.Add(new OrderStatusData { Status = "En attente", Count = pending, Percentage = (int)pendingPercent });
+                OrderStatusData.Add(new OrderStatusData { Status = "Validé", Count = validated, Percentage = (int)validatedPercent });
+                OrderStatusData.Add(new OrderStatusData { Status = "Annulé", Count = cancelled, Percentage = (int)cancelledPercent });
 
                 // Setup LiveCharts for Order Status (Donut Chart) with exact colors
                 OrderStatusSeries = new ISeries[]
@@ -479,7 +494,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                     {
                         Values = new[] { cancelled },
                         Name = "Annulé",
-                        Fill = new SolidColorPaint(new SKColor(37, 99, 235)),
+                        Fill = new SolidColorPaint(new SKColor(239, 68, 68)), // Changed to red
                         InnerRadius = 55
                     }
                 };
@@ -708,6 +723,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         public string Status { get; set; } = string.Empty;
         public int Count { get; set; }
         public double Percentage { get; set; }
+        public string DisplayText => $"{Count} ({Percentage}%)";
     }
 
     public class OperationModel

@@ -93,4 +93,15 @@ public class PurchaseOrderService : IPurchaseOrderService
             
         return recentOrders;
     }
+
+    public async Task<(int Pending, int Validated, int Cancelled)> GetPurchaseOrderStatusCountsAsync()
+    {
+        var allOrders = await _unitOfWork.PurchaseOrders.GetAllAsync();
+
+        int pending = allOrders.Count(po => po.Status == PurchaseOrderStatus.Pending);
+        int validated = allOrders.Count(po => po.Status == PurchaseOrderStatus.Validated);
+        int cancelled = allOrders.Count(po => po.Status == PurchaseOrderStatus.Cancelled);
+
+        return (pending, validated, cancelled);
+    }
 }
