@@ -54,9 +54,6 @@ public class MagasinierDashboardViewModel : BaseViewModel
             
             var lowStockProducts = await _stockService.GetLowStockProductsAsync();
             LowStockCount = lowStockProducts.Count();
-            
-            var newProducts = await _stockService.GetNewProductsAsync();
-            NewProductsCount = newProducts.Count();
 
             var pendingNeeds = await _unitOfWork.Needs.FindAsync(n => n.Status == NeedStatus.Draft || n.Status == NeedStatus.ToValidate);
             PendingNeedsCount = pendingNeeds.Count();
@@ -72,9 +69,6 @@ public class MagasinierDashboardViewModel : BaseViewModel
             
             foreach (var p in lowStockProducts.Take(3))
                 Alerts.Add($"🟡 {p.Designation} - Sous le minimum");
-
-            if (NewProductsCount > 0)
-                Alerts.Add($"✨ {NewProductsCount} nouveaux produits en attente");
         }
         catch (Exception)
         {

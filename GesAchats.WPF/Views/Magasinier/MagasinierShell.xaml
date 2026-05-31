@@ -59,6 +59,11 @@
                             Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
                             CommandParameter="StockExits"/>
+
+                    <Button Content="Gestion des Bons de Commande" 
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
+                            CommandParameter="Orders"/>
                 </StackPanel>
 
                 <!-- Footer (User info & Logout) -->

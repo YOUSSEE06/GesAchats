@@ -525,172 +525,608 @@ public class PdfGeneratorService : IPdfGeneratorService
         return html.ToString();
     }
 
+    public async Task<string> GenerateNeedsListPdfAsync(IEnumerable<Need> needs)
+    {
+        try
+        {
+            var needList = needs.ToList();
+            if (!needList.Any())
+                throw new Exception("La liste des besoins est vide.");
+
+            string htmlContent = GenerateNeedsListHtmlContent(needList);
+
+            string fileName = $"BESOINS_{DateTime.Now:yyyyMMdd}.pdf";
+            string pdfPath = Path.Combine(_outputPath, fileName);
+
+            string htmlPath = Path.Combine(_outputPath, $"BESOINS_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid()}.html");
+            File.WriteAllText(htmlPath, htmlContent, Encoding.UTF8);
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "wkhtmltopdf",
+                Arguments = $"--enable-local-file-access \"{htmlPath}\" \"{pdfPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(processInfo))
+            {
+                if (process != null)
+                {
+                    await process.WaitForExitAsync();
+                    if (process.ExitCode != 0)
+                    {
+                        throw new Exception($"Erreur conversion PDF wkhtmltopdf (code {process.ExitCode}). Assurez-vous que wkhtmltopdf est installé.");
+                    }
+                }
+            }
+
+            try { File.Delete(htmlPath); } catch { }
+
+            return pdfPath;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erreur génération PDF Liste des Besoins: {ex.Message}", ex);
+        }
+    }
+
+    private string GenerateNeedsListHtmlContent(List<Need> needs)
+    {
+        StringBuilder html = new StringBuilder();
+
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html lang=\"fr\">");
+        html.AppendLine("<head>");
+        html.AppendLine("    <meta charset=\"UTF-8\">");
+        html.AppendLine("    <title>Liste des Besoins</title>");
+        html.AppendLine("    <style>");
+        html.AppendLine("        * { margin: 0; padding: 0; box-sizing: border-box; }");
+        html.AppendLine("        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; color: #333; }");
+        html.AppendLine("        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
+        html.AppendLine("        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #1a3a52; padding-bottom: 20px; }");
+        html.AppendLine("        .header-left h1 { color: #0066cc; font-size: 28px; margin-bottom: 5px; }");
+        html.AppendLine("        .header-left p { color: #666; font-size: 14px; }");
+        html.AppendLine("        .header-right { text-align: right; }");
+        html.AppendLine("        .header-right h2 { color: #ccc; font-size: 36px; font-weight: bold; margin-bottom: 10px; }");
+        html.AppendLine("        .header-right p { font-size: 14px; margin: 5px 0; }");
+        html.AppendLine("        .generation-date { font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        .section-title { background-color: #1a3a52; color: white; padding: 10px 15px; margin: 20px 0 10px 0; font-size: 13px; font-weight: bold; }");
+        html.AppendLine("        table { width: 100%; border-collapse: collapse; margin: 20px 0; }");
+        html.AppendLine("        th { background: #e6f0fa; border: 1px solid #bbb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        td { border: 1px solid #bbb; padding: 10px; font-size: 12px; vertical-align: top; }");
+        html.AppendLine("        tbody tr:nth-child(even) { background: #f9f9f9; }");
+        html.AppendLine("        .text-center { text-align: center; }");
+        html.AppendLine("        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }");
+        html.AppendLine("        .badge-draft { background-color: #9E9E9E; }");
+        html.AppendLine("        .badge-tovalidate { background-color: #607D8B; }");
+        html.AppendLine("        .badge-transmitted { background-color: #2196F3; }");
+        html.AppendLine("        .badge-inpurchase { background-color: #FFC107; color: #333; }");
+        html.AppendLine("        .badge-validated { background-color: #4CAF50; }");
+        html.AppendLine("        .badge-cancelled { background-color: #F44336; }");
+        html.AppendLine("        .details-table { margin: 5px 0; width: 100%; border-collapse: collapse; }");
+        html.AppendLine("        .details-table th { background: #f0f0f0; border: 1px solid #ddd; padding: 5px; font-size: 10px; }");
+        html.AppendLine("        .details-table td { border: 1px solid #ddd; padding: 5px; font-size: 10px; }");
+        html.AppendLine("        .recap { margin: 30px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }");
+        html.AppendLine("        .recap-grid { display: flex; gap: 30px; flex-wrap: wrap; }");
+        html.AppendLine("        .recap-item { flex: 1; min-width: 150px; }");
+        html.AppendLine("        .recap-label { font-size: 11px; color: #666; }");
+        html.AppendLine("        .recap-value { font-size: 18px; font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        .footer { text-align: center; font-size: 10px; color: #999; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; }");
+        html.AppendLine("    </style>");
+        html.AppendLine("</head>");
+        html.AppendLine("<body>");
+        html.AppendLine("    <div class=\"container\">");
+
+        // En-tête
+        html.AppendLine("        <div class=\"header\">");
+        html.AppendLine("            <div class=\"header-left\">");
+        html.AppendLine("                <h1>GesAchats v2.0</h1>");
+        html.AppendLine("                <p>Module Magasin / Stocks</p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("            <div class=\"header-right\">");
+        html.AppendLine("                <h2>LISTE DES BESOINS</h2>");
+        html.AppendLine($"                <p><span class=\"generation-date\">Généré le: {DateTime.Now:dd/MM/yyyy HH:mm}</span></p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("        </div>");
+
+        // Section titre
+        html.AppendLine("        <div class=\"section-title\">DEMANDES DE RÉAPPROVISIONNEMENT</div>");
+
+        // Tableau principal
+        html.AppendLine("        <table>");
+        html.AppendLine("            <thead>");
+        html.AppendLine("                <tr>");
+        html.AppendLine("                    <th>N° Demande</th>");
+        html.AppendLine("                    <th>Date</th>");
+        html.AppendLine("                    <th>Demandeur</th>");
+        html.AppendLine("                    <th class=\"text-center\">Nb Articles</th>");
+        html.AppendLine("                    <th>Statut</th>");
+        html.AppendLine("                    <th>Articles demandés</th>");
+        html.AppendLine("                </tr>");
+        html.AppendLine("            </thead>");
+        html.AppendLine("            <tbody>");
+
+        int totalArticles = 0;
+        foreach (var need in needs)
+        {
+            int nbArticles = need.Details?.Count ?? 0;
+            totalArticles += nbArticles;
+
+            string statusClass = need.Status switch
+            {
+                NeedStatus.Draft => "badge-draft",
+                NeedStatus.ToValidate => "badge-tovalidate",
+                NeedStatus.TransmittedToPurchasing => "badge-transmitted",
+                NeedStatus.InPurchase => "badge-inpurchase",
+                NeedStatus.Validated => "badge-validated",
+                NeedStatus.Cancelled => "badge-cancelled",
+                NeedStatus.Rejected => "badge-cancelled",
+                _ => "badge-draft"
+            };
+
+            string statusText = need.Status switch
+            {
+                NeedStatus.Draft => "En attente",
+                NeedStatus.ToValidate => "À Valider",
+                NeedStatus.TransmittedToPurchasing => "Transmis",
+                NeedStatus.InPurchase => "En cours",
+                NeedStatus.Validated => "Complété",
+                NeedStatus.Cancelled => "Annulé",
+                NeedStatus.Rejected => "Annulé",
+                _ => need.Status.ToString()
+            };
+
+            html.AppendLine("                <tr>");
+            html.AppendLine($"                    <td><strong>{need.NumeroBesoin}</strong></td>");
+            html.AppendLine($"                    <td>{need.RequestedAt:dd/MM/yyyy}</td>");
+            html.AppendLine($"                    <td>{need.RequestedBy?.FullName ?? "N/A"}</td>");
+            html.AppendLine($"                    <td class=\"text-center\">{nbArticles}</td>");
+            html.AppendLine($"                    <td><span class=\"badge {statusClass}\">{statusText}</span></td>");
+            html.AppendLine("                    <td>");
+
+            if (need.Details != null && need.Details.Any())
+            {
+                html.AppendLine("                        <table class=\"details-table\">");
+                html.AppendLine("                            <thead>");
+                html.AppendLine("                                <tr>");
+                html.AppendLine("                                    <th>Désignation</th>");
+                html.AppendLine("                                    <th class=\"text-center\">Qté</th>");
+                html.AppendLine("                                    <th class=\"text-center\">Unité</th>");
+                html.AppendLine("                                    <th>Observation</th>");
+                html.AppendLine("                                </tr>");
+                html.AppendLine("                            </thead>");
+                html.AppendLine("                            <tbody>");
+
+                foreach (var detail in need.Details)
+                {
+                    html.AppendLine("                                <tr>");
+                    html.AppendLine($"                                    <td>{detail.Product?.Designation ?? "N/A"}</td>");
+                    html.AppendLine($"                                    <td class=\"text-center\">{detail.Quantity:N2}</td>");
+                    html.AppendLine($"                                    <td class=\"text-center\">{detail.Product?.Unit ?? "-"}</td>");
+                    html.AppendLine($"                                    <td>{(!string.IsNullOrEmpty(need.Notes) ? need.Notes : "")}</td>");
+                    html.AppendLine("                                </tr>");
+                }
+
+                html.AppendLine("                            </tbody>");
+                html.AppendLine("                        </table>");
+            }
+            else
+            {
+                html.AppendLine("                        <span style=\"color: #999; font-size: 11px;\">Aucun détail</span>");
+            }
+
+            html.AppendLine("                    </td>");
+            html.AppendLine("                </tr>");
+        }
+
+        html.AppendLine("            </tbody>");
+        html.AppendLine("        </table>");
+
+        // Récapitulatif
+        int totalNeeds = needs.Count;
+        int transmitCount = needs.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        int inProgressCount = needs.Count(n => n.Status == NeedStatus.InPurchase);
+        int completedCount = needs.Count(n => n.Status == NeedStatus.Validated);
+        int cancelledCount = needs.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
+
+        html.AppendLine("        <div class=\"recap\">");
+        html.AppendLine("            <div class=\"recap-grid\">");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">Total demandes</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{totalNeeds}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">Total articles</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{totalArticles}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">Transmises</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{transmitCount}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">En cours</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{inProgressCount}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">Complétées</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{completedCount}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("                <div class=\"recap-item\">");
+        html.AppendLine("                    <div class=\"recap-label\">Annulées</div>");
+        html.AppendLine($"                    <div class=\"recap-value\">{cancelledCount}</div>");
+        html.AppendLine("                </div>");
+        html.AppendLine("            </div>");
+        html.AppendLine("        </div>");
+
+        // Footer
+        html.AppendLine("        <div class=\"footer\">");
+        html.AppendLine("            <p>Document généré par GesAchats v2.0 - Système de Gestion des Achats</p>");
+        html.AppendLine("            <p>Confidentiel - Usage interne uniquement</p>");
+        html.AppendLine("        </div>");
+
+        html.AppendLine("    </div>");
+        html.AppendLine("</body>");
+        html.AppendLine("</html>");
+
+        return html.ToString();
+    }
+
     public async Task<string> GenerateQuotationRequestPdfAsync(Quotation quotation)
     {
-        var fileName = $"DEV_{quotation.ReferenceNumber.Replace("-", "_")}.pdf";
-        var directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
-        
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
-
-        var filePath = Path.Combine(directory, fileName);
-
-        Document.Create(container =>
+        try
         {
-            container.Page(page =>
+            string htmlContent = GenerateQuotationHtmlContent(quotation);
+
+            string fileName = $"DEVIS_{quotation.ReferenceNumber.Replace("-", "_")}.pdf";
+            string pdfPath = Path.Combine(_outputPath, fileName);
+
+            string htmlPath = Path.Combine(_outputPath, $"DEVIS_{quotation.ReferenceNumber}_{Guid.NewGuid()}.html");
+            File.WriteAllText(htmlPath, htmlContent, Encoding.UTF8);
+
+            var processInfo = new ProcessStartInfo
             {
-                page.Size(PageSizes.A4);
-                page.Margin(1, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Verdana));
+                FileName = "wkhtmltopdf",
+                Arguments = $"--enable-local-file-access \"{htmlPath}\" \"{pdfPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
 
-                page.Header().Row(row =>
+            using (var process = Process.Start(processInfo))
+            {
+                if (process != null)
                 {
-                    row.RelativeItem().Column(col =>
+                    await process.WaitForExitAsync();
+                    if (process.ExitCode != 0)
                     {
-                        col.Item().Text("GesAchats v2.0").FontSize(20).SemiBold().FontColor(Colors.Blue.Medium);
-                        col.Item().Text("Module Responsable d'Achat");
-                    });
+                        throw new Exception($"Erreur conversion PDF wkhtmltopdf (code {process.ExitCode}). Assurez-vous que wkhtmltopdf est installé.");
+                    }
+                }
+            }
 
-                    row.RelativeItem().Column(col =>
-                    {
-                        col.Item().AlignRight().Text("DEMANDE DE PRIX").FontSize(24).SemiBold().FontColor(Colors.Grey.Medium);
-                        col.Item().AlignRight().Text($"Réf : {quotation.ReferenceNumber}");
-                        col.Item().AlignRight().Text($"Date : {quotation.Date:dd/MM/yyyy}");
-                    });
-                });
+            try { File.Delete(htmlPath); } catch { }
 
-                page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
-                {
-                    col.Item().Text($"À l'attention de : {quotation.Supplier?.CompanyName ?? "Fournisseur"}").FontSize(12).SemiBold();
-                    col.Item().PaddingVertical(10).Text("Madame, Monsieur, nous vous prions de bien vouloir nous faire parvenir votre meilleure offre de prix pour les articles suivants :");
+            return pdfPath;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erreur génération PDF Devis: {ex.Message}", ex);
+        }
+    }
 
-                    col.Item().Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.ConstantColumn(40);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn();
-                        });
+    private string GenerateQuotationHtmlContent(Quotation quotation)
+    {
+        StringBuilder html = new StringBuilder();
 
-                        table.Header(header =>
-                        {
-                            header.Cell().BorderBottom(1).Text("#");
-                            header.Cell().BorderBottom(1).Text("Désignation");
-                            header.Cell().BorderBottom(1).Text("Quantité");
-                        });
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html lang=\"fr\">");
+        html.AppendLine("<head>");
+        html.AppendLine("    <meta charset=\"UTF-8\">");
+        html.AppendLine($"    <title>Demande de Prix - {quotation.ReferenceNumber}</title>");
+        html.AppendLine("    <style>");
+        html.AppendLine("        * { margin: 0; padding: 0; box-sizing: border-box; }");
+        html.AppendLine("        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; color: #333; }");
+        html.AppendLine("        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
+        html.AppendLine("        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #1a3a52; padding-bottom: 20px; }");
+        html.AppendLine("        .header-left h1 { color: #0066cc; font-size: 28px; margin-bottom: 5px; }");
+        html.AppendLine("        .header-left p { color: #666; font-size: 14px; }");
+        html.AppendLine("        .header-right { text-align: right; }");
+        html.AppendLine("        .header-right h2 { color: #ccc; font-size: 42px; font-weight: bold; margin-bottom: 10px; }");
+        html.AppendLine("        .header-right p { font-size: 14px; margin: 5px 0; }");
+        html.AppendLine("        .generation-date { font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        .section-title { background-color: #1a3a52; color: white; padding: 10px 15px; margin: 20px 0 10px 0; font-size: 13px; font-weight: bold; }");
+        html.AppendLine("        .supplier-box { border: 2px solid #1a3a52; padding: 15px; border-radius: 4px; margin-bottom: 20px; }");
+        html.AppendLine("        .supplier-box h3 { color: #1a3a52; font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #1a3a52; padding-bottom: 5px; }");
+        html.AppendLine("        .supplier-box p { font-size: 12px; line-height: 1.6; color: #555; }");
+        html.AppendLine("        .intro-text { font-size: 13px; line-height: 1.6; color: #555; margin-bottom: 20px; }");
+        html.AppendLine("        table { width: 100%; border-collapse: collapse; margin: 20px 0; }");
+        html.AppendLine("        th { background: #e6f0fa; border: 1px solid #bbb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        td { border: 1px solid #bbb; padding: 10px; font-size: 12px; }");
+        html.AppendLine("        tbody tr:nth-child(even) { background: #f9f9f9; }");
+        html.AppendLine("        .text-center { text-align: center; }");
+        html.AppendLine("        .info-grid { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }");
+        html.AppendLine("        .info-box { flex: 1; min-width: 200px; border: 1px solid #ddd; padding: 15px; border-radius: 4px; background: #f9f9f9; }");
+        html.AppendLine("        .info-label { font-size: 10px; color: #999; text-transform: uppercase; }");
+        html.AppendLine("        .info-value { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }");
+        html.AppendLine("        .footer { text-align: center; font-size: 10px; color: #999; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 15px; }");
+        html.AppendLine("    </style>");
+        html.AppendLine("</head>");
+        html.AppendLine("<body>");
+        html.AppendLine("    <div class=\"container\">");
 
-                        int i = 1;
-                        foreach (var item in quotation.Details)
-                        {
-                            table.Cell().PaddingVertical(5).Text(i++.ToString());
-                            table.Cell().PaddingVertical(5).Text(item.Product?.Designation ?? "N/A");
-                            table.Cell().PaddingVertical(5).Text(item.Quantity.ToString("N2"));
-                        }
-                    });
-                });
+        // En-tête
+        html.AppendLine("        <div class=\"header\">");
+        html.AppendLine("            <div class=\"header-left\">");
+        html.AppendLine("                <h1>GesAchats v2.0</h1>");
+        html.AppendLine("                <p>Module Responsable d'Achat</p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("            <div class=\"header-right\">");
+        html.AppendLine("                <h2>DEMANDE DE PRIX</h2>");
+        html.AppendLine($"                <p><strong>Réf : {quotation.ReferenceNumber}</strong></p>");
+        html.AppendLine($"                <p>Date : {quotation.Date:dd/MM/yyyy}</p>");
+        html.AppendLine($"                <p><span class=\"generation-date\">Généré le: {DateTime.Now:dd/MM/yyyy HH:mm}</span></p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("        </div>");
 
-                page.Footer().AlignCenter().Text("GesAchats v2.0 - Demande de Devis");
-            });
-        }).GeneratePdf(filePath);
+        // Fournisseur
+        html.AppendLine("        <div class=\"supplier-box\">");
+        html.AppendLine("            <h3>FOURNISSEUR</h3>");
+        html.AppendLine($"            <p><strong>{quotation.Supplier?.CompanyName ?? "N/A"}</strong></p>");
+        if (!string.IsNullOrEmpty(quotation.Supplier?.Address))
+            html.AppendLine($"            <p>{quotation.Supplier.Address}</p>");
+        if (!string.IsNullOrEmpty(quotation.Supplier?.City))
+            html.AppendLine($"            <p>{quotation.Supplier.City}</p>");
+        if (!string.IsNullOrEmpty(quotation.Supplier?.Phone))
+            html.AppendLine($"            <p>Tél : {quotation.Supplier.Phone}</p>");
+        if (!string.IsNullOrEmpty(quotation.Supplier?.Email))
+            html.AppendLine($"            <p>Email : {quotation.Supplier.Email}</p>");
+        html.AppendLine("        </div>");
 
-        return filePath;
+        // Texte d'introduction
+        html.AppendLine("        <div class=\"intro-text\">");
+        html.AppendLine("            Madame, Monsieur, nous vous prions de bien vouloir nous faire parvenir votre meilleure offre de prix pour les articles suivants :");
+        html.AppendLine("        </div>");
+
+        // Tableau des articles
+        html.AppendLine("        <div class=\"section-title\">ARTICLES DEMANDÉS</div>");
+        html.AppendLine("        <table>");
+        html.AppendLine("            <thead>");
+        html.AppendLine("                <tr>");
+        html.AppendLine("                    <th>#</th>");
+        html.AppendLine("                    <th>Désignation</th>");
+        html.AppendLine("                    <th class=\"text-center\">Quantité</th>");
+        html.AppendLine("                    <th class=\"text-center\">Unité</th>");
+        html.AppendLine("                </tr>");
+        html.AppendLine("            </thead>");
+        html.AppendLine("            <tbody>");
+
+        int i = 1;
+        if (quotation.Details != null && quotation.Details.Any())
+        {
+            foreach (var item in quotation.Details)
+            {
+                html.AppendLine("                <tr>");
+                html.AppendLine($"                    <td>{i++}</td>");
+                html.AppendLine($"                    <td>{item.Product?.Designation ?? "N/A"}</td>");
+                html.AppendLine($"                    <td class=\"text-center\">{item.Quantity:N2}</td>");
+                html.AppendLine($"                    <td class=\"text-center\">{item.Product?.Unit ?? "-"}</td>");
+                html.AppendLine("                </tr>");
+            }
+        }
+        else
+        {
+            html.AppendLine("                <tr>");
+            html.AppendLine("                    <td colspan=\"4\" style=\"text-align: center; color: #999;\">Aucun article dans ce devis</td>");
+            html.AppendLine("                </tr>");
+        }
+
+        html.AppendLine("            </tbody>");
+        html.AppendLine("        </table>");
+
+        // Informations complémentaires
+        html.AppendLine("        <div class=\"section-title\">INFORMATIONS COMPLÉMENTAIRES</div>");
+        html.AppendLine("        <div class=\"info-grid\">");
+        html.AppendLine("            <div class=\"info-box\">");
+        html.AppendLine("                <div class=\"info-label\">Statut</div>");
+        html.AppendLine($"                <div class=\"info-value\">{quotation.Status}</div>");
+        html.AppendLine("                <div class=\"info-label\">Besoin lié</div>");
+        html.AppendLine($"                <div class=\"info-value\">{quotation.Need?.NumeroBesoin ?? "N/A"}</div>");
+        html.AppendLine("            </div>");
+        html.AppendLine("            <div class=\"info-box\">");
+        html.AppendLine("                <div class=\"info-label\">Montant Total HT</div>");
+        html.AppendLine($"                <div class=\"info-value\">{quotation.TotalAmountHT:N2} MAD</div>");
+        html.AppendLine("                <div class=\"info-label\">Montant Total TTC</div>");
+        html.AppendLine($"                <div class=\"info-value\">{quotation.TotalAmountTTC:N2} MAD</div>");
+        html.AppendLine("            </div>");
+        if (!string.IsNullOrEmpty(quotation.Observations))
+        {
+            html.AppendLine("            <div class=\"info-box\" style=\"flex-basis: 100%;\">");
+            html.AppendLine("                <div class=\"info-label\">Observations</div>");
+            html.AppendLine($"                <div class=\"info-value\">{quotation.Observations}</div>");
+            html.AppendLine("            </div>");
+        }
+        html.AppendLine("        </div>");
+
+        // Footer
+        html.AppendLine("        <div class=\"footer\">");
+        html.AppendLine("            <p>Document généré par GesAchats v2.0 - Système de Gestion des Achats</p>");
+        html.AppendLine("        </div>");
+
+        html.AppendLine("    </div>");
+        html.AppendLine("</body>");
+        html.AppendLine("</html>");
+
+        return html.ToString();
     }
 
     public async Task<string> GenerateNeedPdfAsync(Need need)
     {
-        var fileName = $"BES_{need.NumeroBesoin.Replace("-", "_")}.pdf";
-        var directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
-        
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
-
-        var filePath = Path.Combine(directory, fileName);
-
-        Document.Create(container =>
+        try
         {
-            container.Page(page =>
+            string htmlContent = GenerateNeedHtmlContent(need);
+
+            string fileName = $"BESOIN_{need.NumeroBesoin.Replace("-", "_")}.pdf";
+            string pdfPath = Path.Combine(_outputPath, fileName);
+
+            string htmlPath = Path.Combine(_outputPath, $"BESOIN_{need.NumeroBesoin}_{Guid.NewGuid()}.html");
+            File.WriteAllText(htmlPath, htmlContent, Encoding.UTF8);
+
+            var processInfo = new ProcessStartInfo
             {
-                page.Size(PageSizes.A4);
-                page.Margin(1, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Verdana));
+                FileName = "wkhtmltopdf",
+                Arguments = $"--enable-local-file-access \"{htmlPath}\" \"{pdfPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
 
-                page.Header().Row(row =>
+            using (var process = Process.Start(processInfo))
+            {
+                if (process != null)
                 {
-                    row.RelativeItem().Column(col =>
+                    await process.WaitForExitAsync();
+                    if (process.ExitCode != 0)
                     {
-                        col.Item().Text("GesAchats v2.0").FontSize(20).SemiBold().FontColor(Colors.Blue.Medium);
-                        col.Item().Text("Module Magasin / Stocks");
-                    });
-
-                    row.RelativeItem().Column(col =>
-                    {
-                        col.Item().AlignRight().Text("LISTE DE BESOINS").FontSize(24).SemiBold().FontColor(Colors.Grey.Medium);
-                        col.Item().AlignRight().Text($"N° : {need.NumeroBesoin}");
-                        col.Item().AlignRight().Text($"Date : {need.RequestedAt:dd/MM/yyyy}");
-                    });
-                });
-
-                page.Content().PaddingVertical(1, Unit.Centimetre).Column(col =>
-                {
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().Border(1).Padding(10).Column(c =>
-                        {
-                            c.Item().Text("DEMANDEUR").SemiBold().FontSize(12);
-                            c.Item().Text(need.RequestedBy?.FullName ?? "Magasinier");
-                            c.Item().Text("Service Maintenance / Stock");
-                        });
-                        row.ConstantItem(20);
-                        row.RelativeItem().Border(1).Padding(10).Column(c =>
-                        {
-                            c.Item().Text("STATUT").SemiBold().FontSize(12);
-                            c.Item().Text(need.Status.ToString());
-                        });
-                    });
-
-                    col.Item().PaddingTop(1, Unit.Centimetre).Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.ConstantColumn(40);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn();
-                            columns.RelativeColumn();
-                        });
-
-                        table.Header(header =>
-                        {
-                            header.Cell().BorderBottom(1).Text("#");
-                            header.Cell().BorderBottom(1).Text("Désignation");
-                            header.Cell().BorderBottom(1).Text("Quantité");
-                            header.Cell().BorderBottom(1).Text("Unité");
-                        });
-
-                        int i = 1;
-                        foreach (var item in need.Details)
-                        {
-                            table.Cell().PaddingVertical(5).Text(i++.ToString());
-                            table.Cell().PaddingVertical(5).Text(item.Product?.Designation ?? "N/A");
-                            table.Cell().PaddingVertical(5).Text(item.Quantity.ToString("N2"));
-                            table.Cell().PaddingVertical(5).Text(item.Product?.Unit ?? "");
-                        }
-                    });
-
-                    if (!string.IsNullOrEmpty(need.Description))
-                    {
-                        col.Item().PaddingTop(30).Column(c =>
-                        {
-                            c.Item().Text("DESCRIPTION / NOTES").SemiBold().FontSize(10);
-                            c.Item().Text(need.Description).FontSize(9).Italic();
-                        });
+                        throw new Exception($"Erreur conversion PDF wkhtmltopdf (code {process.ExitCode}). Assurez-vous que wkhtmltopdf est installé.");
                     }
-                });
+                }
+            }
 
-                page.Footer().AlignCenter().Text("GesAchats v2.0 - Historique des Besoins");
-            });
-        }).GeneratePdf(filePath);
+            try { File.Delete(htmlPath); } catch { }
 
-        return filePath;
+            return pdfPath;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erreur génération PDF Besoin: {ex.Message}", ex);
+        }
+    }
+
+    private string GenerateNeedHtmlContent(Need need)
+    {
+        StringBuilder html = new StringBuilder();
+
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html lang=\"fr\">");
+        html.AppendLine("<head>");
+        html.AppendLine("    <meta charset=\"UTF-8\">");
+        html.AppendLine($"    <title>Fiche Besoin - {need.NumeroBesoin}</title>");
+        html.AppendLine("    <style>");
+        html.AppendLine("        * { margin: 0; padding: 0; box-sizing: border-box; }");
+        html.AppendLine("        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; color: #333; }");
+        html.AppendLine("        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
+        html.AppendLine("        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #1a3a52; padding-bottom: 20px; }");
+        html.AppendLine("        .header-left h1 { color: #0066cc; font-size: 28px; margin-bottom: 5px; }");
+        html.AppendLine("        .header-left p { color: #666; font-size: 14px; }");
+        html.AppendLine("        .header-right { text-align: right; }");
+        html.AppendLine("        .header-right h2 { color: #ccc; font-size: 36px; font-weight: bold; margin-bottom: 10px; }");
+        html.AppendLine("        .header-right p { font-size: 14px; margin: 5px 0; }");
+        html.AppendLine("        .generation-date { font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        .section-title { background-color: #1a3a52; color: white; padding: 10px 15px; margin: 20px 0 10px 0; font-size: 13px; font-weight: bold; }");
+        html.AppendLine("        .info-grid { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }");
+        html.AppendLine("        .info-box { flex: 1; min-width: 200px; border: 2px solid #1a3a52; padding: 15px; border-radius: 4px; }");
+        html.AppendLine("        .info-box h3 { color: #1a3a52; font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #1a3a52; padding-bottom: 5px; }");
+        html.AppendLine("        .info-box p { font-size: 12px; line-height: 1.6; color: #555; }");
+        html.AppendLine("        .info-label { font-size: 10px; color: #999; text-transform: uppercase; }");
+        html.AppendLine("        .info-value { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }");
+        html.AppendLine("        table { width: 100%; border-collapse: collapse; margin: 20px 0; }");
+        html.AppendLine("        th { background: #e6f0fa; border: 1px solid #bbb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; color: #1a3a52; }");
+        html.AppendLine("        td { border: 1px solid #bbb; padding: 10px; font-size: 12px; }");
+        html.AppendLine("        tbody tr:nth-child(even) { background: #f9f9f9; }");
+        html.AppendLine("        .text-center { text-align: center; }");
+        html.AppendLine("        .footer { text-align: center; font-size: 10px; color: #999; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 15px; }");
+        html.AppendLine("    </style>");
+        html.AppendLine("</head>");
+        html.AppendLine("<body>");
+        html.AppendLine("    <div class=\"container\">");
+
+        // En-tête
+        html.AppendLine("        <div class=\"header\">");
+        html.AppendLine("            <div class=\"header-left\">");
+        html.AppendLine("                <h1>GesAchats v2.0</h1>");
+        html.AppendLine("                <p>Module Magasin / Stocks</p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("            <div class=\"header-right\">");
+        html.AppendLine("                <h2>FICHE BESOIN</h2>");
+        html.AppendLine($"                <p><span class=\"generation-date\">Généré le: {DateTime.Now:dd/MM/yyyy HH:mm}</span></p>");
+        html.AppendLine("            </div>");
+        html.AppendLine("        </div>");
+
+        // Section titre
+        html.AppendLine("        <div class=\"section-title\">DEMANDE DE RÉAPPROVISIONNEMENT</div>");
+
+        html.AppendLine("        <div class=\"info-grid\">");
+        html.AppendLine("            <div class=\"info-box\">");
+        html.AppendLine("                <h3>INFORMATIONS GÉNÉRALES</h3>");
+        html.AppendLine("                <div class=\"info-label\">N° Besoin</div>");
+        html.AppendLine($"                <div class=\"info-value\">{need.NumeroBesoin}</div>");
+        html.AppendLine("                <div class=\"info-label\">Date création</div>");
+        html.AppendLine($"                <div class=\"info-value\">{need.RequestedAt:dd/MM/yyyy HH:mm}</div>");
+        html.AppendLine("            </div>");
+        html.AppendLine("            <div class=\"info-box\">");
+        html.AppendLine("                <h3>DEMANDEUR</h3>");
+        html.AppendLine("                <div class=\"info-label\">Créé par</div>");
+        html.AppendLine($"                <div class=\"info-value\">{need.RequestedBy?.FullName ?? "N/A"}</div>");
+        html.AppendLine("            </div>");
+        html.AppendLine("        </div>");
+
+        // Articles
+        html.AppendLine("        <div class=\"section-title\">ARTICLES DEMANDÉS</div>");
+        html.AppendLine("        <table>");
+        html.AppendLine("            <thead>");
+        html.AppendLine("                <tr>");
+        html.AppendLine("                    <th>#</th>");
+        html.AppendLine("                    <th>Désignation</th>");
+        html.AppendLine("                    <th class=\"text-center\">Quantité demandée</th>");
+        html.AppendLine("                    <th class=\"text-center\">Unité</th>");
+        html.AppendLine("                </tr>");
+        html.AppendLine("            </thead>");
+        html.AppendLine("            <tbody>");
+
+        int i = 1;
+        if (need.Details != null && need.Details.Any())
+        {
+            foreach (var detail in need.Details)
+            {
+                html.AppendLine("                <tr>");
+                html.AppendLine($"                    <td>{i++}</td>");
+                html.AppendLine($"                    <td>{detail.Product?.Designation ?? "N/A"}</td>");
+                html.AppendLine($"                    <td class=\"text-center\">{detail.Quantity:N2}</td>");
+                html.AppendLine($"                    <td class=\"text-center\">{detail.Product?.Unit ?? "-"}</td>");
+                html.AppendLine("                </tr>");
+            }
+        }
+        else
+        {
+            html.AppendLine("                <tr>");
+            html.AppendLine("                    <td colspan=\"4\" style=\"text-align: center; color: #999;\">Aucun article dans cette demande</td>");
+            html.AppendLine("                </tr>");
+        }
+
+        html.AppendLine("            </tbody>");
+        html.AppendLine("        </table>");
+
+        // Description / Notes
+        if (!string.IsNullOrEmpty(need.Description) || !string.IsNullOrEmpty(need.Notes))
+        {
+            html.AppendLine("        <div class=\"section-title\">DESCRIPTION / NOTES</div>");
+            html.AppendLine("        <div style=\"background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin: 10px 0; font-size: 12px;\">");
+            html.AppendLine($"            <p>{(string.IsNullOrEmpty(need.Description) ? need.Notes : need.Description)}</p>");
+            html.AppendLine("        </div>");
+        }
+
+        // Footer
+        html.AppendLine("        <div class=\"footer\">");
+        html.AppendLine("            <p>Document généré par GesAchats v2.0 - Système de Gestion des Achats</p>");
+        html.AppendLine("            <p>Confidentiel - Usage interne uniquement</p>");
+        html.AppendLine("        </div>");
+
+        html.AppendLine("    </div>");
+        html.AppendLine("</body>");
+        html.AppendLine("</html>");
+
+        return html.ToString();
     }
 }

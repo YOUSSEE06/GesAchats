@@ -51,7 +51,7 @@ public class AddProductViewModel : BaseViewModel
                 Unit = Unit,
                 CurrentStock = 0,
                 MinimumStock = MinimumStock,
-                IsNew = true,
+                IsNew = false,
                 CreatedBy = _userSession.CurrentUser?.FullName ?? "Magasinier",
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true

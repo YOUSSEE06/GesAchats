@@ -39,6 +39,26 @@ public class ArticleSelectionViewModel : BaseViewModel
     }
 }
 
+public class QuotationDisplayViewModel : BaseViewModel
+{
+    public Quotation Quotation { get; }
+    
+    public string NormalizedStatus { get; private set; }
+    
+    public QuotationDisplayViewModel(Quotation quotation, Func<string, string> normalizeStatus)
+    {
+        Quotation = quotation;
+        NormalizedStatus = normalizeStatus(quotation.Status);
+    }
+    
+    // Proxy all properties we need for binding
+    public string ReferenceNumber => Quotation.ReferenceNumber;
+    public Supplier? Supplier => Quotation.Supplier;
+    public DateTime Date => Quotation.Date;
+    public decimal TotalAmountTTC => Quotation.TotalAmountTTC;
+    public string Status => NormalizedStatus;
+}
+
 public class SupplierSelectionViewModel : BaseViewModel
 {
     private bool _isSelected;
@@ -66,6 +86,9 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private bool _isEditMode;
     private Quotation? _editingQuotation;
     private bool _isCreateDialogOpen;
+    private bool _isDetailsModalOpen;
+    private Quotation? _selectedQuotationDetails;
+    private string _detailsNormalizedStatus = string.Empty;
     private string _filterSearch = string.Empty;
     private DateTime? _filterDate;
     private int? _filterSupplierId;
@@ -76,7 +99,8 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private const int FilterDebounceMs = 300;
     
     // Pagination
-    private List<Quotation> _allFilteredQuotations = new List<Quotation>();
+    private List<Quotation> _allQuotationsList = new List<Quotation>();
+    private List<QuotationDisplayViewModel> _allFilteredQuotations = new List<QuotationDisplayViewModel>();
     private int _currentPage = 1;
     private int _itemsPerPage = 20;
     private int _totalPages = 1;
@@ -108,8 +132,8 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             }
         }
     }
-    public ObservableCollection<Quotation> AllQuotations { get; } = new ObservableCollection<Quotation>();
-    public ObservableCollection<Quotation> FilteredQuotations { get; } = new ObservableCollection<Quotation>();
+    public ObservableCollection<Quotation> AllQuotationsRaw { get; } = new ObservableCollection<Quotation>();
+    public ObservableCollection<QuotationDisplayViewModel> FilteredQuotations { get; } = new ObservableCollection<QuotationDisplayViewModel>();
 
     public Need? SelectedNeed
     {
@@ -134,6 +158,33 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         get => _isCreateDialogOpen;
         set => SetProperty(ref _isCreateDialogOpen, value);
     }
+
+    public bool IsDetailsModalOpen
+    {
+        get => _isDetailsModalOpen;
+        set => SetProperty(ref _isDetailsModalOpen, value);
+    }
+
+    public Quotation? SelectedQuotationDetails
+    {
+        get => _selectedQuotationDetails;
+        set
+        {
+            if (SetProperty(ref _selectedQuotationDetails, value))
+            {
+                DetailsNormalizedStatus = value != null ? GetNormalizedStatus(value.Status) : string.Empty;
+                OnPropertyChanged(nameof(DetailsTva));
+            }
+        }
+    }
+
+    public string DetailsNormalizedStatus
+    {
+        get => _detailsNormalizedStatus;
+        set => SetProperty(ref _detailsNormalizedStatus, value);
+    }
+
+    public decimal DetailsTva => (SelectedQuotationDetails?.TotalAmountTTC ?? 0) - (SelectedQuotationDetails?.TotalAmountHT ?? 0);
 
     public string FilterSearch
     {
@@ -286,6 +337,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     public ICommand CloseCreateDialogCommand { get; }
     public ICommand CreateQuotesCommand { get; }
     public ICommand ViewQuotationCommand { get; }
+    public ICommand CloseDetailsModalCommand { get; }
     public ICommand EditQuotationCommand { get; }
     public ICommand DeleteQuotationCommand { get; }
     public ICommand PrintPdfCommand { get; }
@@ -318,11 +370,12 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         OpenCreateDialogCommand = new RelayCommand(_ => OpenCreateDialog());
         CloseCreateDialogCommand = new RelayCommand(_ => CloseCreateDialog());
         CreateQuotesCommand = new RelayCommand(async _ => await ExecuteCreateQuotes(), _ => CanCreateQuotes());
-        ViewQuotationCommand = new RelayCommand(async p => await ExecuteViewQuotation(p as Quotation));
-        EditQuotationCommand = new RelayCommand(async p => await ExecuteEditQuotation(p as Quotation), p => CanEditQuotation(p as Quotation));
-        DeleteQuotationCommand = new RelayCommand(async p => await ExecuteDeleteQuotation(p as Quotation), p => CanEditQuotation(p as Quotation));
-        PrintPdfCommand = new RelayCommand(async p => await ExecutePrintPdf(p as Quotation));
-        ChiffrerCommand = new RelayCommand(p => ExecuteChiffrer(p as Quotation));
+        ViewQuotationCommand = new RelayCommand(async p => await ExecuteViewQuotation(p));
+        CloseDetailsModalCommand = new RelayCommand(_ => CloseDetailsModal());
+        EditQuotationCommand = new RelayCommand(async p => await ExecuteEditQuotation(p), p => CanEditQuotation(p));
+        DeleteQuotationCommand = new RelayCommand(async p => await ExecuteDeleteQuotation(p), p => CanEditQuotation(p));
+        PrintPdfCommand = new RelayCommand(async p => await ExecutePrintPdf(p));
+        ChiffrerCommand = new RelayCommand(p => ExecuteChiffrer(p));
         NavigateToDashboardCommand = new RelayCommand(_ => _navigationService.NavigateTo("Dashboard"));
         ClearFiltersCommand = new RelayCommand(_ => ClearFilters());
         NextPageCommand = new RelayCommand(_ => { if (CurrentPage < TotalPages) CurrentPage++; }, _ => CurrentPage < TotalPages);
@@ -334,12 +387,14 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     }
 
     private Need? _pendingNavigationNeed;
+    private bool _shouldOpenModalOnNavigation;
 
     public void OnNavigatedTo(object parameter)
     {
         if (parameter is Need need)
         {
             _pendingNavigationNeed = need;
+            _shouldOpenModalOnNavigation = true;
             TryApplyPendingNeed();
         }
     }
@@ -358,12 +413,33 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             }
             SelectedNeed = existing;
             _pendingNavigationNeed = null;
+            
+            if (_shouldOpenModalOnNavigation)
+            {
+                OpenCreateDialog(clearForm: false);
+                _shouldOpenModalOnNavigation = false;
+            }
         }
     }
 
     private void OpenCreateDialog()
     {
-        ResetForm();
+        OpenCreateDialog(clearForm: true);
+    }
+    
+    private void OpenCreateDialog(bool clearForm)
+    {
+        if (clearForm)
+        {
+            ResetForm();
+        }
+        else
+        {
+            // Keep SelectedNeed, but reset other fields
+            var savedNeed = SelectedNeed;
+            ResetForm();
+            SelectedNeed = savedNeed;
+        }
         IsCreateDialogOpen = true;
     }
 
@@ -373,14 +449,46 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         ResetForm();
     }
 
-    private async Task ExecuteViewQuotation(Quotation? quotation)
+    private async Task ExecuteViewQuotation(object? param)
     {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+
         if (quotation == null) return;
-        System.Windows.MessageBox.Show($"Affichage des détails du devis {quotation.ReferenceNumber}", "Détails", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+        var full = await _unitOfWork.Quotations.GetWithDetailsAsync(quotation.Id);
+        if (full == null) return;
+
+        SelectedQuotationDetails = full;
+        IsDetailsModalOpen = true;
     }
 
-    private async Task ExecuteEditQuotation(Quotation? quotation)
+    private static string GetNormalizedStatus(string status)
     {
+        if (string.Equals(status, "accepted", StringComparison.OrdinalIgnoreCase) || string.Equals(status, "Validé", StringComparison.OrdinalIgnoreCase))
+            return "Validé";
+        return "En attente";
+    }
+
+    private void CloseDetailsModal()
+    {
+        IsDetailsModalOpen = false;
+        SelectedQuotationDetails = null;
+    }
+
+    private async Task ExecuteEditQuotation(object? param)
+    {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+        
         if (quotation == null) return;
 
         IsBusy = true;
@@ -410,8 +518,15 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
     }
 
-    private async Task ExecuteDeleteQuotation(Quotation? quotation)
+    private async Task ExecuteDeleteQuotation(object? param)
     {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+        
         if (quotation == null) return;
 
         var result = System.Windows.MessageBox.Show(
@@ -441,8 +556,15 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
     }
 
-    private async Task ExecutePrintPdf(Quotation? quotation)
+    private async Task ExecutePrintPdf(object? param)
     {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+        
         if (quotation == null) return;
 
         IsBusy = true;
@@ -467,10 +589,30 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         }
     }
 
-    private void ExecuteChiffrer(Quotation? quotation)
+    private void ExecuteChiffrer(object? param)
     {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+        
         if (quotation == null) return;
         _navigationService.NavigateTo("SaisiePrix", quotation.Id);
+    }
+    
+    private bool CanEditQuotation(object? param)
+    {
+        Quotation? quotation = param switch
+        {
+            QuotationDisplayViewModel vm => vm.Quotation,
+            Quotation q => q,
+            _ => null
+        };
+        
+        if (quotation == null) return false;
+        return NormalizeQuotationStatus(quotation.Status) != QuotationStatus.Validated;
     }
 
     private async Task LoadInitialData()
@@ -516,8 +658,13 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             }
 
             var quotes = await _unitOfWork.Quotations.GetAllWithAllRelatedAsync();
-            AllQuotations.Clear();
-            foreach (var q in quotes) AllQuotations.Add(q);
+            AllQuotationsRaw.Clear();
+            _allQuotationsList.Clear();
+            foreach (var q in quotes)
+            {
+                AllQuotationsRaw.Add(q);
+                _allQuotationsList.Add(q);
+            }
 
             SelectedFilterSupplier = "Tous";
             FilterStatus = "Tous";
@@ -527,6 +674,13 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             
             // Calculate stats in background
             _ = CalculateStatisticsAsync();
+            
+            // Open modal if we came from Besoins Magasin page with a selected need
+            if (_shouldOpenModalOnNavigation && SelectedNeed != null)
+            {
+                OpenCreateDialog(clearForm: false);
+                _shouldOpenModalOnNavigation = false;
+            }
         }
         finally
         {
@@ -540,18 +694,18 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         await Task.Run(() =>
         {
             // Calculate statistics on background thread
-            var total = AllQuotations.Count;
-            var envoyes = AllQuotations.Count;
-            var reponse = AllQuotations.Count(q => q.ResponseDate.HasValue);
-            var acceptes = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
-            var valides = AllQuotations.Count(q => q.Status == QuotationStatus.Validated);
-            var montant = AllQuotations.Sum(q => q.TotalAmountTTC);
+            var total = AllQuotationsRaw.Count;
+            var envoyes = AllQuotationsRaw.Count;
+            var reponse = AllQuotationsRaw.Count(q => q.ResponseDate.HasValue);
+            var acceptes = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
+            var valides = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
+            var montant = AllQuotationsRaw.Sum(q => q.TotalAmountTTC);
             var moyenne = total > 0 ? montant / total : 0;
             
             string fournisseur = "-";
-            if (AllQuotations.Any())
+            if (AllQuotationsRaw.Any())
             {
-                var supplierStats = AllQuotations
+                var supplierStats = AllQuotationsRaw
                     .Where(q => q.Supplier != null)
                     .GroupBy(q => q.Supplier.CompanyName)
                     .OrderByDescending(g => g.Count())
@@ -578,6 +732,34 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         });
     }
 
+    /// <summary>
+    /// Normalise le statut d'un devis pour l'affichage et les traitements
+    /// </summary>
+    private string NormalizeQuotationStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return QuotationStatus.Pending;
+        
+        status = status.Trim();
+        
+        // Convertir les anciennes valeurs "Accepted" en "Validé"
+        if (status.Equals("Accepted", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("accepted", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("ACCEPTED", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Validated;
+        
+        // Normaliser les valeurs existantes
+        if (status.Equals("En attente", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("en_attente", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Pending;
+        
+        if (status.Equals("Validé", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("valide", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Validated;
+        
+        return status;
+    }
+
     private void CalculateStatistics()
     {
         _ = CalculateStatisticsAsync();
@@ -592,7 +774,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private void ApplyFilters()
     {
         // Store all filtered results first
-        var filtered = AllQuotations.AsEnumerable();
+        var filtered = _allQuotationsList.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(FilterSearch))
         {
@@ -615,10 +797,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
 
         if (FilterStatus != "Tous")
         {
-            filtered = filtered.Where(q => q.Status == FilterStatus);
+            filtered = filtered.Where(q => NormalizeQuotationStatus(q.Status) == FilterStatus);
         }
 
-        _allFilteredQuotations = filtered.ToList();
+        // Convert to display view models
+        _allFilteredQuotations = filtered.Select(q => new QuotationDisplayViewModel(q, NormalizeQuotationStatus)).ToList();
         
         // Reset to first page
         CurrentPage = 1;

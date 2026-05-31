@@ -14,6 +14,7 @@ using GesAchats.WPF.Views.Magasinier.Stock;
 using GesAchats.WPF.Views.Magasinier.Livraisons;
 using GesAchats.WPF.Views.Magasinier.NeedsList;
 using GesAchats.WPF.Views.Magasinier.StockExits;
+using GesAchats.WPF.Views.Magasinier.Orders;
 using GesAchats.WPF.ViewModels.Acheteur;
 using GesAchats.WPF.ViewModels.Comptable;
 using GesAchats.WPF.Views.Acheteur;
@@ -264,6 +265,7 @@ public partial class App : Application
         services.AddTransient<NeedsDetailsViewModel>();
         services.AddTransient<NeedsStatisticsViewModel>();
         services.AddTransient<StockExitViewModel>();
+        services.AddTransient<MagasinierOrdersViewModel>();
 
         // ViewModels - Focus Acheteur
         services.AddTransient<AcheteurShellViewModel>();
@@ -314,6 +316,7 @@ public partial class App : Application
         services.AddTransient<NeedsStatisticsWindow>();
         services.AddTransient<AddProductDialog>();
         services.AddTransient<GesAchats.WPF.Views.Magasinier.StockExits.StockExitPage>();
+        services.AddTransient<MagasinierOrdersPage>();
 
         // Views - Focus Acheteur
          services.AddTransient<AcheteurShell>();

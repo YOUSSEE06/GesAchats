@@ -28,4 +28,7 @@ public class QuotationDetail
     public decimal UnitPriceTTC { get; set; }
 
     public int? DeliveryDelayDays { get; set; } // Délai spécifique par article si nécessaire
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public decimal TotalLigneHT => Quantity * UnitPriceHT;
 }

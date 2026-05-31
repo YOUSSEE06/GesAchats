@@ -9,7 +9,6 @@ public interface IStockService
     Task<IEnumerable<Product>> GetAllProductsWithMagasinAsync();
     Task<IEnumerable<Product>> GetLowStockProductsAsync();
     Task<IEnumerable<Product>> GetRuptureProductsAsync();
-    Task<IEnumerable<Product>> GetNewProductsAsync();
     Task<bool> UpdateStockAsync(int productId, decimal quantityChange);
     Task<bool> RecordStockExitAsync(StockExit stockExit);
     Task<IEnumerable<StockExit>> GetAllStockExitsAsync();

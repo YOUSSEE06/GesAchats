@@ -396,6 +396,253 @@
             </Grid>
         </ScrollViewer>
 
+        <!-- Details Modal Popup (Outside ScrollViewer to stay fixed) -->
+        <Grid Background="#00000040" Visibility="{Binding IsDetailsModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Panel.ZIndex="1100">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Top" Width="700" MaxHeight="750" Margin="0,20,0,0" Style="{StaticResource ModernCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Modal Header -->
+                    <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="Détails du Devis" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Button HorizontalAlignment="Right"
+                                    Command="{Binding CloseDetailsModalCommand}"
+                                    Style="{StaticResource ModernIconButton}">
+                                <TextBlock Text="✕" FontSize="18"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
+                        <StackPanel>
+                            <!-- Status Badge -->
+                            <Border Padding="10,5" CornerRadius="20" HorizontalAlignment="Left" Margin="0,0,0,16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#EEE"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="En attente">
+                                                <Setter Property="Background" Value="#FFF3E0"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding DetailsNormalizedStatus}" FontSize="13" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#757575"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="En attente">
+                                                    <Setter Property="Foreground" Value="#E65100"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                    <Setter Property="Foreground" Value="#2E7D32"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+
+                            <!-- General Info Section -->
+                            <Border Background="#F8F9FA" CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="Référence" FontWeight="SemiBold" Foreground="#757575" FontSize="13" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedQuotationDetails.ReferenceNumber}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Text="Fournisseur" FontWeight="SemiBold" Foreground="#757575" FontSize="13" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedQuotationDetails.Supplier.CompanyName}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="2" Text="Date" FontWeight="SemiBold" Foreground="#757575" FontSize="13" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedQuotationDetails.Date, StringFormat=dd/MM/yyyy}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="3" Text="Besoin lié" FontWeight="SemiBold" Foreground="#757575" FontSize="13" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedQuotationDetails.Need.NumeroBesoin}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="4" Text="Statut" FontWeight="SemiBold" Foreground="#757575" FontSize="13"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DetailsNormalizedStatus}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Pending Status: No prices message -->
+                            <Border Background="#FFF8E1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="Les prix ne sont pas encore saisis pour ce devis."
+                                           Foreground="#E65100" FontSize="13" FontWeight="Medium"/>
+                            </Border>
+
+                            <!-- Articles Table: En attente (no prices) -->
+                            <TextBlock Text="Articles" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DataGrid ItemsSource="{Binding SelectedQuotationDetails.Details}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          HeadersVisibility="Column"
+                                          BorderThickness="0"
+                                          Background="White"
+                                          RowBackground="White"
+                                          AlternatingRowBackground="#F5F5F5"
+                                          FontSize="13"
+                                          Margin="4">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Padding" Value="8,6"/>
+                                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Désignation" Width="*" MinWidth="200" Binding="{Binding Product.Designation}"/>
+                                        <DataGridTextColumn Header="Quantité" Width="100" Binding="{Binding Quantity, StringFormat=N2}"/>
+                                        <DataGridTextColumn Header="Unité" Width="80" Binding="{Binding Product.Unit}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <!-- Articles Table: Validé (with prices) -->
+                            <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DataGrid ItemsSource="{Binding SelectedQuotationDetails.Details}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          HeadersVisibility="Column"
+                                          BorderThickness="0"
+                                          Background="White"
+                                          RowBackground="White"
+                                          AlternatingRowBackground="#F5F5F5"
+                                          FontSize="13"
+                                          Margin="4">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Padding" Value="8,6"/>
+                                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Désignation" Width="*" MinWidth="200" Binding="{Binding Product.Designation}"/>
+                                        <DataGridTextColumn Header="Quantité" Width="100" Binding="{Binding Quantity, StringFormat=N2}"/>
+                                        <DataGridTextColumn Header="Unité" Width="80" Binding="{Binding Product.Unit}"/>
+                                        <DataGridTextColumn Header="Prix unitaire HT" Width="130" Binding="{Binding UnitPriceHT, StringFormat=N2}">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Padding" Value="6,4"/>
+                                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Total ligne HT" Width="130" Binding="{Binding TotalLigneHT, StringFormat=N2}">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Padding" Value="6,4"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <!-- Price Summary (Validé only) -->
+                            <Border Background="#F8F9FA" CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DetailsNormalizedStatus}" Value="Validé">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Total HT" FontWeight="SemiBold" Foreground="#757575" FontSize="13"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedQuotationDetails.TotalAmountHT, StringFormat={}{0:N2} MAD}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Padding="24" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="2"
+                                    Command="{Binding CloseDetailsModalCommand}"
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Background="#1a3a52"
+                                    Foreground="White">
+                                Fermer
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
         <!-- Create/Edit Dialog Popup (Outside ScrollViewer to stay fixed) -->
         <Grid Background="#00000040" Visibility="{Binding IsCreateDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Panel.ZIndex="1000">
             <Border HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" MaxHeight="700" Margin="0,20,0,0" Style="{StaticResource ModernCard}">

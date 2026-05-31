@@ -74,18 +74,6 @@
                     <TextBlock Text="BL reçus cette semaine" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
-
-            <!-- Nouveaux Produits -->
-            <Border Margin="10" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
-                </Border.Effect>
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="✨ Nouveaux" Foreground="{StaticResource NewProductBrush}" FontSize="14" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding NewProductsCount}" Foreground="{StaticResource NewProductBrush}" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10"/>
-                    <TextBlock Text="Articles ajoutés récem." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
         </UniformGrid>
 
         <!-- Alertes Section -->

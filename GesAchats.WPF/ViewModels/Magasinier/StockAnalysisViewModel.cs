@@ -15,13 +15,21 @@ public class StockProductViewModel : BaseViewModel
         Product = product;
     }
 
-    public string StatusColor => Product.IsNew ? "#9C27B0" : 
-                                Product.CurrentStock <= 0 ? "#F44336" : 
-                                Product.CurrentStock <= Product.MinimumStock ? "#FFC107" : "#4CAF50";
+    public string StatusColor => Product.Etat switch
+    {
+        StockState.OutOfStock => "#F44336",
+        StockState.Alert => "#FFC107",
+        StockState.Ok => "#4CAF50",
+        _ => "#808080"
+    };
     
-    public string StatusIcon => Product.IsNew ? "✨" : 
-                               Product.CurrentStock <= 0 ? "🔴" : 
-                               Product.CurrentStock <= Product.MinimumStock ? "🟡" : "🟢";
+    public string StatusIcon => Product.Etat switch
+    {
+        StockState.OutOfStock => "🔴",
+        StockState.Alert => "🟡",
+        StockState.Ok => "🟢",
+        _ => "❓"
+    };
 }
 
 public class StockAnalysisViewModel : BaseViewModel
@@ -38,7 +46,7 @@ public class StockAnalysisViewModel : BaseViewModel
         set { if (SetProperty(ref _searchText, value)) FilterProducts(); }
     }
 
-    public List<string> Filters { get; } = new List<string> { "Tous", "Rupture", "Sous minimum", "Normal", "Nouveaux" };
+    public List<string> Filters { get; } = new List<string> { "Tous", "Rupture", "Sous minimum", "Normal" };
     
     public string SelectedFilter
     {
@@ -92,10 +100,9 @@ public class StockAnalysisViewModel : BaseViewModel
 
         filtered = SelectedFilter switch
         {
-            "Rupture" => filtered.Where(p => p.CurrentStock <= 0 && !p.IsNew),
-            "Sous minimum" => filtered.Where(p => p.CurrentStock > 0 && p.CurrentStock <= p.MinimumStock && !p.IsNew),
-            "Normal" => filtered.Where(p => p.CurrentStock > p.MinimumStock && !p.IsNew),
-            "Nouveaux" => filtered.Where(p => p.IsNew),
+            "Rupture" => filtered.Where(p => p.Etat == StockState.OutOfStock),
+            "Sous minimum" => filtered.Where(p => p.Etat == StockState.Alert),
+            "Normal" => filtered.Where(p => p.Etat == StockState.Ok),
             _ => filtered
         };
 

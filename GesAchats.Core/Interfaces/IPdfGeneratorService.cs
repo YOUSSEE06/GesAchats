@@ -9,4 +9,5 @@ public interface IPdfGeneratorService
     Task<string> GenerateNeedPdfAsync(Need need);
     Task<string> GenerateDeliveryNotePdfAsync(DeliveryNote deliveryNote);
     Task<string> GeneratePaymentReceiptPdfAsync(Payment reglement);
+    Task<string> GenerateNeedsListPdfAsync(IEnumerable<Need> needs);
 }

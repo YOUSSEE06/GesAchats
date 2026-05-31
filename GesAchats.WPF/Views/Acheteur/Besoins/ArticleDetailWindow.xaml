@@ -83,9 +83,18 @@
             <!-- Footer -->
             <Border Grid.Row="3" Background="#F5F5F5" CornerRadius="0,0,15,15" Padding="20,15">
                 <DockPanel>
-                    <TextBlock x:Name="TxtDescription" Text="Description..." Foreground="Gray" FontStyle="Italic" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="400"/>
+                    <TextBlock x:Name="TxtDescription" Text="Description..." Foreground="Gray" FontStyle="Italic" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="300"/>
                     <Button Content="Fermer" Click="Close_Click" 
                             Padding="30,8" Background="#2196F3" Foreground="White" 
+                            FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Right" Margin="5,0,0,0">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="5"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    <Button Content="📄 Exporter PDF" Click="ExportPdf_Click"
+                            Padding="20,8" Background="#1a3a52" Foreground="White"
                             FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Right">
                         <Button.Resources>
                             <Style TargetType="Border">

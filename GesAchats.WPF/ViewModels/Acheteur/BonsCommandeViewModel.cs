@@ -698,12 +698,6 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
 
             await _unitOfWork.PurchaseOrders.AddAsync(order);
 
-            if (SelectedQuotation != null)
-            {
-                SelectedQuotation.Status = "Accepted";
-                _unitOfWork.Quotations.Update(SelectedQuotation);
-            }
-
             await _unitOfWork.CompleteAsync();
 
             System.Windows.MessageBox.Show($"Le Bon de Commande {order.OrderNumber} a été généré avec succès.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
