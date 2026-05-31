@@ -26,6 +26,7 @@ using GesAchats.WPF.Views.Acheteur.Fournisseurs;
 using GesAchats.WPF.Views.Acheteur.Commandes;
 using GesAchats.WPF.Services;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 
 using GesAchats.WPF.Views.Magasinier.NeedsHistory;
 
@@ -252,6 +253,18 @@ public partial class App : Application
         services.AddTransient<IEmailService, EmailService>();
         services.AddTransient<IConformityService, ConformityService>();
         services.AddTransient<IFileStorageService>(s => new FileStorageService(AppDomain.CurrentDomain.BaseDirectory));
+        
+        // Dashboard services
+        services.AddTransient<IPurchaseOrderService, PurchaseOrderService>();
+        services.AddTransient<INeedsService, NeedsService>();
+        services.AddTransient<ISupplierService, SupplierService>();
+        services.AddTransient<IInvoiceService, InvoiceService>();
+        
+        // Serilog - simple logger for now
+        services.AddSingleton<Serilog.ILogger>(sp => 
+            new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .CreateLogger());
 
         // ViewModels - Focus Magasinier
         services.AddTransient<LoginViewModel>();
@@ -269,6 +282,7 @@ public partial class App : Application
 
         // ViewModels - Focus Acheteur
         services.AddTransient<AcheteurShellViewModel>();
+        services.AddTransient<AcheteurDashboardViewModel>();
         services.AddTransient<ReceivedNeedsViewModel>();
         services.AddTransient<QuotesManagementViewModel>();
         services.AddTransient<SupplierManagementViewModel>();
@@ -320,7 +334,7 @@ public partial class App : Application
 
         // Views - Focus Acheteur
          services.AddTransient<AcheteurShell>();
-         services.AddTransient<AcheteurDashboardPage>();
+         services.AddTransient<GesAchats.WPF.Views.Acheteur.Dashboard.AcheteurDashboardPage>();
          services.AddTransient<BesoinsMagasinPage>();
          services.AddTransient<QuotesManagementPage>();
          services.AddTransient<QuotationPriceEntryPage>();

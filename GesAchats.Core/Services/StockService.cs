@@ -12,6 +12,9 @@ public interface IStockService
     Task<bool> UpdateStockAsync(int productId, decimal quantityChange);
     Task<bool> RecordStockExitAsync(StockExit stockExit);
     Task<IEnumerable<StockExit>> GetAllStockExitsAsync();
+    Task<int> GetTrackedProductsCountAsync();
+    Task<int> GetLowStockProductsCountAsync();
+    Task<List<ProductPriceAnalysisData>> GetProductPriceAnalysisAsync(DateTime startDate, DateTime endDate, int topCount);
 }
 
 public class StockService : IStockService
@@ -77,5 +80,66 @@ public class StockService : IStockService
     public async Task<IEnumerable<StockExit>> GetAllStockExitsAsync()
     {
         return await _unitOfWork.StockExits.GetAllWithDetailsAsync();
+    }
+
+    public async Task<int> GetTrackedProductsCountAsync()
+    {
+        var products = await _unitOfWork.Products.FindAsync(p => p.IsActive);
+        return products.Count();
+    }
+
+    public async Task<int> GetLowStockProductsCountAsync()
+    {
+        var products = await GetLowStockProductsAsync();
+        return products.Count();
+    }
+
+    public async Task<List<ProductPriceAnalysisData>> GetProductPriceAnalysisAsync(DateTime startDate, DateTime endDate, int topCount)
+    {
+        // Get purchase order details
+        var allOrders = await _unitOfWork.PurchaseOrders.GetAllIncludingAsync(po => po.Details);
+        var filteredOrders = allOrders.Where(po => po.CreatedAt >= startDate && po.CreatedAt <= endDate);
+        
+        var productQuantities = new Dictionary<int, (decimal quantity, decimal totalPrice)>();
+        
+        foreach (var order in filteredOrders)
+        {
+            foreach (var detail in order.Details)
+            {
+                if (!productQuantities.ContainsKey(detail.ProductId))
+                {
+                    productQuantities[detail.ProductId] = (0, 0);
+                }
+                var current = productQuantities[detail.ProductId];
+                productQuantities[detail.ProductId] = (
+                    current.quantity + detail.Quantity,
+                    current.totalPrice + (detail.Quantity * detail.UnitPriceTTC)
+                );
+            }
+        }
+        
+        // Get product names
+        var products = await _unitOfWork.Products.GetAllAsync();
+        var productDict = products.ToDictionary(p => p.Id);
+        
+        var result = productQuantities
+            .OrderByDescending(x => x.Value.quantity)
+            .Take(topCount)
+            .Select(x => 
+            {
+                var product = productDict.TryGetValue(x.Key, out var p) ? p : null;
+                var avgPrice = x.Value.quantity > 0 ? x.Value.totalPrice / x.Value.quantity : 0;
+                return new ProductPriceAnalysisData
+                {
+                    Name = product?.Designation ?? $"Product {x.Key}",
+                    Quantity = x.Value.quantity,
+                    UnitPrice = avgPrice,
+                    PriceChangePercentage = 0,
+                    EvolutionText = "Stable"
+                };
+            })
+            .ToList();
+            
+        return result;
     }
 }

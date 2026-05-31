@@ -20,6 +20,13 @@
             <conv:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
             <conv:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
             <conv:StaticValueConverter x:Key="StaticValueConverter"/>
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <conv:CurrencyConverter x:Key="CurrencyConverter"/>
+            <conv:PercentageConverter x:Key="PercentageConverter"/>
+            <conv:DateFormatConverter x:Key="DateFormatConverter"/>
+            <conv:ValueToColorConverter x:Key="ValueToColorConverter"/>
+            <conv:AlertTypeToIconConverter x:Key="AlertTypeToIconConverter"/>
+            <conv:NumberFormatConverter x:Key="NumberFormatConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
