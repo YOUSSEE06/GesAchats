@@ -13,6 +13,7 @@
             
             <!-- Converters globaux -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:EqualityConverter x:Key="EqualityConverter"/>
             <shared:EnhancedBooleanToVisibilityConverter x:Key="EnhancedBooleanToVisibilityConverter"/>
             <shared:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <conv:BooleanInverterConverter x:Key="BooleanInverterConverter"/>
