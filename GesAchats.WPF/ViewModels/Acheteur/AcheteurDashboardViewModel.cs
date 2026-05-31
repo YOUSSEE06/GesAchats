@@ -56,6 +56,10 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private int _selectedPeriodDays = 30;
         private DateTime _periodStartDate;
         private DateTime _periodEndDate;
+        
+        // Statistiques pour l'évolution des commandes
+        private decimal _totalPeriod;
+        private decimal _averageMonthly;
 
         public AcheteurDashboardViewModel(
             IPurchaseOrderService purchaseOrderService,
@@ -238,6 +242,20 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _purchaseOrdersXAxes, value);
         }
 
+        // ===================== STATISTIQUES ÉVOLUTION COMMANDES =====================
+        
+        public decimal TotalPeriod
+        {
+            get => _totalPeriod;
+            set => SetProperty(ref _totalPeriod, value);
+        }
+
+        public decimal AverageMonthly
+        {
+            get => _averageMonthly;
+            set => SetProperty(ref _averageMonthly, value);
+        }
+        
         // ===================== FILTRES & INDICATEURS =====================
 
         public int SelectedPeriodDays
@@ -337,29 +355,24 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                // Exact sample data
-                var sampleData = new[]
-                {
-                    new { Month = "Déc 2024", Total = 130000m },
-                    new { Month = "Jan 2025", Total = 155000m },
-                    new { Month = "Fév 2025", Total = 335000m },
-                    new { Month = "Mar 2025", Total = 140000m },
-                    new { Month = "Avr 2025", Total = 255000m },
-                    new { Month = "Mai 2025", Total = 260000m },
-                    new { Month = "Juin 2025", Total = 360000m },
-                    new { Month = "Juil 2025", Total = 245000m },
-                    new { Month = "Août 2025", Total = 455000m }
-                };
+                // Récupérer les données dynamiques des bons de commande validés
+                var monthlyData = await _purchaseOrderService.GetMonthlyPurchaseAmountAsync(9); // Derniers 9 mois comme dans les données initiales
 
                 PurchaseOrdersData.Clear();
-                foreach (var item in sampleData)
+                foreach (var item in monthlyData)
                 {
                     PurchaseOrdersData.Add(new PurchaseOrderData
                     {
                         Month = item.Month,
-                        Total = item.Total
+                        Total = item.Total,
+                        Amount = item.Amount,
+                        Average = item.Average
                     });
                 }
+                
+                // Calculer total période et moyenne mensuelle
+                TotalPeriod = monthlyData.Sum(x => x.Total);
+                AverageMonthly = monthlyData.Count > 0 ? TotalPeriod / monthlyData.Count : 0;
 
                 // Setup LiveCharts for Purchase Orders Evolution with exact blue color
                 PurchaseOrdersSeries = new ISeries[]
@@ -367,7 +380,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                     new LineSeries<decimal>
                     {
                         Values = PurchaseOrdersData.Select(x => x.Total).ToArray(),
-                        Name = "Achats (MAD)",
+                        Name = "Commandes validées (MAD)",
                         Stroke = new SolidColorPaint(new SKColor(37, 99, 235)) { StrokeThickness = 3 },
                         Fill = new SolidColorPaint(new SKColor(37, 99, 235, 30)),
                         GeometrySize = 8

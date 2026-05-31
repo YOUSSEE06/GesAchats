@@ -110,7 +110,7 @@
                         </Grid.RowDefinitions>
                         
                         <TextBlock Grid.Row="0" 
-                                   Text="Évolution des achats (MAD)" 
+                                   Text="Évolution des commandes (MAD)" 
                                    FontSize="16" 
                                    FontWeight="SemiBold" 
                                    Foreground="{StaticResource MainTextBrush}"
@@ -128,11 +128,11 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Total période" FontSize="12" Foreground="#64748B"/>
-                                <TextBlock Text="1,872,540 MAD" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                <TextBlock Text="{Binding TotalPeriod, StringFormat={}{0:N0} MAD}" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Moyenne mensuelle" FontSize="12" Foreground="#64748B"/>
-                                <TextBlock Text="312,090 MAD" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                <TextBlock Text="{Binding AverageMonthly, StringFormat={}{0:N0} MAD}" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
                             </StackPanel>
                         </Grid>
                     </Grid>
