@@ -1,9 +1,14 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GesAchats.WPF.ViewModels.Base;
 using GesAchats.Core.Services;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Acheteur
@@ -41,6 +46,12 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private ObservableCollection<OperationData> _recentOperations;
         private ObservableCollection<AlertData> _alertsData;
 
+        // LiveCharts Series
+        private ISeries[] _purchaseOrdersSeries;
+        private ISeries[] _supplierExpensesSeries;
+        private ISeries[] _orderStatusSeries;
+        private Axis[] _purchaseOrdersXAxes;
+
         // Filtres
         private int _selectedPeriodDays = 30;
         private DateTime _periodStartDate;
@@ -68,6 +79,12 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             _priceAnalysisData = new ObservableCollection<ProductPriceAnalysisData>();
             _recentOperations = new ObservableCollection<OperationData>();
             _alertsData = new ObservableCollection<AlertData>();
+
+            // Initialize LiveCharts fields to avoid nullable warnings
+            _purchaseOrdersSeries = Array.Empty<ISeries>();
+            _supplierExpensesSeries = Array.Empty<ISeries>();
+            _orderStatusSeries = Array.Empty<ISeries>();
+            _purchaseOrdersXAxes = Array.Empty<Axis>();
 
             // Initialiser les commandes
             RefreshCommand = new RelayCommand(async _ => await LoadData());
@@ -195,6 +212,32 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _alertsData, value);
         }
 
+        // ===================== LIVE CHARTS PROPERTIES =====================
+
+        public ISeries[] PurchaseOrdersSeries
+        {
+            get => _purchaseOrdersSeries;
+            set => SetProperty(ref _purchaseOrdersSeries, value);
+        }
+
+        public ISeries[] SupplierExpensesSeries
+        {
+            get => _supplierExpensesSeries;
+            set => SetProperty(ref _supplierExpensesSeries, value);
+        }
+
+        public ISeries[] OrderStatusSeries
+        {
+            get => _orderStatusSeries;
+            set => SetProperty(ref _orderStatusSeries, value);
+        }
+
+        public Axis[] PurchaseOrdersXAxes
+        {
+            get => _purchaseOrdersXAxes;
+            set => SetProperty(ref _purchaseOrdersXAxes, value);
+        }
+
         // ===================== FILTRES & INDICATEURS =====================
 
         public int SelectedPeriodDays
@@ -316,6 +359,29 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                         Average = item.Average
                     });
                 }
+
+                // Setup LiveCharts for Purchase Orders Evolution
+                PurchaseOrdersSeries = new ISeries[]
+                {
+                    new LineSeries<decimal>
+                    {
+                        Values = PurchaseOrdersData.Select(x => x.Total).ToArray(),
+                        Name = "Achats (MAD)",
+                        Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 3 },
+                        Fill = new SolidColorPaint(new SKColor(33, 150, 243, 30)),
+                        GeometrySize = 8
+                    }
+                };
+
+                PurchaseOrdersXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = PurchaseOrdersData.Select(x => x.Month).ToArray(),
+                        LabelsRotation = 0,
+                        SeparatorsPaint = new SolidColorPaint(SKColors.LightGray.WithAlpha(50))
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -340,6 +406,17 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                         PercentageOfTotal = item.PercentageOfTotal
                     });
                 }
+
+                // Setup LiveCharts for Supplier Expenses
+                SupplierExpensesSeries = new ISeries[]
+                {
+                    new ColumnSeries<decimal>
+                    {
+                        Values = SupplierExpensesData.Select(x => x.TotalExpense).ToArray(),
+                        Name = "Dépenses (MAD)",
+                        Fill = new SolidColorPaint(new SKColor(76, 175, 80))
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -359,6 +436,29 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                 OrderStatusData.Add(new OrderStatusData { Status = "En attente", Count = pending, Percentage = 18 });
                 OrderStatusData.Add(new OrderStatusData { Status = "Validé", Count = validated, Percentage = 61 });
                 OrderStatusData.Add(new OrderStatusData { Status = "Transmis", Count = transmitted, Percentage = 21 });
+
+                // Setup LiveCharts for Order Status (Pie Chart)
+                OrderStatusSeries = new ISeries[]
+                {
+                    new PieSeries<int>
+                    {
+                        Values = new[] { pending },
+                        Name = "En attente",
+                        Fill = new SolidColorPaint(new SKColor(255, 152, 0))
+                    },
+                    new PieSeries<int>
+                    {
+                        Values = new[] { validated },
+                        Name = "Validé",
+                        Fill = new SolidColorPaint(new SKColor(76, 175, 80))
+                    },
+                    new PieSeries<int>
+                    {
+                        Values = new[] { transmitted },
+                        Name = "Transmis",
+                        Fill = new SolidColorPaint(new SKColor(33, 150, 243))
+                    }
+                };
             }
             catch (Exception ex)
             {

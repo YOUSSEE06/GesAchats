@@ -2,7 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
-      Title="Tableau de Bord Acheteur"
+      xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+      Title="Tableau de bord Acheteur"
       Background="{StaticResource BackgroundBrush}">
     
     <Grid>
@@ -223,7 +224,7 @@
                                 <ComboBoxItem Content="6 derniers mois"/>
                                 <ComboBoxItem Content="12 derniers mois"/>
                             </ComboBox>
-                            <Rectangle Height="200" Fill="{StaticResource BorderBrush}" RadiusX="4" RadiusY="4"/>
+                            <lvc:CartesianChart Series="{Binding PurchaseOrdersSeries}" XAxes="{Binding PurchaseOrdersXAxes}" Height="200"/>
                             <Grid Margin="0,15,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -249,7 +250,7 @@
                                 <ComboBoxItem Content="Top 5"/>
                                 <ComboBoxItem Content="Top 10"/>
                             </ComboBox>
-                            <Rectangle Height="200" Fill="{StaticResource BorderBrush}" RadiusX="4" RadiusY="4"/>
+                            <lvc:CartesianChart Series="{Binding SupplierExpensesSeries}" Height="200"/>
                             <TextBlock Text="Total dépenses" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,15,0,3"/>
                             <TextBlock Text="1,554,250 MAD" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
@@ -259,7 +260,7 @@
                     <Border Grid.Column="2" Margin="5,0,0,0" Style="{StaticResource ModernCard}" Padding="16">
                         <StackPanel>
                             <TextBlock Text="Répartition des bons de commande" FontSize="14" FontWeight="Bold" Margin="0,0,0,15"/>
-                            <Rectangle Height="200" Fill="{StaticResource BorderBrush}" RadiusX="4" RadiusY="4"/>
+                            <lvc:PieChart Series="{Binding OrderStatusSeries}" Height="200"/>
                             <Grid Margin="0,15,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
