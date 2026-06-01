@@ -119,22 +119,7 @@
                         <lvc:CartesianChart Grid.Row="1" 
                                             Series="{Binding PurchaseOrdersSeries}" 
                                             XAxes="{Binding PurchaseOrdersXAxes}" 
-                                            Height="200" Margin="0,12,0,12"/>
-                        
-                        <Grid Grid.Row="2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Total période" FontSize="12" Foreground="#64748B"/>
-                                <TextBlock Text="{Binding TotalPeriod, StringFormat={}{0:N0} MAD}" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Moyenne mensuelle" FontSize="12" Foreground="#64748B"/>
-                                <TextBlock Text="{Binding AverageMonthly, StringFormat={}{0:N0} MAD}" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A"/>
-                            </StackPanel>
-                        </Grid>
+                                            Height="200" Margin="0,12,0,0"/>
                     </Grid>
                 </Border>
 

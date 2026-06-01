@@ -70,10 +70,6 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private int _selectedPeriodDays = 30;
         private DateTime _periodStartDate;
         private DateTime _periodEndDate;
-        
-        // Statistiques pour l'évolution des commandes
-        private decimal _totalPeriod;
-        private decimal _averageMonthly;
 
         public AcheteurDashboardViewModel(
             IPurchaseOrderService purchaseOrderService,
@@ -318,20 +314,6 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _purchaseOrdersXAxes, value);
         }
 
-        // ===================== STATISTIQUES ÉVOLUTION COMMANDES =====================
-        
-        public decimal TotalPeriod
-        {
-            get => _totalPeriod;
-            set => SetProperty(ref _totalPeriod, value);
-        }
-
-        public decimal AverageMonthly
-        {
-            get => _averageMonthly;
-            set => SetProperty(ref _averageMonthly, value);
-        }
-
         // Total bons de commande pour le donut chart
         private int _totalPurchaseOrders;
         public int TotalPurchaseOrders
@@ -479,10 +461,6 @@ namespace GesAchats.WPF.ViewModels.Acheteur
                         Average = item.Average
                     });
                 }
-                
-                // Calculer total période et moyenne mensuelle
-                TotalPeriod = monthlyData.Sum(x => x.Total);
-                AverageMonthly = monthlyData.Count > 0 ? TotalPeriod / monthlyData.Count : 0;
 
                 // Setup LiveCharts for Purchase Orders Evolution with exact blue color
                 PurchaseOrdersSeries = new ISeries[]
