@@ -49,6 +49,7 @@ public class RecentBlDto
     public string Supplier { get; set; } = string.Empty;
     public string RelatedBc { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public string FirstArticle { get; set; } = string.Empty;
 }
 
 public class RecentNeedDto
@@ -58,6 +59,7 @@ public class RecentNeedDto
     public string Requester { get; set; } = string.Empty;
     public int ArticleCount { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string FirstArticle { get; set; } = string.Empty;
 }
 
 public class RecentBcDto
@@ -67,6 +69,7 @@ public class RecentBcDto
     public string Supplier { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public decimal TotalTtc { get; set; }
+    public string FirstArticle { get; set; } = string.Empty;
 }
 
 public class StockMovementDto
