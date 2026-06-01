@@ -7,10 +7,11 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Services;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
-public class AdminHistoriqueSortiesViewModel : BaseViewModel
+public class AdminHistoriqueSortiesViewModel : BaseViewModel, INavigatable
 {
     private readonly IStockService _stockService;
     private string _searchText = string.Empty;
@@ -77,8 +78,11 @@ public class AdminHistoriqueSortiesViewModel : BaseViewModel
 
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
+    }
 
-        _ = LoadDataAsync();
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadDataAsync();
     }
 
     private void ExecuteResetFilters()

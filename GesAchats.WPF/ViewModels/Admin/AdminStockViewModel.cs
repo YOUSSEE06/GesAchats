@@ -8,10 +8,11 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Services;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
-public class AdminStockViewModel : BaseViewModel
+public class AdminStockViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStockService _stockService;
@@ -101,8 +102,11 @@ public class AdminStockViewModel : BaseViewModel
         _stockService = stockService;
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
         Title = "Stock global";
-        
-        _ = LoadDataAsync();
+    }
+
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadDataAsync();
     }
 
     private async Task LoadDataAsync()

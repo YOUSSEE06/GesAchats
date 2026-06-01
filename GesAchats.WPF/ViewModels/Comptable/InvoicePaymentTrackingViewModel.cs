@@ -93,8 +93,6 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         LoadDataCommand = new RelayCommand(async _ => await LoadDataAsync());
         ViewInvoiceCommand = new RelayCommand(async param => await ViewInvoiceAsync(param as InvoiceWithPaymentsViewModel));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
-
-        _ = LoadDataAsync();
     }
 
     public async void OnNavigatedTo(object parameter)

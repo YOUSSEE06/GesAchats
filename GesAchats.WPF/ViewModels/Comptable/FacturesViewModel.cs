@@ -9,7 +9,7 @@ using GesAchats.WPF.Views.Comptable.Factures;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
-public class FacturesViewModel : BaseViewModel
+public class FacturesViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
@@ -211,8 +211,11 @@ public class FacturesViewModel : BaseViewModel
             if (SelectedFacture != null)
                 _navigationService.NavigateTo("PaymentForm", SelectedFacture.Invoice.Id);
         }, _ => SelectedFacture != null);
+    }
 
-        _ = LoadFacturesAsync();
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadFacturesAsync();
     }
 
     private async Task LoadFacturesAsync()

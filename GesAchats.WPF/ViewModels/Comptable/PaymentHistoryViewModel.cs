@@ -201,8 +201,6 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         ToggleChartsCommand = new RelayCommand(_ => ShowCharts = !ShowCharts);
 
         SelectedPaymentMethod = "Tous";
-
-        _ = LoadPaymentsAsync();
     }
 
     private void ResetFilters()

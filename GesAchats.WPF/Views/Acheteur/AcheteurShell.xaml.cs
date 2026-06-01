@@ -59,10 +59,10 @@ public partial class AcheteurShell : Window
 
         if (page is Page wpfPage)
         {
-            // Si on a un paramètre, on essaie de le passer au ViewModel de la page
-            if (parameter != null && wpfPage.DataContext is INavigatable navigatable)
+            // Si le ViewModel est INavigatable, on appelle OnNavigatedTo
+            if (wpfPage.DataContext is INavigatable navigatable)
             {
-                navigatable.OnNavigatedTo(parameter);
+                navigatable.OnNavigatedTo(parameter!);
             }
             
             MainFrame.Navigate(wpfPage);

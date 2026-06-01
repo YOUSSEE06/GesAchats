@@ -369,14 +369,14 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
         LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
 
-        _ = LoadInitialData();
     }
 
     private Need? _pendingNavigationNeed;
     private bool _shouldOpenModalOnNavigation;
 
-    public void OnNavigatedTo(object parameter)
+    public async void OnNavigatedTo(object parameter)
     {
+        await LoadInitialData();
         if (parameter is Need need)
         {
             _pendingNavigationNeed = need;

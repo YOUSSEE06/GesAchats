@@ -72,8 +72,6 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
         BrowseCommand = new RelayCommand(_ => BrowseFile());
         SaveCommand = new RelayCommand(async _ => await SaveAsync(), _ => CanSave());
         CancelCommand = new RelayCommand(_ => _navigationService.NavigateTo("Reglements"));
-
-        _ = LoadInvoicesAsync();
     }
 
     public async void OnNavigatedTo(object parameter)
