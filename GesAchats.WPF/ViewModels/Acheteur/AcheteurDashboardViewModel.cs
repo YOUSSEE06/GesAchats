@@ -590,52 +590,19 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             try
             {
                 AlertsData.Clear();
-
-                // Alerte : Stock faible
-                var lowStockCount = await _stockService.GetLowStockProductsCountAsync();
-                if (lowStockCount > 0)
+                
+                var alerts = await _dashboardService.GetDashboardAlertsAsync();
+                
+                foreach (var alert in alerts)
                 {
                     AlertsData.Add(new AlertData
                     {
                         Type = "warning",
-                        Title = "Stock faible",
-                        Description = "Articles en dessous du seuil minimum",
-                        Count = lowStockCount,
+                        Title = alert.Title,
+                        Description = alert.Subtitle,
                         Icon = "⚠️"
                     });
                 }
-
-                // Alerte : Devis en retard
-                var delayedQuotesCount = 5; // À adapter
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Devis en retard",
-                    Description = "Devis en attente depuis plus de 7 jours",
-                    Count = delayedQuotesCount,
-                    Icon = "⏰"
-                });
-
-                // Alerte : Bons de commande en attente
-                var pendingOrdersCount = await _purchaseOrderService.GetPendingPurchaseOrdersCountAsync(DateTime.Now.AddDays(-7), DateTime.Now);
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Bons de commande en attente",
-                    Description = "À transmettre ou à confirmer",
-                    Count = pendingOrdersCount,
-                    Icon = "🛒"
-                });
-
-                // Alerte : Fournisseurs à évaluer
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Fournisseurs à évaluer",
-                    Description = "Dernière évaluation > 6 mois",
-                    Count = 3,
-                    Icon = "👥"
-                });
             }
             catch (Exception ex)
             {

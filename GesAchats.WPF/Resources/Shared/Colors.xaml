@@ -38,5 +38,6 @@
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource CardBackgroundColor}"/>
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource MainTextColor}"/>
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="NewProductBrush" Color="{StaticResource SuccessColor}"/>
     
 </ResourceDictionary>
