@@ -39,6 +39,7 @@ public partial class AdminShell : Window
             "Dashboard" => _serviceProvider.GetRequiredService<Dashboard.AdminDashboardPage>(),
             "StockGlobal" => _serviceProvider.GetRequiredService<Stock.AdminStockPage>(),
             "NeedsHistory" => _serviceProvider.GetRequiredService<NeedsHistory.AdminNeedsHistoryPage>(),
+            "HistoriqueSorties" => _serviceProvider.GetRequiredService<StockExits.AdminHistoriqueSortiesPage>(),
             "DeliveryNotes" => _serviceProvider.GetRequiredService<DeliveryNotes.AdminDeliveryNotesPage>(),
             "PriceAnalysis" => _serviceProvider.GetRequiredService<Acheteur.Analyses.PurchaseHistoryPage>(),
             "Historique" => _serviceProvider.GetRequiredService<Acheteur.Analyses.PurchaseHistoryPage>(), // Pour le bouton retour depuis ProductStats

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using GesAchats.Core.Entities;
@@ -20,10 +22,38 @@ public class StockExitViewModel : BaseViewModel
     private string? _reason;
     private string _searchText = string.Empty;
     private DateTime? _filterDate;
+    private int _totalExits;
+    private decimal _totalQuantityExited;
+    private string _totalExitsTrendText = string.Empty;
+    private string _totalQuantityExitedTrendText = string.Empty;
 
     public ObservableCollection<Product> Products { get; } = new();
     public ObservableCollection<StockExit> StockExits { get; } = new();
     private List<StockExit> _allExits = new();
+
+    public int TotalExits
+    {
+        get => _totalExits;
+        set => SetProperty(ref _totalExits, value);
+    }
+
+    public decimal TotalQuantityExited
+    {
+        get => _totalQuantityExited;
+        set => SetProperty(ref _totalQuantityExited, value);
+    }
+
+    public string TotalExitsTrendText
+    {
+        get => _totalExitsTrendText;
+        set => SetProperty(ref _totalExitsTrendText, value);
+    }
+
+    public string TotalQuantityExitedTrendText
+    {
+        get => _totalQuantityExitedTrendText;
+        set => SetProperty(ref _totalQuantityExitedTrendText, value);
+    }
 
     public Product? SelectedProduct
     {
@@ -73,6 +103,7 @@ public class StockExitViewModel : BaseViewModel
     public ICommand RefreshCommand { get; }
     public ICommand CancelExitCommand { get; }
     public ICommand OpenAddDialogCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
 
     public StockExitViewModel(IStockService stockService, IUserSession userSession, IUnitOfWork unitOfWork)
     {
@@ -86,8 +117,15 @@ public class StockExitViewModel : BaseViewModel
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
         CancelExitCommand = new RelayCommand(async p => await CancelExitAsync(p as StockExit));
         OpenAddDialogCommand = new RelayCommand(_ => ExecuteOpenAddDialog());
+        ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
 
         _ = LoadDataAsync();
+    }
+
+    private void ExecuteResetFilters()
+    {
+        SearchText = string.Empty;
+        FilterDate = null;
     }
 
     private void ExecuteOpenAddDialog()
@@ -151,11 +189,30 @@ public class StockExitViewModel : BaseViewModel
             filtered = filtered.Where(e => e.ExitDate.Date == FilterDate.Value.Date);
         }
 
+        var filteredList = filtered.ToList();
         StockExits.Clear();
-        foreach (var e in filtered)
+        foreach (var e in filteredList)
         {
             StockExits.Add(e);
         }
+
+        // Calculate statistics
+        TotalExits = filteredList.Count;
+        TotalQuantityExited = filteredList.Sum(e => e.Quantity);
+
+        // Calculate yesterday's values
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayExits = filteredList.Where(e => 
+            e.CreatedAt.Date >= yesterday && e.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotalCount = yesterdayExits.Count;
+        decimal yesterdayTotalQuantity = yesterdayExits.Sum(e => e.Quantity);
+
+        // Calculate trend texts
+        TotalExitsTrendText = CalculateTrendText(TotalExits, yesterdayTotalCount);
+        TotalQuantityExitedTrendText = CalculateTrendText(TotalQuantityExited, yesterdayTotalQuantity);
     }
 
     private async Task SaveExitAsync()

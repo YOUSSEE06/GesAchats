@@ -3,11 +3,13 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d"
       Title="Gestion du Stock">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -33,8 +35,50 @@
             </StackPanel>
         </DockPanel>
 
+        <!-- Statistics Cards -->
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <controls:KpiCard Grid.Column="0" 
+                              Title="Total des Articles" 
+                              Value="{Binding TotalArticles}"
+                              TrendText="{Binding TotalArticlesTrendText}"
+                              Icon="Box"
+                              IconColor="#3B82F6"
+                              Margin="0,0,10,0"/>
+
+            <controls:KpiCard Grid.Column="1" 
+                              Title="Articles Normaux" 
+                              Value="{Binding NormalArticles}"
+                              TrendText="{Binding NormalArticlesTrendText}"
+                              Icon="CheckCircle"
+                              IconColor="#4CAF50"
+                              Margin="5,0,5,0"/>
+
+            <controls:KpiCard Grid.Column="2" 
+                              Title="Articles Sous Minimum" 
+                              Value="{Binding LowStockArticles}"
+                              TrendText="{Binding LowStockArticlesTrendText}"
+                              Icon="ExclamationTriangle"
+                              IconColor="#FFC107"
+                              Margin="5,0,5,0"/>
+
+            <controls:KpiCard Grid.Column="3" 
+                              Title="Articles en Rupture de Stock" 
+                              Value="{Binding OutOfStockArticles}"
+                              TrendText="{Binding OutOfStockArticlesTrendText}"
+                              Icon="TimesCircle"
+                              IconColor="#F44336"
+                              Margin="10,0,0,0"/>
+        </Grid>
+
         <!-- Stock Table -->
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Products}" 
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Products}" 
                   AutoGenerateColumns="False" CanUserAddRows="False"
                   Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
                   RowHeight="40" SelectionMode="Single" GridLinesVisibility="None"
@@ -59,7 +103,7 @@
         </DataGrid>
 
         <!-- Footer Info -->
-        <StatusBar Grid.Row="2" Background="Transparent" Margin="0,10,0,0">
+        <StatusBar Grid.Row="3" Background="Transparent" Margin="0,10,0,0">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Total: "/>

@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -20,6 +21,26 @@ public abstract class BaseViewModel : INotifyPropertyChanged
         storage = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    protected static string CalculateTrendText(int totalCurrent, int yesterdayCount)
+    {
+        // Percentage displayed under the card = yesterday added records divided by current total
+        if (totalCurrent <= 0)
+            return "+0%";
+
+        double percentage = (yesterdayCount * 100.0) / totalCurrent;
+        return $"+{percentage:0.#}%";
+    }
+
+    protected static string CalculateTrendText(decimal totalCurrent, decimal yesterdayCount)
+    {
+        // Percentage displayed under the card = yesterday added records divided by current total
+        if (totalCurrent <= 0)
+            return "+0%";
+
+        double percentage = (double)((yesterdayCount * 100m) / totalCurrent);
+        return $"+{percentage:0.#}%";
     }
 
     private bool _isBusy;
