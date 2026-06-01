@@ -4,9 +4,11 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Commandes"
+      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
-      Title="Bons de Commande">
+      Title="BonsCommandePage">
 
     <Grid Background="#F5F5F5">
         <Grid.RowDefinitions>
@@ -43,11 +45,39 @@
             <Grid Visibility="{Binding IsHistoryView, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!-- KPI Section -->
+                <UniformGrid Grid.Row="0" Rows="1" Columns="4" Margin="0,0,0,20">
+                    <ctrls:KpiCard Title="Total des Bons" 
+                                   Value="{Binding TotalOrders}" 
+                                   Icon="FileInvoice" 
+                                   IconColor="#071B3A" 
+                                   Margin="0,0,10,0"/>
+
+                    <ctrls:KpiCard Title="En Attente" 
+                                   Value="{Binding PendingOrders}" 
+                                   Icon="Clock" 
+                                   IconColor="#FFC107" 
+                                   Margin="5,0,5,0"/>
+
+                    <ctrls:KpiCard Title="Validés" 
+                                   Value="{Binding ValidatedOrders}" 
+                                   Icon="CheckCircle" 
+                                   IconColor="#4CAF50" 
+                                   Margin="5,0,5,0"/>
+
+                    <ctrls:KpiCard Title="Annulés" 
+                                   Value="{Binding CancelledOrders}" 
+                                   Icon="TimesCircle" 
+                                   IconColor="#F44336" 
+                                   Margin="10,0,0,0"/>
+                </UniformGrid>
+
                 <!-- Filters -->
-        <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+                <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,20,0">
                     <TextBlock Text="Recherche" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
@@ -77,7 +107,7 @@
         </Border>
 
                 <!-- History Table -->
-                <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+                <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
                     <DataGrid ItemsSource="{Binding OrdersHistory}" AutoGenerateColumns="False" IsReadOnly="True" 
                       Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
                 <DataGrid.Columns>

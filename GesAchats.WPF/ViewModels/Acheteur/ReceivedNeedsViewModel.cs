@@ -105,6 +105,27 @@ public class ReceivedNeedsViewModel : BaseViewModel
     public ICommand CreateQuoteCommand { get; }
     public ICommand ResetFiltersCommand { get; }
 
+    private int _totalNeeds;
+    public int TotalNeeds
+    {
+        get => _totalNeeds;
+        set => SetProperty(ref _totalNeeds, value);
+    }
+
+    private int _transmittedNeeds;
+    public int TransmittedNeeds
+    {
+        get => _transmittedNeeds;
+        set => SetProperty(ref _transmittedNeeds, value);
+    }
+
+    private int _inProgressNeeds;
+    public int InProgressNeeds
+    {
+        get => _inProgressNeeds;
+        set => SetProperty(ref _inProgressNeeds, value);
+    }
+
     public ReceivedNeedsViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
@@ -172,6 +193,15 @@ public class ReceivedNeedsViewModel : BaseViewModel
         {
             Needs.Add(n);
         }
+
+        UpdateStatistics(filtered.ToList());
+    }
+
+    private void UpdateStatistics(List<ReceivedNeedItemViewModel> currentNeeds)
+    {
+        TotalNeeds = currentNeeds.Count;
+        TransmittedNeeds = currentNeeds.Count(n => n.Need.Status == NeedStatus.TransmittedToPurchasing);
+        InProgressNeeds = currentNeeds.Count(n => n.Need.Status == NeedStatus.InPurchase);
     }
     
     private void ExecuteResetFilters()
