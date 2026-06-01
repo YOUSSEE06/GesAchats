@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using GesAchats.Core.Entities;
@@ -41,6 +42,10 @@ public class StockAnalysisViewModel : BaseViewModel
     private int _normalArticles;
     private int _lowStockArticles;
     private int _outOfStockArticles;
+    private string _totalArticlesTrendText = string.Empty;
+    private string _normalArticlesTrendText = string.Empty;
+    private string _lowStockArticlesTrendText = string.Empty;
+    private string _outOfStockArticlesTrendText = string.Empty;
 
     public ObservableCollection<StockProductViewModel> Products { get; } = new ObservableCollection<StockProductViewModel>();
     
@@ -66,6 +71,30 @@ public class StockAnalysisViewModel : BaseViewModel
     {
         get => _outOfStockArticles;
         set => SetProperty(ref _outOfStockArticles, value);
+    }
+
+    public string TotalArticlesTrendText
+    {
+        get => _totalArticlesTrendText;
+        set => SetProperty(ref _totalArticlesTrendText, value);
+    }
+
+    public string NormalArticlesTrendText
+    {
+        get => _normalArticlesTrendText;
+        set => SetProperty(ref _normalArticlesTrendText, value);
+    }
+
+    public string LowStockArticlesTrendText
+    {
+        get => _lowStockArticlesTrendText;
+        set => SetProperty(ref _lowStockArticlesTrendText, value);
+    }
+
+    public string OutOfStockArticlesTrendText
+    {
+        get => _outOfStockArticlesTrendText;
+        set => SetProperty(ref _outOfStockArticlesTrendText, value);
     }
     
     public string SearchText
@@ -147,6 +176,24 @@ public class StockAnalysisViewModel : BaseViewModel
         NormalArticles = filteredList.Count(p => p.Etat == StockState.Ok);
         LowStockArticles = filteredList.Count(p => p.Etat == StockState.Alert);
         OutOfStockArticles = filteredList.Count(p => p.Etat == StockState.OutOfStock);
+
+        // Calculate yesterday's counts
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayProducts = filteredList.Where(p => 
+            p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayProducts.Count;
+        int yesterdayNormal = yesterdayProducts.Count(p => p.Etat == StockState.Ok);
+        int yesterdayLowStock = yesterdayProducts.Count(p => p.Etat == StockState.Alert);
+        int yesterdayOutOfStock = yesterdayProducts.Count(p => p.Etat == StockState.OutOfStock);
+
+        // Calculate trend texts
+        TotalArticlesTrendText = CalculateTrendText(TotalArticles, yesterdayTotal);
+        NormalArticlesTrendText = CalculateTrendText(NormalArticles, yesterdayNormal);
+        LowStockArticlesTrendText = CalculateTrendText(LowStockArticles, yesterdayLowStock);
+        OutOfStockArticlesTrendText = CalculateTrendText(OutOfStockArticles, yesterdayOutOfStock);
     }
 
     private void NavigateToNeeds()

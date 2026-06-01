@@ -103,6 +103,7 @@
             <controls:KpiCard Grid.Column="0"
                 Title="Total des Besoins"
                 Value="{Binding TotalNeeds}"
+                TrendText="{Binding TotalNeedsTrendText}"
                 Icon="Box"
                 IconColor="#3B82F6"
                 Margin="0,0,10,0"/>
@@ -110,6 +111,7 @@
             <controls:KpiCard Grid.Column="1"
                 Title="Besoins Transmis"
                 Value="{Binding TransmittedNeeds}"
+                TrendText="{Binding TransmittedNeedsTrendText}"
                 Icon="PaperPlane"
                 IconColor="#2196F3"
                 Margin="5,0,5,0"/>
@@ -117,6 +119,7 @@
             <controls:KpiCard Grid.Column="2"
                 Title="Besoins En cours"
                 Value="{Binding InProgressNeeds}"
+                TrendText="{Binding InProgressNeedsTrendText}"
                 Icon="Clock"
                 IconColor="#FFC107"
                 Margin="5,0,5,0"/>
@@ -124,6 +127,7 @@
             <controls:KpiCard Grid.Column="3"
                 Title="Besoins Annulés"
                 Value="{Binding CancelledNeeds}"
+                TrendText="{Binding CancelledNeedsTrendText}"
                 Icon="TimesCircle"
                 IconColor="#F44336"
                 Margin="10,0,0,0"/>

@@ -11,6 +11,9 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
     private int _totalOrders;
     private int _validatedOrders;
     private int _pendingOrders;
+    private string _totalOrdersTrendText = string.Empty;
+    private string _validatedOrdersTrendText = string.Empty;
+    private string _pendingOrdersTrendText = string.Empty;
 
     public int TotalOrders
     {
@@ -28,6 +31,24 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
     {
         get => _pendingOrders;
         set => SetProperty(ref _pendingOrders, value);
+    }
+
+    public string TotalOrdersTrendText
+    {
+        get => _totalOrdersTrendText;
+        set => SetProperty(ref _totalOrdersTrendText, value);
+    }
+
+    public string ValidatedOrdersTrendText
+    {
+        get => _validatedOrdersTrendText;
+        set => SetProperty(ref _validatedOrdersTrendText, value);
+    }
+
+    public string PendingOrdersTrendText
+    {
+        get => _pendingOrdersTrendText;
+        set => SetProperty(ref _pendingOrdersTrendText, value);
     }
 
     public MagasinierOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
@@ -82,5 +103,21 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         TotalOrders = filteredList.Count;
         ValidatedOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Validated);
         PendingOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Pending);
+
+        // Calculate yesterday's counts
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayOrders = filteredList.Where(x => 
+            x.PurchaseOrder.CreatedAt.Date >= yesterday && x.PurchaseOrder.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayOrders.Count;
+        int yesterdayValidated = yesterdayOrders.Count(x => x.Status == PurchaseOrderStatus.Validated);
+        int yesterdayPending = yesterdayOrders.Count(x => x.Status == PurchaseOrderStatus.Pending);
+
+        // Calculate trend texts
+        TotalOrdersTrendText = CalculateTrendText(TotalOrders, yesterdayTotal);
+        ValidatedOrdersTrendText = CalculateTrendText(ValidatedOrders, yesterdayValidated);
+        PendingOrdersTrendText = CalculateTrendText(PendingOrders, yesterdayPending);
     }
 }

@@ -41,6 +41,7 @@
             <controls:KpiCard Grid.Column="0" 
                               Title="Total des Bons de Commande" 
                               Value="{Binding TotalOrders}"
+                              TrendText="{Binding TotalOrdersTrendText}"
                               Icon="FileAlt"
                               IconColor="#3B82F6"
                               Margin="0,0,12,0"/>
@@ -48,6 +49,7 @@
             <controls:KpiCard Grid.Column="1" 
                               Title="Bons de Commande Validés" 
                               Value="{Binding ValidatedOrders}"
+                              TrendText="{Binding ValidatedOrdersTrendText}"
                               Icon="CheckCircle"
                               IconColor="#22C55E"
                               Margin="6,0,6,0"/>
@@ -55,6 +57,7 @@
             <controls:KpiCard Grid.Column="2" 
                               Title="Bons de Commande En Attente" 
                               Value="{Binding PendingOrders}"
+                              TrendText="{Binding PendingOrdersTrendText}"
                               Icon="Clock"
                               IconColor="#F59E0B"
                               Margin="12,0,0,0"/>

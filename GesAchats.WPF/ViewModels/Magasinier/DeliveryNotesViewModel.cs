@@ -54,6 +54,9 @@ public class DeliveryNotesViewModel : BaseViewModel
     private int _totalDeliveries;
     private int _pendingDeliveries;
     private int _validatedDeliveries;
+    private string _totalDeliveriesTrendText = string.Empty;
+    private string _pendingDeliveriesTrendText = string.Empty;
+    private string _validatedDeliveriesTrendText = string.Empty;
 
     public int TotalDeliveries
     {
@@ -71,6 +74,24 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         get => _validatedDeliveries;
         set => SetProperty(ref _validatedDeliveries, value);
+    }
+
+    public string TotalDeliveriesTrendText
+    {
+        get => _totalDeliveriesTrendText;
+        set => SetProperty(ref _totalDeliveriesTrendText, value);
+    }
+
+    public string PendingDeliveriesTrendText
+    {
+        get => _pendingDeliveriesTrendText;
+        set => SetProperty(ref _pendingDeliveriesTrendText, value);
+    }
+
+    public string ValidatedDeliveriesTrendText
+    {
+        get => _validatedDeliveriesTrendText;
+        set => SetProperty(ref _validatedDeliveriesTrendText, value);
     }
 
     // Form properties
@@ -231,8 +252,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             // Récupération optimisée avec les relations
             var deliveries = await _unitOfWork.DeliveryNotes.GetAllIncludingAsync(
                 d => d.Supplier, 
-                d => d.PurchaseOrder
-            );
+                d => d.PurchaseOrder);
             
             var invoices = await _unitOfWork.Invoices.GetAllAsync();
             var invoiceMap = invoices.Where(i => i.DeliveryNoteId.HasValue)
@@ -288,8 +308,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             filtered = filtered.Where(item => 
                 item.DeliveryNote.DeliveryNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 (item.DeliveryNote.PurchaseOrder != null && item.DeliveryNote.PurchaseOrder.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
-                (item.InvoiceNumber != null && item.InvoiceNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-            );
+                (item.InvoiceNumber != null && item.InvoiceNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
         }
 
         // Supplier filter - Correction : Gérer le null et le vide
@@ -325,6 +344,22 @@ public class DeliveryNotesViewModel : BaseViewModel
         TotalDeliveries = filteredList.Count;
         PendingDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "EnAttente");
         ValidatedDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "Valide");
+
+        // Calculate yesterday's counts
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayDeliveries = filteredList.Where(item => 
+            item.DeliveryNote.CreatedAt.Date >= yesterday && item.DeliveryNote.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayDeliveries.Count;
+        int yesterdayPending = yesterdayDeliveries.Count(item => item.DeliveryNote.Status == "EnAttente");
+        int yesterdayValidated = yesterdayDeliveries.Count(item => item.DeliveryNote.Status == "Valide");
+
+        // Calculate trend texts
+        TotalDeliveriesTrendText = CalculateTrendText(TotalDeliveries, yesterdayTotal);
+        PendingDeliveriesTrendText = CalculateTrendText(PendingDeliveries, yesterdayPending);
+        ValidatedDeliveriesTrendText = CalculateTrendText(ValidatedDeliveries, yesterdayValidated);
     }
 
     private async Task LoadPurchaseOrders()
@@ -337,9 +372,9 @@ public class DeliveryNotesViewModel : BaseViewModel
             p.Status != "Closed" && 
             p.Status != "Clôturé");
 
-        foreach (var p in pos)
+        foreach (var po in pos)
         {
-            PurchaseOrders.Add(p);
+            PurchaseOrders.Add(po);
         }
     }
 
@@ -385,7 +420,7 @@ public class DeliveryNotesViewModel : BaseViewModel
                 // On réutilise DeliveryNoteItemViewModel mais on pourrait en créer un dédié pour l'inspection
                 // On passe une fausse commande de BC car on est en mode inspection
                 var fakeBcDetail = new PurchaseOrderDetail { Product = detail.Product, Quantity = detail.QuantityOrdered, UnitPriceHT = detail.UnitPriceHT, UnitPriceTTC = detail.UnitPriceTTC };
-                var itemVm = new DeliveryNoteItemViewModel(fakeBcDetail, () => { });
+                var itemVm = new DeliveryNoteItemViewModel(fakeBcDetail, () => CommandManager.InvalidateRequerySuggested());
                 itemVm.QuantityReceived = detail.QuantityReceived;
                 itemVm.IsValidated = detail.IsValidated;
                 
@@ -395,7 +430,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             IsHistoryView = false;
             IsEditView = false;
             IsInspectView = true;
-            Title = $"Détail BL {dn.DeliveryNumber}";
+            Title = $"Détails BL {dn.DeliveryNumber}";
         }
         finally
         {
@@ -419,8 +454,12 @@ public class DeliveryNotesViewModel : BaseViewModel
                 return;
             }
 
-            var process = new Process();
-            process.StartInfo = new ProcessStartInfo(dn.FilePath) { UseShellExecute = true };
+            var process = new System.Diagnostics.Process();
+            process.StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = dn.FilePath,
+                UseShellExecute = true
+            };
             process.Start();
         }
         catch (Exception ex)
@@ -467,10 +506,9 @@ public class DeliveryNotesViewModel : BaseViewModel
     private bool CanValidate()
     {
         return !string.IsNullOrWhiteSpace(DeliveryNoteNumber) && 
-               SelectedPurchaseOrder != null && 
-               DeliveryItems.Any() &&
-               DeliveryItems.All(i => i.Error == null) &&
-               AttachedFilePath != "Aucun fichier sélectionné";
+            SelectedPurchaseOrder != null && 
+            DeliveryItems.Any() &&
+            AttachedFilePath != "Aucun fichier sélectionné";
     }
 
     private async Task ExecuteValidate()
@@ -482,7 +520,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             {
                 // MODE MISE À JOUR (UPDATE)
                 // On met à jour uniquement les observations dans cet exemple, 
-                // car les autres champs sont en lecture seule en mode inspection.
+                // car les autres champs sont en lecture seule en mode inspection
                 var dnToUpdate = await _unitOfWork.DeliveryNotes.GetByIdAsync(SelectedDeliveryNote.Id);
                 if (dnToUpdate != null)
                 {

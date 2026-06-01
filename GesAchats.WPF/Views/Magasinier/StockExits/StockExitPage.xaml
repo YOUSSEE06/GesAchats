@@ -40,6 +40,7 @@
             <controls:KpiCard Grid.Column="0"
                 Title="Total des Sorties"
                 Value="{Binding TotalExits}"
+                TrendText="{Binding TotalExitsTrendText}"
                 Icon="Box"
                 IconColor="#3B82F6"
                 Margin="0,0,7,0"/>
@@ -47,6 +48,7 @@
             <controls:KpiCard Grid.Column="1"
                 Title="Quantité Totale Sortie"
                 Value="{Binding TotalQuantityExited}"
+                TrendText="{Binding TotalQuantityExitedTrendText}"
                 Unit=""
                 Icon="ArrowDown"
                 IconColor="#F44336"
@@ -67,6 +69,11 @@
                         <DatePicker Width="180" SelectedDate="{Binding FilterDate}" Padding="4" Height="28"/>
                     </StackPanel>
                 </StackPanel>
+                <Button Content="🔄 Réinitialiser" 
+                        Command="{Binding ResetFiltersCommand}"
+                        Background="#FFC107" 
+                        Foreground="#1A3A52" FontWeight="Bold" 
+                        Padding="20,10" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
             </DockPanel>
         </Border>
 

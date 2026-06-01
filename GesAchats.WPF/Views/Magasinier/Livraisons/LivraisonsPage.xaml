@@ -62,25 +62,28 @@
                     </Grid.ColumnDefinitions>
 
                     <controls:KpiCard Grid.Column="0"
-                        Title="Total des Bons de Livraison"
-                        Value="{Binding TotalDeliveries}"
-                        Icon="Box"
-                        IconColor="#3B82F6"
-                        Margin="0,0,10,0"/>
+                Title="Total des Bons de Livraison"
+                Value="{Binding TotalDeliveries}"
+                TrendText="{Binding TotalDeliveriesTrendText}"
+                Icon="Box"
+                IconColor="#3B82F6"
+                Margin="0,0,10,0"/>
 
-                    <controls:KpiCard Grid.Column="1"
-                        Title="Bons de Livraison En attente"
-                        Value="{Binding PendingDeliveries}"
-                        Icon="Clock"
-                        IconColor="#FFC107"
-                        Margin="5,0,5,0"/>
+            <controls:KpiCard Grid.Column="1"
+                Title="Bons de Livraison En attente"
+                Value="{Binding PendingDeliveries}"
+                TrendText="{Binding PendingDeliveriesTrendText}"
+                Icon="Clock"
+                IconColor="#FFC107"
+                Margin="5,0,5,0"/>
 
-                    <controls:KpiCard Grid.Column="2"
-                        Title="Bons de Livraison Validés"
-                        Value="{Binding ValidatedDeliveries}"
-                        Icon="CheckCircle"
-                        IconColor="#4CAF50"
-                        Margin="10,0,0,0"/>
+            <controls:KpiCard Grid.Column="2"
+                Title="Bons de Livraison Validés"
+                Value="{Binding ValidatedDeliveries}"
+                TrendText="{Binding ValidatedDeliveriesTrendText}"
+                Icon="CheckCircle"
+                IconColor="#4CAF50"
+                Margin="10,0,0,0"/>
                 </Grid>
 
                 <!-- Filters -->

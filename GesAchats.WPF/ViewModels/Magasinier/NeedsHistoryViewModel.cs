@@ -95,6 +95,10 @@ public class NeedsHistoryViewModel : BaseViewModel
     private int _transmittedNeeds;
     private int _inProgressNeeds;
     private int _cancelledNeeds;
+    private string _totalNeedsTrendText = string.Empty;
+    private string _transmittedNeedsTrendText = string.Empty;
+    private string _inProgressNeedsTrendText = string.Empty;
+    private string _cancelledNeedsTrendText = string.Empty;
 
     public int TotalNeeds
     {
@@ -118,6 +122,30 @@ public class NeedsHistoryViewModel : BaseViewModel
     {
         get => _cancelledNeeds;
         set => SetProperty(ref _cancelledNeeds, value);
+    }
+
+    public string TotalNeedsTrendText
+    {
+        get => _totalNeedsTrendText;
+        set => SetProperty(ref _totalNeedsTrendText, value);
+    }
+
+    public string TransmittedNeedsTrendText
+    {
+        get => _transmittedNeedsTrendText;
+        set => SetProperty(ref _transmittedNeedsTrendText, value);
+    }
+
+    public string InProgressNeedsTrendText
+    {
+        get => _inProgressNeedsTrendText;
+        set => SetProperty(ref _inProgressNeedsTrendText, value);
+    }
+
+    public string CancelledNeedsTrendText
+    {
+        get => _cancelledNeedsTrendText;
+        set => SetProperty(ref _cancelledNeedsTrendText, value);
     }
 
     public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterNeeds(); } }
@@ -206,6 +234,24 @@ public class NeedsHistoryViewModel : BaseViewModel
         TransmittedNeeds = filteredList.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
         InProgressNeeds = filteredList.Count(n => n.Status == NeedStatus.InPurchase);
         CancelledNeeds = filteredList.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
+
+        // Calculate yesterday's counts
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayNeeds = filteredList.Where(n => 
+            n.RequestedAt.Date >= yesterday && n.RequestedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayNeeds.Count;
+        int yesterdayTransmitted = yesterdayNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        int yesterdayInProgress = yesterdayNeeds.Count(n => n.Status == NeedStatus.InPurchase);
+        int yesterdayCancelled = yesterdayNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
+
+        // Calculate trend texts
+        TotalNeedsTrendText = CalculateTrendText(TotalNeeds, yesterdayTotal);
+        TransmittedNeedsTrendText = CalculateTrendText(TransmittedNeeds, yesterdayTransmitted);
+        InProgressNeedsTrendText = CalculateTrendText(InProgressNeeds, yesterdayInProgress);
+        CancelledNeedsTrendText = CalculateTrendText(CancelledNeeds, yesterdayCancelled);
     }
 
     private void ExecuteViewDetails(NeedHistoryItemViewModel? item)
