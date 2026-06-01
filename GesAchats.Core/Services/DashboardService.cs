@@ -145,7 +145,7 @@ public class DashboardService : IDashboardService
             .ToList();
 
         // 6. Derniers BL (Top 5)
-        var recentBlData = await _unitOfWork.DeliveryNotes.GetAllIncludingAsync(n => n.Supplier, n => n.PurchaseOrder);
+        var recentBlData = await _unitOfWork.DeliveryNotes.GetAllIncludingAsync(n => n.Supplier, n => n.PurchaseOrder, n => n.Details);
         stats.RecentBls = recentBlData
             .OrderByDescending(b => b.ReceptionDate)
             .Take(5)
@@ -155,7 +155,8 @@ public class DashboardService : IDashboardService
                 Number = b.DeliveryNumber,
                 Supplier = b.Supplier?.CompanyName ?? "Inconnu",
                 RelatedBc = b.PurchaseOrder?.OrderNumber ?? "-",
-                Status = b.Status == "Valide" || b.Status == "Validé" ? "Validé" : "En attente"
+                Status = b.Status == "Valide" || b.Status == "Validé" ? "Validé" : "En attente",
+                FirstArticle = b.Details?.FirstOrDefault()?.Product?.Designation ?? "-"
             })
             .ToList();
 
@@ -170,12 +171,13 @@ public class DashboardService : IDashboardService
                 Date = n.RequestedAt,
                 Requester = n.RequestedBy?.FullName ?? "Inconnu",
                 ArticleCount = n.Details?.Count ?? 0,
-                Status = n.Status.ToString()
+                Status = n.Status.ToString(),
+                FirstArticle = n.Details?.FirstOrDefault()?.Product?.Designation ?? "-"
             })
             .ToList();
 
         // 8. Derniers BC (Top 5 - Filtrer "Annulé")
-        var recentBcData = await _unitOfWork.PurchaseOrders.GetAllIncludingAsync(b => b.Supplier);
+        var recentBcData = await _unitOfWork.PurchaseOrders.GetAllIncludingAsync(b => b.Supplier, b => b.Details);
         stats.RecentBcs = recentBcData
             .Where(b => b.Status != PurchaseOrderStatus.Cancelled)
             .OrderByDescending(b => b.OrderDate)
@@ -186,7 +188,8 @@ public class DashboardService : IDashboardService
                 Number = b.OrderNumber,
                 Supplier = b.Supplier?.CompanyName ?? "Inconnu",
                 Status = b.Status,
-                TotalTtc = b.TotalAmountTTC
+                TotalTtc = b.TotalAmountTTC,
+                FirstArticle = b.Details?.FirstOrDefault()?.Product?.Designation ?? "-"
             })
             .ToList();
 
