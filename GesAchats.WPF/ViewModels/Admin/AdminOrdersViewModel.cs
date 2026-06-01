@@ -7,6 +7,7 @@ using System.Windows.Input;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Admin;
@@ -28,7 +29,7 @@ public class AdminOrderItemViewModel : BaseViewModel
     }
 }
 
-public class AdminOrdersViewModel : BaseViewModel
+public class AdminOrdersViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
@@ -37,6 +38,14 @@ public class AdminOrdersViewModel : BaseViewModel
     private string _selectedSupplier = string.Empty;
     private string _selectedStatus = string.Empty;
     private DateTime? _searchDate;
+
+    public void OnNavigatedTo(object parameter)
+    {
+        if (parameter is string status)
+        {
+            SelectedStatus = status;
+        }
+    }
 
     public string SearchText
     {

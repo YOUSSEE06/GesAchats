@@ -7,6 +7,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GesAchats.Core.DTOs;
+using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.Services;
 using LiveChartsCore;
@@ -45,8 +46,8 @@ public partial class MagasinierDashboardViewModel : ObservableObject
         // Initialisation des commandes d'action rapide
         NewProductCommand = new RelayCommand(() => _navigationService.NavigateTo("Stock"));
         AddBlCommand = new RelayCommand(() => _navigationService.NavigateTo("Livraisons"));
-        ViewPendingBcCommand = new RelayCommand(() => _navigationService.NavigateTo("Commandes"));
-        CreateNeedCommand = new RelayCommand(() => _navigationService.NavigateTo("Besoins"));
+        ViewPendingBcCommand = new RelayCommand(() => _navigationService.NavigateTo("Orders", PurchaseOrderStatus.Pending));
+        CreateNeedCommand = new RelayCommand(() => _navigationService.NavigateTo("Needs"));
 
         _ = LoadDataAsync(30);
     }
