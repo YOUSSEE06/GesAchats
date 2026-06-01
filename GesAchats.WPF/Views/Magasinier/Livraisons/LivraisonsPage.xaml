@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Magasinier.Livraisons"
       xmlns:shared="clr-namespace:GesAchats.WPF.Resources.Shared"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Réception des Bons de Livraison">
@@ -48,11 +49,42 @@
             <Grid Visibility="{Binding IsHistoryView, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!-- Statistics Cards -->
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <controls:KpiCard Grid.Column="0"
+                        Title="Total des Bons de Livraison"
+                        Value="{Binding TotalDeliveries}"
+                        Icon="Box"
+                        IconColor="#3B82F6"
+                        Margin="0,0,10,0"/>
+
+                    <controls:KpiCard Grid.Column="1"
+                        Title="Bons de Livraison En attente"
+                        Value="{Binding PendingDeliveries}"
+                        Icon="Clock"
+                        IconColor="#FFC107"
+                        Margin="5,0,5,0"/>
+
+                    <controls:KpiCard Grid.Column="2"
+                        Title="Bons de Livraison Validés"
+                        Value="{Binding ValidatedDeliveries}"
+                        Icon="CheckCircle"
+                        IconColor="#4CAF50"
+                        Margin="10,0,0,0"/>
+                </Grid>
+
                 <!-- Filters -->
-                <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+                <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
                         <StackPanel Margin="0,0,20,0">
                             <TextBlock Text="Recherche" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
@@ -82,7 +114,7 @@
                 </Border>
 
                 <!-- BL History Table -->
-                <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+                <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
                     <DataGrid ItemsSource="{Binding DeliveriesHistory}" AutoGenerateColumns="False" IsReadOnly="True" 
                               Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
                         <DataGrid.Columns>

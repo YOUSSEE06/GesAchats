@@ -4,6 +4,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="Gestion des Bons de Commande">
@@ -18,6 +20,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -28,7 +31,36 @@
         <TextBlock Grid.Row="1" Text="Gestion des Bons de Commande" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
-        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,10">
+        <Grid Grid.Row="2" Margin="25,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <controls:KpiCard Grid.Column="0" 
+                              Title="Total des Bons de Commande" 
+                              Value="{Binding TotalOrders}"
+                              Icon="FileAlt"
+                              IconColor="#3B82F6"
+                              Margin="0,0,12,0"/>
+
+            <controls:KpiCard Grid.Column="1" 
+                              Title="Bons de Commande Validés" 
+                              Value="{Binding ValidatedOrders}"
+                              Icon="CheckCircle"
+                              IconColor="#22C55E"
+                              Margin="6,0,6,0"/>
+
+            <controls:KpiCard Grid.Column="2" 
+                              Title="Bons de Commande En Attente" 
+                              Value="{Binding PendingOrders}"
+                              Icon="Clock"
+                              IconColor="#F59E0B"
+                              Margin="12,0,0,0"/>
+        </Grid>
+
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10">
             <StackPanel Margin="5">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -82,7 +114,7 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding Orders}" 
                       Style="{StaticResource ModernDataGrid}">
                 <DataGrid.Columns>

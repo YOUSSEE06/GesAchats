@@ -37,8 +37,36 @@ public class StockAnalysisViewModel : BaseViewModel
     private readonly IStockService _stockService;
     private string _searchText = string.Empty;
     private string _selectedFilter = "Tous";
+    private int _totalArticles;
+    private int _normalArticles;
+    private int _lowStockArticles;
+    private int _outOfStockArticles;
 
     public ObservableCollection<StockProductViewModel> Products { get; } = new ObservableCollection<StockProductViewModel>();
+    
+    public int TotalArticles
+    {
+        get => _totalArticles;
+        set => SetProperty(ref _totalArticles, value);
+    }
+    
+    public int NormalArticles
+    {
+        get => _normalArticles;
+        set => SetProperty(ref _normalArticles, value);
+    }
+    
+    public int LowStockArticles
+    {
+        get => _lowStockArticles;
+        set => SetProperty(ref _lowStockArticles, value);
+    }
+    
+    public int OutOfStockArticles
+    {
+        get => _outOfStockArticles;
+        set => SetProperty(ref _outOfStockArticles, value);
+    }
     
     public string SearchText
     {
@@ -106,11 +134,19 @@ public class StockAnalysisViewModel : BaseViewModel
             _ => filtered
         };
 
+        var filteredList = filtered.ToList();
+        
         Products.Clear();
-        foreach (var p in filtered)
+        foreach (var p in filteredList)
         {
             Products.Add(new StockProductViewModel(p));
         }
+        
+        // Calculate statistics
+        TotalArticles = filteredList.Count;
+        NormalArticles = filteredList.Count(p => p.Etat == StockState.Ok);
+        LowStockArticles = filteredList.Count(p => p.Etat == StockState.Alert);
+        OutOfStockArticles = filteredList.Count(p => p.Etat == StockState.OutOfStock);
     }
 
     private void NavigateToNeeds()

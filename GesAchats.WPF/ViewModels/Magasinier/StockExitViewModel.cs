@@ -20,10 +20,24 @@ public class StockExitViewModel : BaseViewModel
     private string? _reason;
     private string _searchText = string.Empty;
     private DateTime? _filterDate;
+    private int _totalExits;
+    private decimal _totalQuantityExited;
 
     public ObservableCollection<Product> Products { get; } = new();
     public ObservableCollection<StockExit> StockExits { get; } = new();
     private List<StockExit> _allExits = new();
+
+    public int TotalExits
+    {
+        get => _totalExits;
+        set => SetProperty(ref _totalExits, value);
+    }
+
+    public decimal TotalQuantityExited
+    {
+        get => _totalQuantityExited;
+        set => SetProperty(ref _totalQuantityExited, value);
+    }
 
     public Product? SelectedProduct
     {
@@ -151,11 +165,16 @@ public class StockExitViewModel : BaseViewModel
             filtered = filtered.Where(e => e.ExitDate.Date == FilterDate.Value.Date);
         }
 
+        var filteredList = filtered.ToList();
         StockExits.Clear();
-        foreach (var e in filtered)
+        foreach (var e in filteredList)
         {
             StockExits.Add(e);
         }
+
+        // Calculate statistics
+        TotalExits = filteredList.Count;
+        TotalQuantityExited = filteredList.Sum(e => e.Quantity);
     }
 
     private async Task SaveExitAsync()

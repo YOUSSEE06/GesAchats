@@ -8,6 +8,28 @@ namespace GesAchats.WPF.ViewModels.Magasinier;
 
 public class MagasinierOrdersViewModel : AdminOrdersViewModel
 {
+    private int _totalOrders;
+    private int _validatedOrders;
+    private int _pendingOrders;
+
+    public int TotalOrders
+    {
+        get => _totalOrders;
+        set => SetProperty(ref _totalOrders, value);
+    }
+
+    public int ValidatedOrders
+    {
+        get => _validatedOrders;
+        set => SetProperty(ref _validatedOrders, value);
+    }
+
+    public int PendingOrders
+    {
+        get => _pendingOrders;
+        set => SetProperty(ref _pendingOrders, value);
+    }
+
     public MagasinierOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
         : base(unitOfWork, serviceProvider)
     {
@@ -48,10 +70,17 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         if (SearchDate.HasValue)
             filtered = filtered.Where(x => x.PurchaseOrder.OrderDate.Date == SearchDate.Value.Date);
 
+        var filteredList = filtered.ToList();
+        
         Orders.Clear();
-        foreach (var item in filtered)
+        foreach (var item in filteredList)
         {
             Orders.Add(item);
         }
+
+        // Mettre à jour les statistiques
+        TotalOrders = filteredList.Count;
+        ValidatedOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Validated);
+        PendingOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Pending);
     }
 }

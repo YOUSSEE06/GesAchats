@@ -4,12 +4,14 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Magasinier.StockExits"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Sortie des besoins">
 
     <Grid Background="#F5F6F7" Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -28,8 +30,31 @@
             </DockPanel>
         </Border>
 
+        <!-- Statistics Cards -->
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <controls:KpiCard Grid.Column="0"
+                Title="Total des Sorties"
+                Value="{Binding TotalExits}"
+                Icon="Box"
+                IconColor="#3B82F6"
+                Margin="0,0,7,0"/>
+
+            <controls:KpiCard Grid.Column="1"
+                Title="Quantité Totale Sortie"
+                Value="{Binding TotalQuantityExited}"
+                Unit=""
+                Icon="ArrowDown"
+                IconColor="#F44336"
+                Margin="7,0,0,0"/>
+        </Grid>
+
         <!-- 2. Barre de Filtres -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,15" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,15" BorderBrush="#E0E0E0" BorderThickness="1">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                     <StackPanel Margin="0,0,15,0">
@@ -46,7 +71,7 @@
         </Border>
 
         <!-- 3. Tableau de l'Historique -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

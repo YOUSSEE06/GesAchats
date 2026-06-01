@@ -49,6 +49,29 @@ public class DeliveryNotesViewModel : BaseViewModel
     private DateTime? _searchDate;
     public ObservableCollection<string> SupplierOptions { get; } = new ObservableCollection<string>();
     public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "En attente", "Validé" };
+    
+    // Statistics properties
+    private int _totalDeliveries;
+    private int _pendingDeliveries;
+    private int _validatedDeliveries;
+
+    public int TotalDeliveries
+    {
+        get => _totalDeliveries;
+        set => SetProperty(ref _totalDeliveries, value);
+    }
+
+    public int PendingDeliveries
+    {
+        get => _pendingDeliveries;
+        set => SetProperty(ref _pendingDeliveries, value);
+    }
+
+    public int ValidatedDeliveries
+    {
+        get => _validatedDeliveries;
+        set => SetProperty(ref _validatedDeliveries, value);
+    }
 
     // Form properties
     private DateTime _receptionDate = DateTime.Today;
@@ -290,11 +313,18 @@ public class DeliveryNotesViewModel : BaseViewModel
             filtered = filtered.Where(item => item.DeliveryNote.ReceptionDate.Date == SearchDate.Value.Date);
         }
 
+        var filteredList = filtered.ToList();
+        
         DeliveriesHistory.Clear();
-        foreach (var d in filtered)
+        foreach (var d in filteredList)
         {
             DeliveriesHistory.Add(d);
         }
+
+        // Calculate statistics
+        TotalDeliveries = filteredList.Count;
+        PendingDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "EnAttente");
+        ValidatedDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "Valide");
     }
 
     private async Task LoadPurchaseOrders()

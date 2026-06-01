@@ -89,6 +89,36 @@ public class NeedsHistoryViewModel : BaseViewModel
 
     public ObservableCollection<NeedHistoryItemViewModel> Needs { get; } = new ObservableCollection<NeedHistoryItemViewModel>();
     public ObservableCollection<string> StatusFilterOptions { get; } = new ObservableCollection<string> { "Tous", "transmit", "encours", "Annulé" };
+    
+    // Statistics properties
+    private int _totalNeeds;
+    private int _transmittedNeeds;
+    private int _inProgressNeeds;
+    private int _cancelledNeeds;
+
+    public int TotalNeeds
+    {
+        get => _totalNeeds;
+        set => SetProperty(ref _totalNeeds, value);
+    }
+
+    public int TransmittedNeeds
+    {
+        get => _transmittedNeeds;
+        set => SetProperty(ref _transmittedNeeds, value);
+    }
+
+    public int InProgressNeeds
+    {
+        get => _inProgressNeeds;
+        set => SetProperty(ref _inProgressNeeds, value);
+    }
+
+    public int CancelledNeeds
+    {
+        get => _cancelledNeeds;
+        set => SetProperty(ref _cancelledNeeds, value);
+    }
 
     public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterNeeds(); } }
     public string SelectedStatus { get => _selectedStatus; set { if (SetProperty(ref _selectedStatus, value)) FilterNeeds(); } }
@@ -167,8 +197,15 @@ public class NeedsHistoryViewModel : BaseViewModel
             filtered = filtered.Where(n => n.RequestedAt.Date == dateUtc);
         }
 
-        foreach (var n in filtered.OrderByDescending(x => x.RequestedAt))
+        var filteredList = filtered.ToList();
+        foreach (var n in filteredList.OrderByDescending(x => x.RequestedAt))
             Needs.Add(new NeedHistoryItemViewModel(n));
+
+        // Calculate statistics
+        TotalNeeds = filteredList.Count;
+        TransmittedNeeds = filteredList.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        InProgressNeeds = filteredList.Count(n => n.Status == NeedStatus.InPurchase);
+        CancelledNeeds = filteredList.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
     }
 
     private void ExecuteViewDetails(NeedHistoryItemViewModel? item)
