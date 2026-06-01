@@ -68,6 +68,13 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
 
     public ObservableCollection<AdminNeedHistoryItemViewModel> Needs { get; } = new();
 
+    // Stats KPIs
+    public int TotalBesoins => _allNeeds.Count;
+    public int BesoinsEnCours => _allNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
+    public int BesoinsTransmis => _allNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+    public int TotalArticlesDemandes => _allNeeds.Sum(n => n.Details?.Count ?? 0);
+    public int DemandeursActifs => _allNeeds.Select(n => n.RequestedById).Distinct().Count();
+
     public ICommand ViewDetailsCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand ClearFiltersCommand { get; }
@@ -78,7 +85,7 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         _serviceProvider = serviceProvider;
         Title = "HISTORIQUE DES BESOINS";
 
-        ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as AdminNeedHistoryItemViewModel));
+        ViewDetailsCommand = new RelayCommand(async p => await ExecuteViewDetails(p as AdminNeedHistoryItemViewModel));
         RefreshCommand = new RelayCommand(async _ => await LoadData());
         ClearFiltersCommand = new RelayCommand(_ => { SearchNumero = string.Empty; SearchDate = null; SelectedStatus = "Tous"; });
 
@@ -93,6 +100,13 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
             var needs = await _unitOfWork.Needs.GetAllWithDetailsAsync();
             _allNeeds = needs.ToList();
             FilterNeeds();
+
+            // Update stats
+            OnPropertyChanged(nameof(TotalBesoins));
+            OnPropertyChanged(nameof(BesoinsEnCours));
+            OnPropertyChanged(nameof(BesoinsTransmis));
+            OnPropertyChanged(nameof(TotalArticlesDemandes));
+            OnPropertyChanged(nameof(DemandeursActifs));
         }
         finally
         {
@@ -133,7 +147,7 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         }
     }
 
-    private void ExecuteViewDetails(AdminNeedHistoryItemViewModel? item)
+    private async Task ExecuteViewDetails(AdminNeedHistoryItemViewModel? item)
     {
         if (item == null) return;
         
@@ -144,6 +158,9 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
             var win = ActivatorUtilities.CreateInstance<Views.Magasinier.NeedsHistory.NeedsDetailsWindow>(scope.ServiceProvider, vm);
             win.Owner = System.Windows.Application.Current.MainWindow;
             win.ShowDialog();
+            
+            // Refresh data after closing the details window in case something changed
+            await LoadData();
         }
     }
 }

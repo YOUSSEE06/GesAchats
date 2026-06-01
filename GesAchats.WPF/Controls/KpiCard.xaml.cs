@@ -103,7 +103,26 @@ public partial class KpiCard : UserControl
     {
         if (d is KpiCard control)
         {
-            control.ValueControl.Text = e.NewValue?.ToString() ?? "0";
+            if (e.NewValue is decimal decimalValue)
+            {
+                control.ValueControl.Text = decimalValue.ToString("N2");
+            }
+            else if (e.NewValue is double doubleValue)
+            {
+                control.ValueControl.Text = doubleValue.ToString("N2");
+            }
+            else if (e.NewValue is int intValue)
+            {
+                control.ValueControl.Text = intValue.ToString("N0");
+            }
+            else if (e.NewValue is long longValue)
+            {
+                control.ValueControl.Text = longValue.ToString("N0");
+            }
+            else
+            {
+                control.ValueControl.Text = e.NewValue?.ToString() ?? "0";
+            }
         }
     }
 

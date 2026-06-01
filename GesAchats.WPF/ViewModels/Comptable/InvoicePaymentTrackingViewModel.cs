@@ -74,6 +74,11 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
     public decimal TotalPayments => _allInvoices.Sum(i => i.TotalPayments);
     public decimal TotalBalance => TotalTTC - TotalPayments;
 
+    // Nouveaux KPIs
+    public int PaidInvoicesCount => _allInvoices.Count(i => i.StatusCalculated == "Payée");
+    public int PartialInvoicesCount => _allInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
+    public int BilledSuppliersCount => _allInvoices.Select(i => i.Invoice.SupplierId).Distinct().Count();
+
     public ICommand LoadDataCommand { get; }
     public ICommand ViewInvoiceCommand { get; }
     public ICommand ResetFiltersCommand { get; }
@@ -141,6 +146,9 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             OnPropertyChanged(nameof(TotalTTC));
             OnPropertyChanged(nameof(TotalPayments));
             OnPropertyChanged(nameof(TotalBalance));
+            OnPropertyChanged(nameof(PaidInvoicesCount));
+            OnPropertyChanged(nameof(PartialInvoicesCount));
+            OnPropertyChanged(nameof(BilledSuppliersCount));
         }
         catch (Exception ex)
         {

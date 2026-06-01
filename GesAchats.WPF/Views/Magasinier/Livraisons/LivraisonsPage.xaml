@@ -15,7 +15,7 @@
     </Page.Resources>
 
     <Grid Background="#F5F5F5">
-        <Grid.RowDefinitions>
+<Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
