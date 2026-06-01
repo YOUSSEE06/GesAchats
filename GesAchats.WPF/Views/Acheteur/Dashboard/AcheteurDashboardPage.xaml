@@ -253,31 +253,13 @@
                                     <Setter Property="BorderThickness" Value="0"/>
                                     <Setter Property="Padding" Value="8,10"/>
                                     <Setter Property="FontSize" Value="12"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="DataGridCell">
-                                                <Border Padding="8,10">
-                                                    <TextBlock Text="{TemplateBinding Content}" 
-                                                               TextTrimming="CharacterEllipsis"
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 </Style>
                             </DataGrid.CellStyle>
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="DataGridRow">
-                                                <Grid>
-                                                    <DataGridCellsPresenter/>
-                                                    <Border Height="1" Background="#E5E7EB" VerticalAlignment="Bottom"/>
-                                                </Grid>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
+                                    <Setter Property="Background" Value="White"/>
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>

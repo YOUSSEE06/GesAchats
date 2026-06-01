@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -20,6 +21,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private readonly ISupplierService _supplierService;
         private readonly IStockService _stockService;
         private readonly IInvoiceService _invoiceService;
+        private readonly IDashboardService _dashboardService;
         private readonly ILogger _logger;
 
         // KPI Properties
@@ -67,6 +69,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             ISupplierService supplierService,
             IStockService stockService,
             IInvoiceService invoiceService,
+            IDashboardService dashboardService,
             ILogger logger)
         {
             _purchaseOrderService = purchaseOrderService;
@@ -74,6 +77,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             _supplierService = supplierService;
             _stockService = stockService;
             _invoiceService = invoiceService;
+            _dashboardService = dashboardService;
             _logger = logger;
 
             // Initialiser les collections
@@ -309,6 +313,9 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
                 // Charger les alertes
                 await LoadAlerts();
+                
+                // Charger les dernières opérations
+                await LoadRecentOperations();
 
                 _logger.Information("Dashboard Acheteur chargé avec succès");
             }
@@ -535,68 +542,42 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
+                _logger.Information("Loading recent operations...");
                 LatestOperations.Clear();
                 
-                // Exact sample data
-                LatestOperations.Add(new OperationModel
-                {
-                    Reference = "DEV-20260530-F4A0",
-                    Type = "Devis",
-                    Fournisseur = "sdfgs",
-                    Date = "30/05/2026",
-                    Montant = "330.00",
-                    Statut = "En attente"
-                });
+                // Load from database
+                var operations = await _dashboardService.GetRecentOperationsAsync(6);
                 
-                LatestOperations.Add(new OperationModel
-                {
-                    Reference = "DEV-20260530-D9A8",
-                    Type = "Devis",
-                    Fournisseur = "Société Matériaux SA",
-                    Date = "30/05/2026",
-                    Montant = "3,300.00",
-                    Statut = "Validé"
-                });
+                _logger.Information($"Number of recent operations loaded from DB: {operations.Count}");
                 
-                LatestOperations.Add(new OperationModel
+                if (operations.Count == 0)
                 {
-                    Reference = "BC-2026-7499",
-                    Type = "BC",
-                    Fournisseur = "sdfgs",
-                    Date = "30/05/2026",
-                    Montant = "330.00",
-                    Statut = "Validé"
-                });
-                
-                LatestOperations.Add(new OperationModel
+                    // Add test items if no data
+                    _logger.Information("No data from DB - adding test items");
+                    LatestOperations.Add(new OperationModel
+                    {
+                        Reference = "TEST-123",
+                        Type = "Devis",
+                        Fournisseur = "Test Fournisseur",
+                        Date = "01/06/2026",
+                        Statut = "En attente"
+                    });
+                }
+                else
                 {
-                    Reference = "BC-2026-81AC",
-                    Type = "BC",
-                    Fournisseur = "Société Matériaux SA",
-                    Date = "30/05/2026",
-                    Montant = "18.00",
-                    Statut = "Validé"
-                });
-                
-                LatestOperations.Add(new OperationModel
-                {
-                    Reference = "BC-2026-01F8",
-                    Type = "BC",
-                    Fournisseur = "Société Matériaux SA",
-                    Date = "30/05/2026",
-                    Montant = "5,760.00",
-                    Statut = "Validé"
-                });
-                
-                LatestOperations.Add(new OperationModel
-                {
-                    Reference = "BC-2026-03C1",
-                    Type = "BC",
-                    Fournisseur = "Société Matériaux SA",
-                    Date = "29/05/2026",
-                    Montant = "6,534.00",
-                    Statut = "En attente"
-                });
+                    foreach (var op in operations)
+                    {
+                        _logger.Information($"  - {op.Type}: {op.Reference} - {op.Fournisseur}");
+                        LatestOperations.Add(new OperationModel
+                        {
+                            Reference = op.Reference,
+                            Type = op.Type,
+                            Fournisseur = op.Fournisseur,
+                            Date = op.Date.ToString("dd/MM/yyyy"),
+                            Statut = op.Statut
+                        });
+                    }
+                }
             }
             catch (Exception ex)
             {

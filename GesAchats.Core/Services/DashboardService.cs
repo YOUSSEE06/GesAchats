@@ -17,6 +17,39 @@ public class DashboardService : IDashboardService
         _unitOfWork = unitOfWork;
     }
 
+    public async Task<List<DashboardOperationDto>> GetRecentOperationsAsync(int count = 6)
+    {
+        var operations = new List<DashboardOperationDto>();
+
+        // Load Quotations (Devis)
+        var quotations = await _unitOfWork.Quotations.GetAllWithSuppliersAsync();
+        operations.AddRange(quotations.Select(q => new DashboardOperationDto
+        {
+            Reference = q.ReferenceNumber,
+            Type = "Devis",
+            Fournisseur = q.Supplier?.CompanyName ?? "Inconnu",
+            Date = q.Date,
+            Statut = q.Status
+        }));
+
+        // Load Purchase Orders (Bons de Commande)
+        var purchaseOrders = await _unitOfWork.PurchaseOrders.GetAllWithSuppliersAsync();
+        operations.AddRange(purchaseOrders.Select(po => new DashboardOperationDto
+        {
+            Reference = po.OrderNumber,
+            Type = "Bon de Commande",
+            Fournisseur = po.Supplier?.CompanyName ?? "Inconnu",
+            Date = po.OrderDate,
+            Statut = po.Status
+        }));
+
+        // Sort by date descending and take top count
+        return operations
+            .OrderByDescending(op => op.Date)
+            .Take(count)
+            .ToList();
+    }
+
     public async Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(int days = 30)
     {
         var stats = new DashboardStatsDto();
