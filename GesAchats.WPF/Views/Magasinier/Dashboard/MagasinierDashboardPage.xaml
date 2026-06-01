@@ -298,7 +298,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" 
-                           Text="Bons de commande (7 derniers jours)" 
+                           Text="Bon de commande" 
                            FontSize="16" 
                            FontWeight="SemiBold" 
                            Foreground="{StaticResource MainTextBrush}"
