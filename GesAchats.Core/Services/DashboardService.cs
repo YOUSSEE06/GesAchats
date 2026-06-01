@@ -155,11 +155,10 @@ public class DashboardService : IDashboardService
         stats.BcEnAttenteCount = allBcs.Count(b => b.Status == PurchaseOrderStatus.Pending);
         stats.BcValidesCount = allBcs.Count(b => b.Status == PurchaseOrderStatus.Validated);
 
-        // 5. Articles Critiques (Top 5)
+        // 5. Articles Critiques
         stats.CriticalProducts = allProducts
             .Where(p => p.CurrentStock < p.MinimumStock)
             .OrderBy(p => p.CurrentStock / (p.MinimumStock > 0 ? p.MinimumStock : 1))
-            .Take(5)
             .Select(p => new CriticalProductDto
             {
                 Name = p.Designation,
@@ -170,11 +169,11 @@ public class DashboardService : IDashboardService
             })
             .ToList();
 
-        // 6. Derniers BL (Top 5)
+        // 6. Derniers BL (Top 10)
         var recentBlData = await _unitOfWork.DeliveryNotes.GetAllIncludingAsync(n => n.Supplier, n => n.PurchaseOrder, n => n.Details);
         stats.RecentBls = recentBlData
             .OrderByDescending(b => b.ReceptionDate)
-            .Take(5)
+            .Take(10)
             .Select(b => new RecentBlDto
             {
                 Date = b.ReceptionDate,
@@ -186,28 +185,33 @@ public class DashboardService : IDashboardService
             })
             .ToList();
 
-        // 7. Derniers Besoins (Top 5)
+        // 7. Derniers Besoins (Top 10)
         var recentNeedsData = await _unitOfWork.Needs.GetAllIncludingAsync(n => n.RequestedBy, n => n.Details);
         stats.RecentNeeds = recentNeedsData
             .OrderByDescending(n => n.RequestedAt)
-            .Take(5)
+            .Take(10)
             .Select(n => new RecentNeedDto
             {
                 Number = n.NumeroBesoin,
                 Date = n.RequestedAt,
                 Requester = n.RequestedBy?.FullName ?? "Inconnu",
                 ArticleCount = n.Details?.Count ?? 0,
-                Status = n.Status.ToString(),
+                Status = n.Status switch
+                {
+                    NeedStatus.TransmittedToPurchasing => "Transmis",
+                    NeedStatus.InPurchase => "En cours",
+                    NeedStatus.Cancelled => "Annulé",
+                    _ => "En cours"
+                },
                 FirstArticle = n.Details?.FirstOrDefault()?.Product?.Designation ?? "-"
             })
             .ToList();
 
-        // 8. Derniers BC (Top 5 - Filtrer "Annulé")
+        // 8. Derniers BC (Top 10)
         var recentBcData = await _unitOfWork.PurchaseOrders.GetAllIncludingAsync(b => b.Supplier, b => b.Details);
         stats.RecentBcs = recentBcData
-            .Where(b => b.Status != PurchaseOrderStatus.Cancelled)
             .OrderByDescending(b => b.OrderDate)
-            .Take(5)
+            .Take(10)
             .Select(b => new RecentBcDto
             {
                 Date = b.OrderDate,

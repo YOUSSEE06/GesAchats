@@ -11,6 +11,7 @@ using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.Services;
+using GesAchats.WPF.ViewModels;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -30,6 +31,9 @@ public partial class MagasinierDashboardViewModel : ObservableObject
     [ObservableProperty]
     private MagasinierDashboardStats _stats = new();
 
+    [ObservableProperty]
+    private PurchaseOrderChartViewModel _purchaseOrderChartViewModel;
+
     // Charts Properties
     public ISeries[] StockStatusSeries { get; set; } = [];
     public ISeries[] BcStatusSeries { get; set; } = [];
@@ -44,6 +48,8 @@ public partial class MagasinierDashboardViewModel : ObservableObject
     {
         _dashboardService = dashboardService;
         _navigationService = navigationService;
+        
+        PurchaseOrderChartViewModel = new PurchaseOrderChartViewModel();
         
         LoadDataCommand = new AsyncRelayCommand(() => LoadDataAsync(SelectedPeriod));
         RefreshCommand = new AsyncRelayCommand(() => LoadDataAsync(SelectedPeriod));
@@ -111,13 +117,14 @@ public partial class MagasinierDashboardViewModel : ObservableObject
                 Reference = bl.Number,
                 TypeIcon = IconChar.FileInvoice,
                 TypeColor = new SolidColorBrush(Colors.MediumSeaGreen),
+                TypeText = "Bon de Livraison",
                 MovementIcon = IconChar.ArrowUp,
                 MovementColor = new SolidColorBrush(Colors.MediumSeaGreen),
                 MovementText = "Entrée",
                 Supplier = bl.Supplier,
                 CriticalArticle = bl.FirstArticle,
-                Status = bl.Status == "Valide" ? "Validé" : "En attente",
-                StatusColor = bl.Status == "Valide" ? new SolidColorBrush(Colors.MediumSeaGreen) : new SolidColorBrush(Colors.Orange)
+                Status = bl.Status,
+                StatusColor = bl.Status == "Validé" ? new SolidColorBrush(Colors.MediumSeaGreen) : new SolidColorBrush(Colors.Orange)
             });
         }
 
@@ -129,17 +136,45 @@ public partial class MagasinierDashboardViewModel : ObservableObject
                 Reference = bc.Number,
                 TypeIcon = IconChar.CartShopping,
                 TypeColor = new SolidColorBrush(Colors.Orange),
+                TypeText = "Bon de Commande",
                 MovementIcon = IconChar.ArrowRight,
                 MovementColor = new SolidColorBrush(Colors.Orange),
                 MovementText = "Commande",
                 Supplier = bc.Supplier,
                 CriticalArticle = bc.FirstArticle,
-                Status = bc.Status == "Valide" ? "Validé" : "En attente",
-                StatusColor = bc.Status == "Valide" ? new SolidColorBrush(Colors.MediumSeaGreen) : new SolidColorBrush(Colors.Orange)
+                Status = bc.Status,
+                StatusColor = bc.Status switch
+                {
+                    "Validé" => new SolidColorBrush(Colors.MediumSeaGreen),
+                    "Annulé" => new SolidColorBrush(Colors.Red),
+                    _ => new SolidColorBrush(Colors.Orange)
+                }
             });
         }
 
-        vmStats.RecentOperations = operations.OrderByDescending(o => o.Date).Take(10).ToList();
+        foreach (var besoin in dto.RecentNeeds)
+        {
+            operations.Add(new RecentOperationViewModel
+            {
+                Date = besoin.Date,
+                Reference = besoin.Number,
+                TypeIcon = IconChar.ClipboardList,
+                TypeColor = new SolidColorBrush(Colors.Purple),
+                TypeText = "Besoin",
+                MovementIcon = IconChar.ArrowUp,
+                MovementColor = new SolidColorBrush(Colors.Purple),
+                MovementText = "Besoin",
+                Status = besoin.Status,
+                StatusColor = besoin.Status switch
+                {
+                    "Transmis" => new SolidColorBrush(Colors.MediumSeaGreen),
+                    "Annulé" => new SolidColorBrush(Colors.Red),
+                    _ => new SolidColorBrush(Colors.Orange)
+                }
+            });
+        }
+
+        vmStats.RecentOperations = operations.OrderByDescending(o => o.Date).Take(5).ToList();
         return vmStats;
     }
 
@@ -213,6 +248,29 @@ public partial class MagasinierDashboardViewModel : ObservableObject
                 SeparatorsPaint = new SolidColorPaint(new SKColor(229, 231, 235))
             }
         };
+        
+        // 4. Mettre à jour le contrôle personnalisé des bons de commande
+        int maxValue = Math.Max(Stats.BcEnAttenteCount, Stats.BcValidesCount);
+        maxValue = maxValue == 0 ? 10 : maxValue + 10; // Ajouter un peu de marge
+        double chartHeight = 200;
+        
+        PurchaseOrderChartViewModel.ChartData = new ObservableCollection<ChartBarData>
+        {
+            new ChartBarData
+            {
+                Label = "BC en attente",
+                Value = Stats.BcEnAttenteCount,
+                BarHeight = (Stats.BcEnAttenteCount / (double)maxValue) * chartHeight,
+                BarColor = new SolidColorBrush(Color.FromArgb(255, 255, 157, 92))
+            },
+            new ChartBarData
+            {
+                Label = "BC validés",
+                Value = Stats.BcValidesCount,
+                BarHeight = (Stats.BcValidesCount / (double)maxValue) * chartHeight,
+                BarColor = new SolidColorBrush(Color.FromArgb(255, 16, 185, 129))
+            }
+        };
 
         OnPropertyChanged(nameof(StockStatusSeries));
         OnPropertyChanged(nameof(BcStatusSeries));
@@ -245,6 +303,7 @@ public class RecentOperationViewModel
     public string Reference { get; set; } = string.Empty;
     public IconChar TypeIcon { get; set; }
     public Brush TypeColor { get; set; } = Brushes.Gray;
+    public string TypeText { get; set; } = string.Empty;
     public IconChar MovementIcon { get; set; }
     public Brush MovementColor { get; set; } = Brushes.Gray;
     public string MovementText { get; set; } = string.Empty;

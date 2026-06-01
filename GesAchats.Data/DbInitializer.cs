@@ -772,6 +772,75 @@ public static class DbInitializer
                     }
                     
                     await context.SaveChangesAsync();
+
+                    // --- 9. Ajout des Bons de Livraison de test ---
+                    var testMagasinier = await context.Users.FirstOrDefaultAsync(u => u.Login == "magasinier");
+                    if (testMagasinier != null)
+                    {
+                        // Check if test BLs already exist
+                        var testBlExists = await context.DeliveryNotes
+                            .AnyAsync(bl => bl.DeliveryNumber.StartsWith("BL-TEST-"));
+
+                        if (!testBlExists)
+                        {
+                            var randomBl = new Random();
+                            // Get all test BCs
+                            var testBcs = await context.PurchaseOrders
+                                .Where(po => po.OrderNumber.StartsWith("BC-TEST-"))
+                                .ToListAsync();
+
+                            if (testBcs.Any())
+                            {
+                                // Create 3 test BLs with recent dates
+                                var blDates = new List<DateTime>
+                                {
+                                    DateTime.UtcNow.AddDays(-1),
+                                    DateTime.UtcNow.AddDays(-3),
+                                    DateTime.UtcNow.AddDays(-7)
+                                };
+
+                                for (int i = 1; i <= 3; i++)
+                                {
+                                    var bc = testBcs[randomBl.Next(testBcs.Count)];
+                                    var firstDetail = bc.Details.FirstOrDefault();
+                                    var receivedQty = firstDetail != null ? firstDetail.Quantity : 100;
+
+                                    var bl = new DeliveryNote
+                                    {
+                                        DeliveryNumber = $"BL-TEST-{i:D4}",
+                                        ReceptionDate = blDates[i - 1],
+                                        PurchaseOrderId = bc.Id,
+                                        SupplierId = bc.SupplierId,
+                                        ReceivedQuantity = receivedQty,
+                                        CompliantQuantity = receivedQty,
+                                        DefectiveQuantity = 0,
+                                        Status = i == 1 ? "Validé" : "En attente",
+                                        ReceivedById = testMagasinier.Id,
+                                        CreatedAt = blDates[i - 1],
+                                        UpdatedAt = blDates[i - 1]
+                                    };
+
+                                    if (firstDetail != null)
+                                    {
+                                        bl.Details.Add(new DeliveryNoteDetail
+                                        {
+                                            ProductId = firstDetail.ProductId,
+                                            QuantityOrdered = firstDetail.Quantity,
+                                            QuantityReceived = receivedQty,
+                                            UnitPriceHT = firstDetail.UnitPriceHT,
+                                            UnitPriceTTC = firstDetail.UnitPriceTTC,
+                                            Total = receivedQty * firstDetail.UnitPriceTTC,
+                                            IsValidated = true
+                                        });
+                                    }
+
+                                    await context.DeliveryNotes.AddAsync(bl);
+                                }
+
+                                await context.SaveChangesAsync();
+                            }
+                        }
+                    }
                 }
             }
         }

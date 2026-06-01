@@ -1,0 +1,82 @@
+<UserControl x:Class="GesAchats.WPF.Views.Components.PurchaseOrderChartControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="250" d:DesignWidth="500"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/BarChartStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Zone du diagramme -->
+        <Grid Grid.Row="0">
+            <!-- Barres -->
+            <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Center">
+                <!-- Conteneur des barres (à remplir dynamiquement) -->
+                <ItemsControl x:Name="BarsContainer" 
+                              ItemsSource="{Binding ChartData}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="200"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="16,0" VerticalAlignment="Bottom" Width="100">
+                                <!-- Barre -->
+                                <Rectangle Height="{Binding BarHeight}" 
+                                           Fill="{Binding BarColor}"
+                                           Margin="0,0,0,0"
+                                           RadiusX="4" RadiusY="4">
+                                    <Rectangle.Effect>
+                                        <DropShadowEffect BlurRadius="2" ShadowDepth="1" Opacity="0.2"/>
+                                    </Rectangle.Effect>
+                                </Rectangle>
+                                <!-- Valeur -->
+                                <TextBlock Text="{Binding Value}" 
+                                           Style="{StaticResource ChartValueStyle}"
+                                           Margin="0,4,0,0"
+                                           HorizontalAlignment="Center"/>
+                                <!-- Label -->
+                                <TextBlock Text="{Binding Label}" 
+                                           Style="{StaticResource ChartLabelStyle}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,8,0,0"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+
+        <!-- Légende -->
+        <Border Grid.Row="1" Margin="0,12,0,0" Padding="12" Background="#F9F9F9" CornerRadius="6">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <!-- Item 1 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center">
+                    <Rectangle Width="12" Height="12" Fill="#FF9D5C" RadiusX="2" RadiusY="2"/>
+                    <TextBlock Text="BC en attente" Margin="8,0,0,0" Style="{StaticResource LegendLabelStyle}"/>
+                </StackPanel>
+                <!-- Item 2 -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Rectangle Width="12" Height="12" Fill="#10B981" RadiusX="2" RadiusY="2"/>
+                    <TextBlock Text="BC validés" Margin="8,0,0,0" Style="{StaticResource LegendLabelStyle}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

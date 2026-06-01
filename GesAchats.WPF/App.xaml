@@ -9,6 +9,7 @@
                 <ResourceDictionary Source="Resources/Shared/Colors.xaml"/>
                 <ResourceDictionary Source="Resources/Shared/Fonts.xaml"/>
                 <ResourceDictionary Source="Resources/Shared/CommonStyles.xaml"/>
+                <ResourceDictionary Source="Resources/BarChartStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters globaux -->

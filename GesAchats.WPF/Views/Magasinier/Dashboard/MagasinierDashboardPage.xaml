@@ -1,16 +1,17 @@
 <Page x:Class="GesAchats.WPF.Views.Magasinier.Dashboard.MagasinierDashboardPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
-      xmlns:vm="clr-namespace:GesAchats.WPF.ViewModels.Magasinier"
-      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
-      mc:Ignorable="d" d:DesignHeight="1080" d:DesignWidth="1640"
-      d:DataContext="{d:DesignInstance Type=vm:MagasinierDashboardViewModel}"
-      Title="Tableau de bord - Espace Magasinier"
-      Background="#F5F7FA">
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
+             xmlns:vm="clr-namespace:GesAchats.WPF.ViewModels.Magasinier"
+             xmlns:components="clr-namespace:GesAchats.WPF.Views.Components"
+             xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+             mc:Ignorable="d" d:DesignHeight="1080" d:DesignWidth="1640"
+             d:DataContext="{d:DesignInstance Type=vm:MagasinierDashboardViewModel}"
+             Title="Tableau de bord - Espace Magasinier"
+             Background="#F5F7FA">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -294,12 +295,29 @@
         </Border>
 
                 <!-- BC Status Bar Chart -->
-                <Border Grid.Column="1" Style="{StaticResource KpiCard}">
-                    <StackPanel>
-                        <TextBlock Text="Bons de commande (7 derniers jours)" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
-                        <lvc:CartesianChart Series="{Binding BcStatusSeries}" XAxes="{Binding BcStatusXAxes}" Height="260"/>
-                    </StackPanel>
-                </Border>
+        <Border Grid.Column="1" Margin="0,0,18,0" Background="{StaticResource CardBackgroundBrush}" Padding="18" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" 
+                           Text="Bons de commande (7 derniers jours)" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Foreground="{StaticResource MainTextBrush}"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,12"/>
+
+                <components:PurchaseOrderChartControl Grid.Row="1"
+                    DataContext="{Binding PurchaseOrderChartViewModel}"
+                    ChartData="{Binding ChartData}"/>
+            </Grid>
+        </Border>
 
                 <!-- Stock Movements Line Chart -->
         <Border Grid.Column="2" Margin="0,0,0,0" Background="{StaticResource CardBackgroundBrush}" Padding="18" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
@@ -330,8 +348,8 @@
             <!-- Tables Section -->
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1.8*"/>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="1.6*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Critical Products Table -->
@@ -345,11 +363,9 @@
                             </StackPanel>
                         </Grid>
                         
-                        <Button DockPanel.Dock="Bottom" Content="Voir tous les articles critiques →" 
-                                Background="Transparent" BorderThickness="0" Foreground="#EF4444" 
-                                FontWeight="SemiBold" Cursor="Hand" HorizontalAlignment="Center" Margin="0,16,0,0"/>
 
-                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.CriticalProducts}" MaxHeight="300">
+
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.CriticalProducts}" MaxHeight="250" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Article" Binding="{Binding Name}" Width="2*"/>
                                 <DataGridTextColumn Header="Stock actuel" Binding="{Binding CurrentStock, StringFormat={}{0:N2}}" Width="1*"/>
@@ -382,34 +398,23 @@
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="Dernière opération" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
                         
-                        <Button DockPanel.Dock="Bottom" Content="Voir toutes les opérations →" 
-                                Background="Transparent" BorderThickness="0" Foreground="#2563EB" 
-                                FontWeight="SemiBold" Cursor="Hand" HorizontalAlignment="Center" Margin="0,16,0,0"/>
 
-                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.RecentOperations}" MaxHeight="300">
+
+                        <DataGrid Style="{StaticResource ModernDataGrid}" ItemsSource="{Binding Stats.RecentOperations}" MaxHeight="280" VerticalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
-                                <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="1.2*"/>
-                                <DataGridTemplateColumn Header="Type" Width="0.8*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <fa:IconImage Icon="{Binding TypeIcon}" Width="16" Height="16" Foreground="{Binding TypeColor}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Mouvement des stocks" Width="1.5*">
+                                <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="1.5*"/>
+                                <DataGridTemplateColumn Header="Type" Width="1.5*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <fa:IconImage Icon="{Binding MovementIcon}" Width="12" Height="12" Foreground="{Binding MovementColor}" Margin="0,0,8,0"/>
-                                                <TextBlock Text="{Binding MovementText}" Foreground="{Binding MovementColor}" FontWeight="SemiBold"/>
+                                                <fa:IconImage Icon="{Binding TypeIcon}" Width="16" Height="16" Foreground="{Binding TypeColor}" Margin="0,0,8,0"/>
+                                                <TextBlock Text="{Binding TypeText}" VerticalAlignment="Center" FontSize="13"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier}" Width="1.5*"/>
-                                <DataGridTextColumn Header="Article critique" Binding="{Binding CriticalArticle}" Width="1.5*"/>
-                                <DataGridTemplateColumn Header="Statut" Width="1*">
+                                <DataGridTemplateColumn Header="Statut" Width="1.5*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border CornerRadius="12" Padding="10,4" Background="{Binding StatusColor}" HorizontalAlignment="Left">
