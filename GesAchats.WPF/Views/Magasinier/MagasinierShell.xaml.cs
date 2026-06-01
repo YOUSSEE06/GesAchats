@@ -56,9 +56,9 @@ public partial class MagasinierShell : Window
 
         if (page is Page wpfPage)
         {
-            if (parameter != null && wpfPage.DataContext is INavigatable navigatable)
+            if (wpfPage.DataContext is INavigatable navigatable)
             {
-                navigatable.OnNavigatedTo(parameter);
+                navigatable.OnNavigatedTo(parameter!);
             }
             MainFrame.Navigate(wpfPage);
         }

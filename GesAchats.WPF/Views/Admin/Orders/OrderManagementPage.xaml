@@ -37,30 +37,35 @@
         <UniformGrid Grid.Row="2" Rows="1" Columns="6" Margin="25,10">
             <ctrls:KpiCard Title="Total BC" 
                            Value="{Binding TotalBc}" 
+                           TrendText="{Binding TotalBcTrendText}"
                            Icon="CartShopping" 
                            IconColor="#2563EB" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="BC Validés" 
                            Value="{Binding BcValides}" 
+                           TrendText="{Binding BcValidesTrendText}"
                            Icon="CheckCircle" 
                            IconColor="#10B981" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="BC En attente" 
                            Value="{Binding BcEnAttente}" 
+                           TrendText="{Binding BcEnAttenteTrendText}"
                            Icon="Clock" 
                            IconColor="#F59E0B" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="BC Annulés" 
                            Value="{Binding BcAnnules}" 
+                           TrendText="{Binding BcAnnulesTrendText}"
                            Icon="Ban" 
                            IconColor="#EF4444" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="Valeur Totale" 
                            Value="{Binding ValeurTotaleBc}" 
+                           TrendText="{Binding ValeurTotaleBcTrendText}"
                            Unit="MAD"
                            Icon="MoneyBill" 
                            IconColor="#8B5CF6" 
@@ -68,6 +73,7 @@
 
             <ctrls:KpiCard Title="Fournisseurs actifs" 
                            Value="{Binding FournisseursActifs}" 
+                           TrendText="{Binding FournisseursActifsTrendText}"
                            Icon="Users" 
                            IconColor="#1E293B" 
                            Margin="0,0,0,0"/>

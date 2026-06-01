@@ -31,30 +31,35 @@
         <UniformGrid Grid.Row="2" Rows="1" Columns="5" Margin="25,10">
             <ctrls:KpiCard Title="Total Besoins" 
                            Value="{Binding TotalBesoins}" 
+                           TrendText="{Binding TotalBesoinsTrendText}"
                            Icon="ClipboardList" 
                            IconColor="#2563EB" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="Besoins En Cours" 
                            Value="{Binding BesoinsEnCours}" 
+                           TrendText="{Binding BesoinsEnCoursTrendText}"
                            Icon="Clock" 
                            IconColor="#F59E0B" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="Besoins Transmis" 
                            Value="{Binding BesoinsTransmis}" 
+                           TrendText="{Binding BesoinsTransmisTrendText}"
                            Icon="Share" 
                            IconColor="#10B981" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="Articles Demandés" 
                            Value="{Binding TotalArticlesDemandes}" 
+                           TrendText="{Binding TotalArticlesDemandesTrendText}"
                            Icon="BoxesStacked" 
                            IconColor="#8B5CF6" 
                            Margin="0,0,14,0"/>
 
             <ctrls:KpiCard Title="Demandeurs Actifs" 
                            Value="{Binding DemandeursActifs}" 
+                           TrendText="{Binding DemandeursActifsTrendText}"
                            Icon="Users" 
                            IconColor="#6366F1" 
                            Margin="0,0,0,0"/>

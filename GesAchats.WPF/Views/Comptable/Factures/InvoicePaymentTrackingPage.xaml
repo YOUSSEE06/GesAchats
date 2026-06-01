@@ -31,6 +31,7 @@
             <!-- 1. Montant Total TTC -->
             <ctrls:KpiCard Title="Montant Total TTC" 
                            Value="{Binding TotalTTC}" 
+                           TrendText="{Binding TotalTTCTrendText}"
                            Unit="MAD"
                            Icon="FileInvoiceDollar" 
                            IconColor="#2563EB" 
@@ -39,6 +40,7 @@
             <!-- 2. Total Règlements -->
             <ctrls:KpiCard Title="Total Règlements" 
                            Value="{Binding TotalPayments}" 
+                           TrendText="{Binding TotalPaymentsTrendText}"
                            Unit="MAD"
                            Icon="HandHoldingDollar" 
                            IconColor="#10B981" 
@@ -47,6 +49,7 @@
             <!-- 3. Solde Total -->
             <ctrls:KpiCard Title="Solde Total" 
                            Value="{Binding TotalBalance}" 
+                           TrendText="{Binding TotalBalanceTrendText}"
                            Unit="MAD"
                            Icon="ScaleUnbalanced" 
                            IconColor="#F59E0B" 
@@ -55,6 +58,7 @@
             <!-- 4. Factures Payées -->
             <ctrls:KpiCard Title="Factures Payées" 
                            Value="{Binding PaidInvoicesCount}" 
+                           TrendText="{Binding PaidInvoicesCountTrendText}"
                            Icon="CheckDouble" 
                            IconColor="#059669" 
                            Margin="0,0,10,0"/>
@@ -62,6 +66,7 @@
             <!-- 5. Factures Partiellement Payées -->
             <ctrls:KpiCard Title="Factures Part. Payées" 
                            Value="{Binding PartialInvoicesCount}" 
+                           TrendText="{Binding PartialInvoicesCountTrendText}"
                            Icon="HourglassHalf" 
                            IconColor="#D97706" 
                            Margin="0,0,10,0"/>
@@ -69,6 +74,7 @@
             <!-- 6. Fournisseurs Facturés -->
             <ctrls:KpiCard Title="Fournisseurs Facturés" 
                            Value="{Binding BilledSuppliersCount}" 
+                           TrendText="{Binding BilledSuppliersCountTrendText}"
                            Icon="Users" 
                            IconColor="#4F46E5" 
                            Margin="0,0,0,0"/>

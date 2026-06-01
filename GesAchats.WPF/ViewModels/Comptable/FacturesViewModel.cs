@@ -9,7 +9,7 @@ using GesAchats.WPF.Views.Comptable.Factures;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
-public class FacturesViewModel : BaseViewModel
+public class FacturesViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
@@ -132,6 +132,49 @@ public class FacturesViewModel : BaseViewModel
         set => SetProperty(ref _paymentRate, value);
     }
 
+    // Trend texts
+    private string _totalFacturesCountTrendText = string.Empty;
+    public string TotalFacturesCountTrendText
+    {
+        get => _totalFacturesCountTrendText;
+        set => SetProperty(ref _totalFacturesCountTrendText, value);
+    }
+
+    private string _totalAmountTrendText = string.Empty;
+    public string TotalAmountTrendText
+    {
+        get => _totalAmountTrendText;
+        set => SetProperty(ref _totalAmountTrendText, value);
+    }
+
+    private string _paidInvoicesCountTrendText = string.Empty;
+    public string PaidInvoicesCountTrendText
+    {
+        get => _paidInvoicesCountTrendText;
+        set => SetProperty(ref _paidInvoicesCountTrendText, value);
+    }
+
+    private string _partialInvoicesCountTrendText = string.Empty;
+    public string PartialInvoicesCountTrendText
+    {
+        get => _partialInvoicesCountTrendText;
+        set => SetProperty(ref _partialInvoicesCountTrendText, value);
+    }
+
+    private string _waitingInvoicesCountTrendText = string.Empty;
+    public string WaitingInvoicesCountTrendText
+    {
+        get => _waitingInvoicesCountTrendText;
+        set => SetProperty(ref _waitingInvoicesCountTrendText, value);
+    }
+
+    private string _pendingAmountTrendText = string.Empty;
+    public string PendingAmountTrendText
+    {
+        get => _pendingAmountTrendText;
+        set => SetProperty(ref _pendingAmountTrendText, value);
+    }
+
     private InvoiceWithPaymentsViewModel? _selectedFacture;
     public InvoiceWithPaymentsViewModel? SelectedFacture
     {
@@ -211,8 +254,11 @@ public class FacturesViewModel : BaseViewModel
             if (SelectedFacture != null)
                 _navigationService.NavigateTo("PaymentForm", SelectedFacture.Invoice.Id);
         }, _ => SelectedFacture != null);
+    }
 
-        _ = LoadFacturesAsync();
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadFacturesAsync();
     }
 
     private async Task LoadFacturesAsync()
@@ -241,6 +287,7 @@ public class FacturesViewModel : BaseViewModel
 
             // Charger les paiements
             var payments = await _unitOfWork.Payments.GetAllAsync();
+            _allPayments = payments.ToList();
 
             // Créer les viewmodels avec les paiements
             _allFactures = new ObservableCollection<InvoiceWithPaymentsViewModel>();
@@ -292,6 +339,8 @@ public class FacturesViewModel : BaseViewModel
         CalculateStats();
     }
 
+    private List<Payment> _allPayments = new(); // Store all payments for yesterday's calculations
+
     private void CalculateStats()
     {
         TotalFacturesCount = _allFactures.Count;
@@ -300,6 +349,28 @@ public class FacturesViewModel : BaseViewModel
         PartialInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "Partiellement payée");
         WaitingInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "En attente");
         PendingAmount = _allFactures.Sum(f => f.Balance);
+
+        // Calculate yesterday's data
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+
+        var yesterdayInvoices = _allFactures.Where(f => 
+            f.Invoice.CreatedAt.Date >= yesterday && f.Invoice.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotalCount = yesterdayInvoices.Count;
+        decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.Invoice.AmountTTC);
+        int yesterdayPaidCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Payée");
+        int yesterdayPartialCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
+        int yesterdayWaitingCount = yesterdayInvoices.Count(f => f.StatusCalculated == "En attente");
+        decimal yesterdayPendingAmount = yesterdayInvoices.Sum(f => f.Balance);
+
+        // Calculate trend texts
+        TotalFacturesCountTrendText = CalculateTrendText(TotalFacturesCount, yesterdayTotalCount);
+        TotalAmountTrendText = CalculateTrendText(TotalAmount, yesterdayTotalAmount);
+        PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
+        PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
+        WaitingInvoicesCountTrendText = CalculateTrendText(WaitingInvoicesCount, yesterdayWaitingCount);
+        PendingAmountTrendText = CalculateTrendText(PendingAmount, yesterdayPendingAmount);
     }
 
     private void ResetFilters()

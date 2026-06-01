@@ -7,10 +7,11 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Services;
 
 namespace GesAchats.WPF.ViewModels.Magasinier;
 
-public class StockExitViewModel : BaseViewModel
+public class StockExitViewModel : BaseViewModel, INavigatable
 {
     private readonly IStockService _stockService;
     private readonly IUserSession _userSession;
@@ -118,8 +119,11 @@ public class StockExitViewModel : BaseViewModel
         CancelExitCommand = new RelayCommand(async p => await CancelExitAsync(p as StockExit));
         OpenAddDialogCommand = new RelayCommand(_ => ExecuteOpenAddDialog());
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
+    }
 
-        _ = LoadDataAsync();
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadDataAsync();
     }
 
     private void ExecuteResetFilters()

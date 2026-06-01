@@ -55,12 +55,43 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     private int _blEnAttente;
     private int _blAnnules;
     private int _fournisseursActifs;
+    private string _totalBlTrendText = string.Empty;
+    private string _blValidesTrendText = string.Empty;
+    private string _blEnAttenteTrendText = string.Empty;
+    private string _blAnnulesTrendText = string.Empty;
+    private string _fournisseursActifsTrendText = string.Empty;
 
     public int TotalBl { get => _totalBl; set => SetProperty(ref _totalBl, value); }
     public int BlValides { get => _blValides; set => SetProperty(ref _blValides, value); }
     public int BlEnAttente { get => _blEnAttente; set => SetProperty(ref _blEnAttente, value); }
     public int BlAnnules { get => _blAnnules; set => SetProperty(ref _blAnnules, value); }
     public int FournisseursActifs { get => _fournisseursActifs; set => SetProperty(ref _fournisseursActifs, value); }
+
+    public string TotalBlTrendText
+    {
+        get => _totalBlTrendText;
+        set => SetProperty(ref _totalBlTrendText, value);
+    }
+    public string BlValidesTrendText
+    {
+        get => _blValidesTrendText;
+        set => SetProperty(ref _blValidesTrendText, value);
+    }
+    public string BlEnAttenteTrendText
+    {
+        get => _blEnAttenteTrendText;
+        set => SetProperty(ref _blEnAttenteTrendText, value);
+    }
+    public string BlAnnulesTrendText
+    {
+        get => _blAnnulesTrendText;
+        set => SetProperty(ref _blAnnulesTrendText, value);
+    }
+    public string FournisseursActifsTrendText
+    {
+        get => _fournisseursActifsTrendText;
+        set => SetProperty(ref _fournisseursActifsTrendText, value);
+    }
 
     public string SearchText
     {
@@ -157,6 +188,25 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
             BlEnAttente = _allDeliveryNotes.Count(n => n.Status == "EnAttente");
             BlAnnules = _allDeliveryNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
             FournisseursActifs = _allDeliveryNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+
+            // Calculate yesterday's data
+            DateTime today = DateTime.Today;
+            DateTime yesterday = today.AddDays(-1);
+            var yesterdayNotes = _allDeliveryNotes.Where(n =>
+                n.CreatedAt.Date >= yesterday && n.CreatedAt.Date < today).ToList();
+
+            int yesterdayTotal = yesterdayNotes.Count;
+            int yesterdayValides = yesterdayNotes.Count(n => n.Status == "Valide");
+            int yesterdayEnAttente = yesterdayNotes.Count(n => n.Status == "EnAttente");
+            int yesterdayAnnules = yesterdayNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
+            int yesterdayFournisseurs = yesterdayNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+
+            // Calculate trend texts
+            TotalBlTrendText = CalculateTrendText(TotalBl, yesterdayTotal);
+            BlValidesTrendText = CalculateTrendText(BlValides, yesterdayValides);
+            BlEnAttenteTrendText = CalculateTrendText(BlEnAttente, yesterdayEnAttente);
+            BlAnnulesTrendText = CalculateTrendText(BlAnnules, yesterdayAnnules);
+            FournisseursActifsTrendText = CalculateTrendText(FournisseursActifs, yesterdayFournisseurs);
 
             FilterDeliveryNotes();
         }

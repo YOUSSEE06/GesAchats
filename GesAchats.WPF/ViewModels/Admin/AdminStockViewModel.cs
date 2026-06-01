@@ -8,10 +8,11 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Services;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
-public class AdminStockViewModel : BaseViewModel
+public class AdminStockViewModel : BaseViewModel, INavigatable
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStockService _stockService;
@@ -26,6 +27,11 @@ public class AdminStockViewModel : BaseViewModel
     private ObservableCollection<Product> _filteredProducts = new();
     private ObservableCollection<string> _statusOptions = new() { "Tous", "OK", "Alerte", "Rupture" };
     private List<Product> _allProducts = new();
+    private string _totalProductsTrendText = string.Empty;
+    private string _totalStockTrendText = string.Empty;
+    private string _productsOkTrendText = string.Empty;
+    private string _productsAlertTrendText = string.Empty;
+    private string _productsOutOfStockTrendText = string.Empty;
 
     public int TotalProducts
     {
@@ -55,6 +61,36 @@ public class AdminStockViewModel : BaseViewModel
     {
         get => _productsOutOfStock;
         set => SetProperty(ref _productsOutOfStock, value);
+    }
+
+    public string TotalProductsTrendText
+    {
+        get => _totalProductsTrendText;
+        set => SetProperty(ref _totalProductsTrendText, value);
+    }
+
+    public string TotalStockTrendText
+    {
+        get => _totalStockTrendText;
+        set => SetProperty(ref _totalStockTrendText, value);
+    }
+
+    public string ProductsOkTrendText
+    {
+        get => _productsOkTrendText;
+        set => SetProperty(ref _productsOkTrendText, value);
+    }
+
+    public string ProductsAlertTrendText
+    {
+        get => _productsAlertTrendText;
+        set => SetProperty(ref _productsAlertTrendText, value);
+    }
+
+    public string ProductsOutOfStockTrendText
+    {
+        get => _productsOutOfStockTrendText;
+        set => SetProperty(ref _productsOutOfStockTrendText, value);
     }
 
     public ObservableCollection<Product> FilteredProducts
@@ -101,8 +137,11 @@ public class AdminStockViewModel : BaseViewModel
         _stockService = stockService;
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
         Title = "Stock global";
-        
-        _ = LoadDataAsync();
+    }
+
+    public async void OnNavigatedTo(object parameter)
+    {
+        await LoadDataAsync();
     }
 
     private async Task LoadDataAsync()
@@ -151,6 +190,8 @@ public class AdminStockViewModel : BaseViewModel
         {
             FilteredProducts.Add(p);
         }
+
+        CalculateStats();
     }
 
     private void CalculateStats()
@@ -160,5 +201,26 @@ public class AdminStockViewModel : BaseViewModel
         ProductsOk = _allProducts.Count(p => p.Etat == StockState.Ok);
         ProductsAlert = _allProducts.Count(p => p.Etat == StockState.Alert);
         ProductsOutOfStock = _allProducts.Count(p => p.Etat == StockState.OutOfStock);
+
+        // Calculate yesterday's data
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+
+        // Get products created yesterday
+        var yesterdayProducts = _allProducts.Where(p =>
+            p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayProducts.Count;
+        decimal yesterdayTotalStock = yesterdayProducts.Sum(p => p.CurrentStock);
+        int yesterdayOk = yesterdayProducts.Count(p => p.Etat == StockState.Ok);
+        int yesterdayAlert = yesterdayProducts.Count(p => p.Etat == StockState.Alert);
+        int yesterdayOutOfStock = yesterdayProducts.Count(p => p.Etat == StockState.OutOfStock);
+
+        // Calculate trend texts
+        TotalProductsTrendText = CalculateTrendText(TotalProducts, yesterdayTotal);
+        TotalStockTrendText = CalculateTrendText(TotalStock, yesterdayTotalStock);
+        ProductsOkTrendText = CalculateTrendText(ProductsOk, yesterdayOk);
+        ProductsAlertTrendText = CalculateTrendText(ProductsAlert, yesterdayAlert);
+        ProductsOutOfStockTrendText = CalculateTrendText(ProductsOutOfStock, yesterdayOutOfStock);
     }
 }
