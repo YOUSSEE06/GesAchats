@@ -229,18 +229,69 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Stock Status Donut -->
-                <Border Grid.Column="0" Style="{StaticResource KpiCard}">
-                    <StackPanel>
-                        <TextBlock Text="État du stock" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
-                        <Grid Height="260">
-                            <lvc:PieChart Series="{Binding StockStatusSeries}" LegendPosition="Right"/>
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,45,0">
-                                <TextBlock Text="{Binding Stats.TotalArticles}" FontSize="24" FontWeight="Bold" Foreground="#071B3A" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Total" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
-                            </StackPanel>
+        <Border Grid.Column="0" Margin="0,0,0,0" Background="{StaticResource CardBackgroundBrush}" Padding="18" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" 
+                           Text="État du stock" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Foreground="{StaticResource MainTextBrush}"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,12"/>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Donut Chart with Center Text -->
+                    <Grid Grid.Column="0">
+                        <lvc:PieChart Series="{Binding StockStatusSeries}" />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Stats.TotalArticles}" FontSize="24" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Total" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Legend -->
+                    <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="12" Height="12" Background="#10B981" CornerRadius="6"/>
+                            <TextBlock Grid.Column="1" Text="Normal" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="12" Height="12" Background="#F59E0B" CornerRadius="6"/>
+                            <TextBlock Grid.Column="1" Text="Sous minimum" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="12" Height="12" Background="#EF4444" CornerRadius="6"/>
+                            <TextBlock Grid.Column="1" Text="En rupture" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"/>
                         </Grid>
                     </StackPanel>
-                </Border>
+                </Grid>
+            </Grid>
+        </Border>
 
                 <!-- BC Status Bar Chart -->
                 <Border Grid.Column="1" Style="{StaticResource KpiCard}">
@@ -251,12 +302,29 @@
                 </Border>
 
                 <!-- Stock Movements Line Chart -->
-                <Border Grid.Column="2" Style="{StaticResource KpiCard}">
-                    <StackPanel>
-                        <TextBlock Text="Mouvement stock (7 derniers jours)" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
-                        <lvc:CartesianChart Series="{Binding StockMovementSeries}" XAxes="{Binding StockMovementXAxes}" Height="260" LegendPosition="Top"/>
-                    </StackPanel>
-                </Border>
+        <Border Grid.Column="2" Margin="0,0,0,0" Background="{StaticResource CardBackgroundBrush}" Padding="18" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" 
+                           Text="Mouvement stock (7 derniers jours)" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Foreground="{StaticResource MainTextBrush}"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <lvc:CartesianChart Grid.Row="1" 
+                                    Series="{Binding StockMovementSeries}" 
+                                    XAxes="{Binding StockMovementXAxes}" 
+                                    Height="200" Margin="0,12,0,0" LegendPosition="Top"/>
+            </Grid>
+        </Border>
             </Grid>
 
             <!-- Tables Section -->

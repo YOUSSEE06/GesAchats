@@ -148,9 +148,9 @@ public partial class MagasinierDashboardViewModel : ObservableObject
         // 1. État du stock (Donut)
         StockStatusSeries = new ISeries[]
         {
-            new PieSeries<int> { Values = new[] { Stats.StockNormalCount }, Name = "Normal", Fill = new SolidColorPaint(new SKColor(16, 185, 129)) },
-            new PieSeries<int> { Values = new[] { Stats.StockSousMinimumCount }, Name = "Sous minimum", Fill = new SolidColorPaint(new SKColor(245, 158, 11)) },
-            new PieSeries<int> { Values = new[] { Stats.StockEnRuptureCount }, Name = "En rupture", Fill = new SolidColorPaint(new SKColor(239, 68, 68)) }
+            new PieSeries<int> { Values = new[] { Stats.StockNormalCount }, Name = "Normal", Fill = new SolidColorPaint(new SKColor(16, 185, 129)), InnerRadius = 55 },
+            new PieSeries<int> { Values = new[] { Stats.StockSousMinimumCount }, Name = "Sous minimum", Fill = new SolidColorPaint(new SKColor(245, 158, 11)), InnerRadius = 55 },
+            new PieSeries<int> { Values = new[] { Stats.StockEnRuptureCount }, Name = "En rupture", Fill = new SolidColorPaint(new SKColor(239, 68, 68)), InnerRadius = 55 }
         };
 
         // 2. Bons de commande (Bar) - Uniquement 2 barres comme demandé
@@ -183,7 +183,7 @@ public partial class MagasinierDashboardViewModel : ObservableObject
             }
         };
 
-        // 3. Mouvements de stock (Line) - Smooth lines with dots
+        // 3. Mouvements de stock (Line) - Styled like Acheteur's chart
         StockMovementSeries = new ISeries[]
         {
             new LineSeries<decimal> 
@@ -191,20 +191,16 @@ public partial class MagasinierDashboardViewModel : ObservableObject
                 Values = Stats.StockMovements.Select(m => m.In).ToArray(), 
                 Name = "Mouvement de stock d'entrée", 
                 Stroke = new SolidColorPaint(new SKColor(37, 99, 235)) { StrokeThickness = 3 },
-                Fill = null,
-                GeometrySize = 10,
-                GeometryStroke = new SolidColorPaint(new SKColor(37, 99, 235)) { StrokeThickness = 2 },
-                LineSmoothness = 1
+                Fill = new SolidColorPaint(new SKColor(37, 99, 235, 30)),
+                GeometrySize = 8
             },
             new LineSeries<decimal> 
             { 
                 Values = Stats.StockMovements.Select(m => m.Out).ToArray(), 
                 Name = "Mouvement de stock de sortie", 
                 Stroke = new SolidColorPaint(new SKColor(239, 68, 68)) { StrokeThickness = 3 },
-                Fill = null,
-                GeometrySize = 10,
-                GeometryStroke = new SolidColorPaint(new SKColor(239, 68, 68)) { StrokeThickness = 2 },
-                LineSmoothness = 1
+                Fill = new SolidColorPaint(new SKColor(239, 68, 68, 30)),
+                GeometrySize = 8
             }
         };
 
@@ -214,7 +210,7 @@ public partial class MagasinierDashboardViewModel : ObservableObject
             {
                 Labels = Stats.StockMovements.Select(m => m.Date.ToString("dd/MM")).ToArray(),
                 LabelsRotation = 0,
-                SeparatorsPaint = new SolidColorPaint(new SKColor(226, 232, 240, 100))
+                SeparatorsPaint = new SolidColorPaint(new SKColor(229, 231, 235))
             }
         };
 
