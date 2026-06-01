@@ -42,7 +42,7 @@ public partial class MagasinierDashboardViewModel : ObservableObject
     public Axis[] StockMovementXAxes { get; set; } = [];
 
     [ObservableProperty]
-    private int _selectedPeriod = 30;
+    private int _selectedPeriod = 7;
 
     public MagasinierDashboardViewModel(IDashboardService dashboardService, INavigationService navigationService)
     {

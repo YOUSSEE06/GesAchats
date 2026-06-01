@@ -236,7 +236,7 @@ public class DashboardService : IDashboardService
                 .Sum(s => s.Quantity);
 
             var dailyIn = allBls
-                .Where(b => (b.Status == "Valide" || b.Status == "Validé") && b.ReceptionDate >= date && b.ReceptionDate < nextDate)
+                .Where(b => b.ReceptionDate >= date && b.ReceptionDate < nextDate)
                 .Sum(b => b.ReceivedQuantity);
 
             stats.StockMovements.Add(new StockMovementDto
