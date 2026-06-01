@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.Entities;
+using Serilog;
 
 namespace GesAchats.Core.Services;
 
@@ -15,6 +16,31 @@ public class DashboardService : IDashboardService
     public DashboardService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
+    }
+
+    private string NormalizeQuotationStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return QuotationStatus.Pending;
+        
+        status = status.Trim();
+        
+        // Convert old values "Accepted" to "Validated"
+        if (status.Equals("Accepted", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("accepted", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("ACCEPTED", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Validated;
+        
+        // Normalize existing values
+        if (status.Equals("En attente", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("en_attente", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Pending;
+        
+        if (status.Equals("Validé", StringComparison.OrdinalIgnoreCase) || 
+            status.Equals("valide", StringComparison.OrdinalIgnoreCase))
+            return QuotationStatus.Validated;
+        
+        return status;
     }
 
     public async Task<List<DashboardAlertDto>> GetDashboardAlertsAsync()
@@ -218,5 +244,131 @@ public class DashboardService : IDashboardService
         }
 
         return stats;
+    }
+
+    public async Task<AcheteurKpiDto> GetAcheteurKpisAsync()
+    {
+        // 1. Calculate current KPI counts from database
+        var allNeeds = await _unitOfWork.Needs.GetAllAsync();
+        var allQuotations = await _unitOfWork.Quotations.GetAllAsync();
+        var allSuppliers = await _unitOfWork.Suppliers.GetAllAsync();
+        var allPurchaseOrders = await _unitOfWork.PurchaseOrders.GetAllAsync();
+
+        var currentKpis = new DashboardKpiSnapshot
+        {
+            SnapshotDate = DateTime.Today,
+            BesEnCoursCount = allNeeds.Count(n => n.Status == NeedStatus.Draft || n.Status == NeedStatus.ToValidate || n.Status == NeedStatus.InPurchase || n.Status == NeedStatus.Relaunched),
+            BesTransmisCount = allNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing),
+            DevEnAttenteCount = allQuotations.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending),
+            DevValideCount = allQuotations.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated),
+            FournisseursActifsCount = allSuppliers.Count(s => s.IsActive),
+            TotalBcCount = allPurchaseOrders.Count()
+        };
+
+        // Log current KPI values
+        Log.Information("Current KPI values:");
+        Log.Information("  BesEnCours: {Count}", currentKpis.BesEnCoursCount);
+        Log.Information("  BesTransmis: {Count}", currentKpis.BesTransmisCount);
+        Log.Information("  DevEnAttente: {Count}", currentKpis.DevEnAttenteCount);
+        Log.Information("  DevValide: {Count}", currentKpis.DevValideCount);
+        Log.Information("  FournisseursActifs: {Count}", currentKpis.FournisseursActifsCount);
+        Log.Information("  TotalBc: {Count}", currentKpis.TotalBcCount);
+
+        // 2. Save today's snapshot if it doesn't exist, or update it
+        var today = DateTime.Today;
+        Log.Information("Today: {Today}", today);
+        
+        var allSnapshots = await _unitOfWork.DashboardKpiSnapshots.GetAllAsync();
+        
+        // Log all SnapshotDate values
+        Log.Information("All snapshots:");
+        foreach (var snapshot in allSnapshots)
+        {
+            Log.Information("  {Date}", snapshot.SnapshotDate);
+        }
+        
+        // Check for existing today's snapshot by Date part only
+        var existingTodaySnapshot = allSnapshots.FirstOrDefault(s => s.SnapshotDate.Date == today.Date);
+        
+        if (existingTodaySnapshot != null)
+        {
+            // Update existing snapshot
+            Log.Information("Updating existing snapshot for today: {Date}", existingTodaySnapshot.SnapshotDate);
+            existingTodaySnapshot.BesEnCoursCount = currentKpis.BesEnCoursCount;
+            existingTodaySnapshot.BesTransmisCount = currentKpis.BesTransmisCount;
+            existingTodaySnapshot.DevEnAttenteCount = currentKpis.DevEnAttenteCount;
+            existingTodaySnapshot.DevValideCount = currentKpis.DevValideCount;
+            existingTodaySnapshot.FournisseursActifsCount = currentKpis.FournisseursActifsCount;
+            existingTodaySnapshot.TotalBcCount = currentKpis.TotalBcCount;
+            _unitOfWork.DashboardKpiSnapshots.Update(existingTodaySnapshot);
+        }
+        else
+        {
+            // Add new snapshot
+            Log.Information("Adding new snapshot for today");
+            await _unitOfWork.DashboardKpiSnapshots.AddAsync(currentKpis);
+        }
+
+        await _unitOfWork.CompleteAsync();
+
+        // 3. Find snapshot from 7 days ago (or closest before that)
+        var targetDate = today.AddDays(-7).Date;
+        Log.Information("Target date (7 days ago): {TargetDate}", targetDate);
+        
+        var snapshot7DaysAgo = allSnapshots
+            .Where(s => s.SnapshotDate.Date <= targetDate.Date)
+            .OrderByDescending(s => s.SnapshotDate)
+            .FirstOrDefault();
+
+        Log.Information("Selected previous snapshot date: {SelectedDate}", 
+            snapshot7DaysAgo != null ? snapshot7DaysAgo.SnapshotDate.ToString() : "No previous snapshot found");
+        
+        if (snapshot7DaysAgo != null)
+        {
+            Log.Information("Previous KPI values:");
+            Log.Information("  BesEnCours: {Count}", snapshot7DaysAgo.BesEnCoursCount);
+            Log.Information("  BesTransmis: {Count}", snapshot7DaysAgo.BesTransmisCount);
+            Log.Information("  DevEnAttente: {Count}", snapshot7DaysAgo.DevEnAttenteCount);
+            Log.Information("  DevValide: {Count}", snapshot7DaysAgo.DevValideCount);
+            Log.Information("  FournisseursActifs: {Count}", snapshot7DaysAgo.FournisseursActifsCount);
+            Log.Information("  TotalBc: {Count}", snapshot7DaysAgo.TotalBcCount);
+        }
+
+        // 4. Calculate evolution percentages
+        var result = new AcheteurKpiDto
+        {
+            BesEnCoursCount = currentKpis.BesEnCoursCount,
+            BesTransmisCount = currentKpis.BesTransmisCount,
+            DevEnAttenteCount = currentKpis.DevEnAttenteCount,
+            DevValideCount = currentKpis.DevValideCount,
+            FournisseursActifsCount = currentKpis.FournisseursActifsCount,
+            TotalBcCount = currentKpis.TotalBcCount,
+
+            BesEnCoursEvolution = CalculateEvolution(currentKpis.BesEnCoursCount, snapshot7DaysAgo?.BesEnCoursCount),
+            BesTransmisEvolution = CalculateEvolution(currentKpis.BesTransmisCount, snapshot7DaysAgo?.BesTransmisCount),
+            DevEnAttenteEvolution = CalculateEvolution(currentKpis.DevEnAttenteCount, snapshot7DaysAgo?.DevEnAttenteCount),
+            DevValideEvolution = CalculateEvolution(currentKpis.DevValideCount, snapshot7DaysAgo?.DevValideCount),
+            FournisseursActifsEvolution = CalculateEvolution(currentKpis.FournisseursActifsCount, snapshot7DaysAgo?.FournisseursActifsCount),
+            TotalBcEvolution = CalculateEvolution(currentKpis.TotalBcCount, snapshot7DaysAgo?.TotalBcCount)
+        };
+
+        Log.Information("Calculated percentages:");
+        Log.Information("  BesEnCoursEvolution: {Percent}", result.BesEnCoursEvolution);
+        Log.Information("  BesTransmisEvolution: {Percent}", result.BesTransmisEvolution);
+        Log.Information("  DevEnAttenteEvolution: {Percent}", result.DevEnAttenteEvolution);
+        Log.Information("  DevValideEvolution: {Percent}", result.DevValideEvolution);
+        Log.Information("  FournisseursActifsEvolution: {Percent}", result.FournisseursActifsEvolution);
+        Log.Information("  TotalBcEvolution: {Percent}", result.TotalBcEvolution);
+
+        return result;
+    }
+
+    private double CalculateEvolution(int current, int? previous)
+    {
+        if (!previous.HasValue || previous.Value == 0)
+        {
+            return current > 0 ? 100 : 0;
+        }
+        return Math.Round(((double)(current - previous.Value) / previous.Value) * 100, 1);
     }
 }

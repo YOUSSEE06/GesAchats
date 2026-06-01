@@ -33,6 +33,7 @@ public class UnitOfWork : IUnitOfWork
         NeedDetails = new Repository<NeedDetail>(_context);
         AuditLogs = new Repository<AuditLog>(_context);
         StockExits = new StockExitRepository(_context);
+        DashboardKpiSnapshots = new Repository<DashboardKpiSnapshot>(_context);
     }
 
     public IUserRepository Users { get; private set; }
@@ -53,6 +54,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<NeedDetail> NeedDetails { get; private set; }
     public IRepository<AuditLog> AuditLogs { get; private set; }
     public IStockExitRepository StockExits { get; private set; }
+    public IRepository<DashboardKpiSnapshot> DashboardKpiSnapshots { get; private set; }
 
     public async Task<int> CompleteAsync()
     {
