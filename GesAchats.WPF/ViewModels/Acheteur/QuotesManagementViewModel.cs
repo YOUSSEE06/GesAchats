@@ -242,25 +242,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalDevis, value);
     }
 
-    private int _devisEnvoyes;
-    public int DevisEnvoyes
+    private int _devisEnAttente;
+    public int DevisEnAttente
     {
-        get => _devisEnvoyes;
-        set => SetProperty(ref _devisEnvoyes, value);
-    }
-
-    private int _reponseRecue;
-    public int ReponseRecue
-    {
-        get => _reponseRecue;
-        set => SetProperty(ref _reponseRecue, value);
-    }
-
-    private int _devisAcceptes;
-    public int DevisAcceptes
-    {
-        get => _devisAcceptes;
-        set => SetProperty(ref _devisAcceptes, value);
+        get => _devisEnAttente;
+        set => SetProperty(ref _devisEnAttente, value);
     }
 
     private int _devisValides;
@@ -695,9 +681,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         {
             // Calculate statistics on background thread
             var total = AllQuotationsRaw.Count;
-            var envoyes = AllQuotationsRaw.Count;
-            var reponse = AllQuotationsRaw.Count(q => q.ResponseDate.HasValue);
-            var acceptes = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
+            var enAttente = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending);
             var valides = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
             var montant = AllQuotationsRaw.Sum(q => q.TotalAmountTTC);
             var moyenne = total > 0 ? montant / total : 0;
@@ -720,9 +704,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 TotalDevis = total;
-                DevisEnvoyes = envoyes;
-                ReponseRecue = reponse;
-                DevisAcceptes = acceptes;
+                DevisEnAttente = enAttente;
                 DevisValides = valides;
                 MontantTotal = montant;
                 MoyenneParDevis = moyenne;

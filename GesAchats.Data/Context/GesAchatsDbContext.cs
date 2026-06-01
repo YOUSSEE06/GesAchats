@@ -27,6 +27,7 @@ public class GesAchatsDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Magasin> Magasins => Set<Magasin>();
     public DbSet<StockExit> StockExits => Set<StockExit>();
+    public DbSet<DashboardKpiSnapshot> DashboardKpiSnapshots => Set<DashboardKpiSnapshot>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

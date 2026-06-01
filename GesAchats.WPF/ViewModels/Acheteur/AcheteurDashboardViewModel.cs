@@ -40,6 +40,18 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private double _fournisseursProgression;
         private double _articlesSuivisProgression;
 
+        // Trend texts and positive flags
+        private string _demandesTrendText = string.Empty;
+        private bool _demandesIsPositiveTrend = true;
+        private string _devisAttentTrendText = string.Empty;
+        private bool _devisAttentIsPositiveTrend = true;
+        private string _devisValidesTrendText = string.Empty;
+        private bool _devisValidesIsPositiveTrend = true;
+        private string _bonsCommandeTrendText = string.Empty;
+        private bool _bonsCommandeIsPositiveTrend = true;
+        private string _fournisseursTrendText = string.Empty;
+        private bool _fournisseursIsPositiveTrend = true;
+
         // Données pour les graphiques
         private ObservableCollection<PurchaseOrderData> _purchaseOrdersData;
         private ObservableCollection<SupplierExpenseData> _supplierExpensesData;
@@ -180,6 +192,66 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             get => _articlesSuivisProgression;
             set => SetProperty(ref _articlesSuivisProgression, value);
+        }
+
+        public string DemandesTrendText
+        {
+            get => _demandesTrendText;
+            set => SetProperty(ref _demandesTrendText, value);
+        }
+
+        public bool DemandesIsPositiveTrend
+        {
+            get => _demandesIsPositiveTrend;
+            set => SetProperty(ref _demandesIsPositiveTrend, value);
+        }
+
+        public string DevisAttentTrendText
+        {
+            get => _devisAttentTrendText;
+            set => SetProperty(ref _devisAttentTrendText, value);
+        }
+
+        public bool DevisAttentIsPositiveTrend
+        {
+            get => _devisAttentIsPositiveTrend;
+            set => SetProperty(ref _devisAttentIsPositiveTrend, value);
+        }
+
+        public string DevisValidesTrendText
+        {
+            get => _devisValidesTrendText;
+            set => SetProperty(ref _devisValidesTrendText, value);
+        }
+
+        public bool DevisValidesIsPositiveTrend
+        {
+            get => _devisValidesIsPositiveTrend;
+            set => SetProperty(ref _devisValidesIsPositiveTrend, value);
+        }
+
+        public string BonsCommandeTrendText
+        {
+            get => _bonsCommandeTrendText;
+            set => SetProperty(ref _bonsCommandeTrendText, value);
+        }
+
+        public bool BonsCommandeIsPositiveTrend
+        {
+            get => _bonsCommandeIsPositiveTrend;
+            set => SetProperty(ref _bonsCommandeIsPositiveTrend, value);
+        }
+
+        public string FournisseursTrendText
+        {
+            get => _fournisseursTrendText;
+            set => SetProperty(ref _fournisseursTrendText, value);
+        }
+
+        public bool FournisseursIsPositiveTrend
+        {
+            get => _fournisseursIsPositiveTrend;
+            set => SetProperty(ref _fournisseursIsPositiveTrend, value);
         }
 
         // ===================== DONNÉES POUR GRAPHIQUES =====================
@@ -331,21 +403,44 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         private async Task LoadKPIs()
         {
-            // Exact sample data
-            DemandesEnCours = 23;
-            DevisEnAttente = 14;
-            DevisValides = 38;
-            BonsCommandeEnAttente = 7;
-            FournisseursActifs = 26;
+            var kpis = await _dashboardService.GetAcheteurKpisAsync();
+            
+            DemandesEnCours = kpis.BesEnCoursCount;
+            DevisEnAttente = kpis.DevEnAttenteCount;
+            DevisValides = kpis.DevValideCount;
+            BonsCommandeEnAttente = kpis.TotalBcCount;
+            FournisseursActifs = kpis.FournisseursActifsCount;
+            // Keep ArticlesSuivis as is or calculate if needed
             ArticlesSuivis = 156;
 
-            // Progression sample data
-            DemandesProgression = 27.0;
-            DevisAttentProgression = 12.0;
-            DevisValidesProgression = 18.0;
-            BonsCommandeProgression = 8.0;
-            FournisseursProgression = 6.0;
-            ArticlesSuivisProgression = 11.0;
+            DemandesProgression = kpis.BesEnCoursEvolution;
+            DevisAttentProgression = kpis.DevEnAttenteEvolution;
+            DevisValidesProgression = kpis.DevValideEvolution;
+            BonsCommandeProgression = kpis.TotalBcEvolution;
+            FournisseursProgression = kpis.FournisseursActifsEvolution;
+            ArticlesSuivisProgression = 0;
+
+            // Update trend texts and IsPositiveTrend flags
+            DemandesTrendText = FormatTrendText(DemandesProgression);
+            DemandesIsPositiveTrend = DemandesProgression >= 0;
+            DevisAttentTrendText = FormatTrendText(DevisAttentProgression);
+            DevisAttentIsPositiveTrend = DevisAttentProgression >= 0;
+            DevisValidesTrendText = FormatTrendText(DevisValidesProgression);
+            DevisValidesIsPositiveTrend = DevisValidesProgression >= 0;
+            BonsCommandeTrendText = FormatTrendText(BonsCommandeProgression);
+            BonsCommandeIsPositiveTrend = BonsCommandeProgression >= 0;
+            FournisseursTrendText = FormatTrendText(FournisseursProgression);
+            FournisseursIsPositiveTrend = FournisseursProgression >= 0;
+        }
+
+        private string FormatTrendText(double percentage)
+        {
+            if (percentage > 0)
+                return $"+{percentage}% cette semaine";
+            else if (percentage < 0)
+                return $"{percentage}% cette semaine";
+            else
+                return "0% cette semaine";
         }
 
         private async Task LoadChartData()

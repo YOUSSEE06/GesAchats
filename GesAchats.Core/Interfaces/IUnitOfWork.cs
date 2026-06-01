@@ -26,6 +26,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<NeedDetail> NeedDetails { get; }
     IRepository<AuditLog> AuditLogs { get; }
     IStockExitRepository StockExits { get; }
+    IRepository<DashboardKpiSnapshot> DashboardKpiSnapshots { get; }
 
     Task<int> CompleteAsync();
 }

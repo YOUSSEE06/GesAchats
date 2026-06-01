@@ -45,7 +45,7 @@
 
                 <!-- Statistics Cards -->
                 <Border Grid.Row="1" Padding="24,20">
-                    <UniformGrid Columns="4" Rows="2">
+                    <UniformGrid Columns="3" Rows="2">
                         <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,12">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -69,25 +69,10 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#FFF3E0" CornerRadius="10" Padding="10" Width="48" Height="48">
-                                    <TextBlock Text="📤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="⏳" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="{Binding DevisEnvoyes}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#F57C00" Margin="0,16,0,4"/>
-                                <TextBlock Text="Devis Envoyés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
-                            </Grid>
-                        </Border>
-
-                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Border Background="#E3F2FD" CornerRadius="10" Padding="10" Width="48" Height="48">
-                                    <TextBlock Text="📥" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <TextBlock Text="{Binding ReponseRecue}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#1565C0" Margin="0,16,0,4"/>
-                                <TextBlock Text="Réponse Reçue" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Text="{Binding DevisEnAttente}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#F57C00" Margin="0,16,0,4"/>
+                                <TextBlock Text="Devis en attente" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -99,25 +84,10 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
-                                    <TextBlock Text="✅" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <TextBlock Text="{Binding DevisAcceptes}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
-                                <TextBlock Text="Devis Acceptés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
-                            </Grid>
-                        </Border>
-
-                        <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
                                     <TextBlock Text="✓" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding DevisValides}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
-                                <TextBlock Text="Devis Validés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Text="Devis validés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -132,7 +102,7 @@
                                     <TextBlock Text="💰" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding MontantTotal, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
-                                <TextBlock Text="Montant Total (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Text="Montant total (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -147,7 +117,7 @@
                                     <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding MoyenneParDevis, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#7B1FA2" Margin="0,16,0,4"/>
-                                <TextBlock Text="Moyenne par Devis" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Text="Moyenne par devis (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 

@@ -36,8 +36,8 @@
                                Unit="BES"
                                Icon="ClipboardList"
                                IconColor="#2563EB"
-                               TrendText="+27% cette semaine"
-                               IsPositiveTrend="True"/>
+                               TrendText="{Binding DemandesTrendText}"
+                               IsPositiveTrend="{Binding DemandesIsPositiveTrend}"/>
 
                 <!-- KPI Card 2: BES transmis -->
                 <ctrls:KpiCard Margin="7,0,7,0" 
@@ -46,28 +46,28 @@
                                Unit="BES"
                                Icon="Share"
                                IconColor="#10B981"
-                               TrendText="+12% cette semaine"
-                               IsPositiveTrend="True"/>
+                               TrendText="{Binding DevisAttentTrendText}"
+                               IsPositiveTrend="{Binding DevisAttentIsPositiveTrend}"/>
 
                 <!-- KPI Card 3: DEV en attente -->
                 <ctrls:KpiCard Margin="7,0,7,0" 
                                Title="DEV en attente" 
-                               Value="{Binding DevisValides}"
+                               Value="{Binding DevisEnAttente}"
                                Unit="DEV"
                                Icon="Clock"
                                IconColor="#EF4444"
-                               TrendText="-18% cette semaine"
-                               IsPositiveTrend="False"/>
+                               TrendText="{Binding DevisAttentTrendText}"
+                               IsPositiveTrend="{Binding DevisAttentIsPositiveTrend}"/>
 
                 <!-- KPI Card 4: DEV validé -->
                 <ctrls:KpiCard Margin="7,0,7,0" 
                                Title="DEV validé" 
-                               Value="{Binding BonsCommandeEnAttente}"
+                               Value="{Binding DevisValides}"
                                Unit="DEV"
                                Icon="CheckCircle"
                                IconColor="#22C55E"
-                               TrendText="+8%  cette semaine"
-                               IsPositiveTrend="True"/>
+                               TrendText="{Binding DevisValidesTrendText}"
+                               IsPositiveTrend="{Binding DevisValidesIsPositiveTrend}"/>
 
                 <!-- KPI Card 5: Fourn. actifs -->
                 <ctrls:KpiCard Margin="7,0,7,0" 
@@ -76,18 +76,18 @@
                                Unit="fournisseurs"
                                Icon="Users"
                                IconColor="#2563EB"
-                               TrendText="+6% cette semaine"
-                               IsPositiveTrend="True"/>
+                               TrendText="{Binding FournisseursTrendText}"
+                               IsPositiveTrend="{Binding FournisseursIsPositiveTrend}"/>
 
                 <!-- KPI Card 6: Total BC -->
                 <ctrls:KpiCard Margin="7,0,0,0" 
                                Title="Total BC" 
-                               Value="{Binding ArticlesSuivis}"
+                               Value="{Binding TotalPurchaseOrders}"
                                Unit="BC"
                                Icon="CartShopping"
                                IconColor="#EF4444"
-                               TrendText="-11% cette semaine"
-                               IsPositiveTrend="False"/>
+                               TrendText="{Binding BonsCommandeTrendText}"
+                               IsPositiveTrend="{Binding BonsCommandeIsPositiveTrend}"/>
             </UniformGrid>
 
             <!-- ===================== SECTION ANALYSES ===================== -->

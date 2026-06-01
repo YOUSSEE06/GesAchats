@@ -10,4 +10,5 @@ public interface IDashboardService
     Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(int days = 30);
     Task<List<DashboardOperationDto>> GetRecentOperationsAsync(int count = 6);
     Task<List<DashboardAlertDto>> GetDashboardAlertsAsync();
+    Task<AcheteurKpiDto> GetAcheteurKpisAsync();
 }

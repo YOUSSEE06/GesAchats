@@ -138,34 +138,58 @@ public partial class App : Application
                         END $$;
                     ");
 
-                    // Étape 2: Vérifier si la table __EFMigrationsHistory existe, et marquer InitialPostgres comme appliquée si nécessaire
+                    // Étape 2: Vérifier si la table __EFMigrationsHistory existe, et marquer toutes les migrations comme appliquées si nécessaire
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
                             -- Vérifier si la table __EFMigrationsHistory existe
                             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory') THEN
-                                -- Vérifier si InitialPostgres est déjà enregistrée
+                                -- Vérifier et insérer InitialPostgres
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260430151534_InitialPostgres') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260430151534_InitialPostgres', '8.0.10');
                                 END IF;
 
-                                -- Vérifier si les autres migrations sont déjà enregistrées (si vous en avez)
+                                -- Vérifier et insérer UpdateComptableModule
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260505165725_UpdateComptableModule') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260505165725_UpdateComptableModule', '8.0.10');
+                                END IF;
+
+                                -- Vérifier et insérer AddInvoiceFilePath
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113458_AddInvoiceFilePath') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506113458_AddInvoiceFilePath', '8.0.10');
                                 END IF;
+
+                                -- Vérifier et insérer SyncInvoiceModel
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113841_SyncInvoiceModel') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506113841_SyncInvoiceModel', '8.0.10');
                                 END IF;
+
+                                -- Vérifier et insérer FixPendingChanges
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506114425_FixPendingChanges') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506114425_FixPendingChanges', '8.0.10');
                                 END IF;
-                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260505165725_UpdateComptableModule') THEN
+
+                                -- Vérifier et insérer AddMagasin
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260528151908_AddMagasin') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
-                                    VALUES ('20260505165725_UpdateComptableModule', '8.0.10');
+                                    VALUES ('20260528151908_AddMagasin', '8.0.10');
+                                END IF;
+
+                                -- Vérifier et insérer AddSetNullForPurchaseOrderNeedId
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260530010111_AddSetNullForPurchaseOrderNeedId') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260530010111_AddSetNullForPurchaseOrderNeedId', '8.0.10');
+                                END IF;
+
+                                -- Vérifier et insérer AddDashboardKpiSnapshot (la nouvelle migration)
+                                IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260601020010_AddDashboardKpiSnapshot') THEN
+                                    INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                                    VALUES ('20260601020010_AddDashboardKpiSnapshot', '10.0.7');
                                 END IF;
                             END IF;
                         END $$;
@@ -198,19 +222,44 @@ public partial class App : Application
 
                     // Étape 6: Créer la table StockExits manuellement si elle n'existe pas
                     await context.Database.ExecuteSqlRawAsync(@"
-                        CREATE TABLE IF NOT EXISTS ""StockExits"" (
-                            ""Id"" INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                            ""ProductId"" INTEGER NOT NULL,
-                            ""Quantity"" NUMERIC(18,2) NOT NULL,
-                            ""ExitDate"" TIMESTAMP WITH TIME ZONE NOT NULL,
-                            ""ProjectOrChantier"" VARCHAR(200),
-                            ""Reason"" VARCHAR(500),
-                            ""StockAfterExit"" NUMERIC(18,2) NOT NULL,
-                            ""CreatedById"" INTEGER NOT NULL,
-                            ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL,
-                            CONSTRAINT ""FK_StockExits_Products_ProductId"" FOREIGN KEY (""ProductId"") REFERENCES ""Products"" (""Id"") ON DELETE CASCADE,
-                            CONSTRAINT ""FK_StockExits_Users_CreatedById"" FOREIGN KEY (""CreatedById"") REFERENCES ""Users"" (""Id"") ON DELETE CASCADE
-                        );
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'StockExits') THEN
+                                CREATE TABLE ""StockExits"" (
+                                    ""Id"" INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                                    ""ProductId"" INTEGER NOT NULL,
+                                    ""Quantity"" NUMERIC(18,2) NOT NULL,
+                                    ""ExitDate"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                                    ""ProjectOrChantier"" VARCHAR(200),
+                                    ""Reason"" VARCHAR(500),
+                                    ""StockAfterExit"" NUMERIC(18,2) NOT NULL,
+                                    ""CreatedById"" INTEGER NOT NULL,
+                                    ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                                    CONSTRAINT ""FK_StockExits_Products_ProductId"" FOREIGN KEY (""ProductId"") REFERENCES ""Products"" (""Id"") ON DELETE CASCADE,
+                                    CONSTRAINT ""FK_StockExits_Users_CreatedById"" FOREIGN KEY (""CreatedById"") REFERENCES ""Users"" (""Id"") ON DELETE CASCADE
+                                );
+                            END IF;
+                        END $$;
+                    ");
+
+                    // Étape 7: Créer la table DashboardKpiSnapshots manuellement si elle n'existe pas
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'DashboardKpiSnapshots') THEN
+                                CREATE TABLE ""DashboardKpiSnapshots"" (
+                                    ""Id"" INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                                    ""SnapshotDate"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                                    ""BesEnCoursCount"" INTEGER NOT NULL,
+                                    ""BesTransmisCount"" INTEGER NOT NULL,
+                                    ""DevEnAttenteCount"" INTEGER NOT NULL,
+                                    ""DevValideCount"" INTEGER NOT NULL,
+                                    ""FournisseursActifsCount"" INTEGER NOT NULL,
+                                    ""TotalBcCount"" INTEGER NOT NULL,
+                                    ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL
+                                );
+                            END IF;
+                        END $$;
                     ");
                 }
             }
