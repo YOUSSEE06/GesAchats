@@ -55,6 +55,15 @@
 
                     <Button Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
+                            CommandParameter="HistoriqueSorties">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" Margin="0,0,10,0"/>
+                            <TextBlock Text="Historique des sorties"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
                             CommandParameter="DeliveryNotes">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="🚚" Margin="0,0,10,0"/>
