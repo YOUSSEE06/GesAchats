@@ -326,6 +326,34 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _selectedOrder, value);
     }
 
+    private int _totalOrders;
+    public int TotalOrders
+    {
+        get => _totalOrders;
+        set => SetProperty(ref _totalOrders, value);
+    }
+
+    private int _pendingOrders;
+    public int PendingOrders
+    {
+        get => _pendingOrders;
+        set => SetProperty(ref _pendingOrders, value);
+    }
+
+    private int _validatedOrders;
+    public int ValidatedOrders
+    {
+        get => _validatedOrders;
+        set => SetProperty(ref _validatedOrders, value);
+    }
+
+    private int _cancelledOrders;
+    public int CancelledOrders
+    {
+        get => _cancelledOrders;
+        set => SetProperty(ref _cancelledOrders, value);
+    }
+
     // Commands
     public ICommand CreateOrderCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -527,8 +555,19 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         }
 
         OrdersHistory.Clear();
-        foreach (var o in filtered.OrderByDescending(x => x.OrderDate)) 
+        var filteredList = filtered.OrderByDescending(x => x.OrderDate).ToList();
+        foreach (var o in filteredList) 
             OrdersHistory.Add(o);
+
+        UpdateStatistics(filteredList);
+    }
+
+    private void UpdateStatistics(List<PurchaseOrder> currentOrders)
+    {
+        TotalOrders = currentOrders.Count;
+        PendingOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
+        ValidatedOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Validated);
+        CancelledOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled);
     }
 
     private void ExecuteResetFilters()
