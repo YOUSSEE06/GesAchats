@@ -6,6 +6,7 @@
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Admin.Stock"
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
       xmlns:entities="clr-namespace:GesAchats.Core.Entities"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d"
       Title="Stock global">
     <Page.Resources>
@@ -21,48 +22,56 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Dashboard Cards -->
-        <WrapPanel Grid.Row="0" Margin="0,0,0,20" Orientation="Horizontal">
-            <!-- Total Products -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,0" Width="180" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Total Produits" FontSize="14" Foreground="#757575"/>
-                    <TextBlock Text="{Binding TotalProducts}" FontSize="36" FontWeight="Bold" Foreground="#2196F3" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-            
-            <!-- Total Stock -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,0" Width="180" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Total Stock" FontSize="14" Foreground="#757575"/>
-                    <TextBlock Text="{Binding TotalStock}" FontSize="36" FontWeight="Bold" Foreground="#2196F3" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-            
-            <!-- OK -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,0" Width="180" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="État OK" FontSize="14" Foreground="#757575"/>
-                    <TextBlock Text="{Binding ProductsOk}" FontSize="36" FontWeight="Bold" Foreground="#4CAF50" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-            
-            <!-- Alert -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,0" Width="180" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Alerte" FontSize="14" Foreground="#757575"/>
-                    <TextBlock Text="{Binding ProductsAlert}" FontSize="36" FontWeight="Bold" Foreground="#FF9800" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-            
-            <!-- Out of Stock -->
-            <Border Background="White" CornerRadius="8" Padding="20" Width="180" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Rupture" FontSize="14" Foreground="#757575"/>
-                    <TextBlock Text="{Binding ProductsOutOfStock}" FontSize="36" FontWeight="Bold" Foreground="#F44336" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-        </WrapPanel>
+        <!-- Statistics Cards -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <controls:KpiCard Grid.Column="0" 
+                              Title="Total Produits" 
+                              Value="{Binding TotalProducts}"
+                              TrendText="{Binding TotalProductsTrendText}"
+                              Icon="Box"
+                              IconColor="#3B82F6"
+                              Margin="0,0,8,0"/>
+
+            <controls:KpiCard Grid.Column="1" 
+                              Title="Total Stock" 
+                              Value="{Binding TotalStock}"
+                              TrendText="{Binding TotalStockTrendText}"
+                              Icon="Database"
+                              IconColor="#3B82F6"
+                              Margin="4,0,4,0"/>
+
+            <controls:KpiCard Grid.Column="2" 
+                              Title="État OK" 
+                              Value="{Binding ProductsOk}"
+                              TrendText="{Binding ProductsOkTrendText}"
+                              Icon="CheckCircle"
+                              IconColor="#4CAF50"
+                              Margin="4,0,4,0"/>
+
+            <controls:KpiCard Grid.Column="3" 
+                              Title="Alerte" 
+                              Value="{Binding ProductsAlert}"
+                              TrendText="{Binding ProductsAlertTrendText}"
+                              Icon="ExclamationTriangle"
+                              IconColor="#FFC107"
+                              Margin="4,0,4,0"/>
+
+            <controls:KpiCard Grid.Column="4" 
+                              Title="Rupture" 
+                              Value="{Binding ProductsOutOfStock}"
+                              TrendText="{Binding ProductsOutOfStockTrendText}"
+                              Icon="TimesCircle"
+                              IconColor="#F44336"
+                              Margin="8,0,0,0"/>
+        </Grid>
 
         <!-- Header Actions -->
         <DockPanel Grid.Row="1" Margin="0,0,0,20">

@@ -42,6 +42,16 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
     private string _searchNumero = string.Empty;
     private DateTime? _searchDate;
     private string _selectedStatus = "Tous";
+    private int _totalBesoins;
+    private int _besoinsEnCours;
+    private int _besoinsTransmis;
+    private int _totalArticlesDemandes;
+    private int _demandeursActifs;
+    private string _totalBesoinsTrendText = string.Empty;
+    private string _besoinsEnCoursTrendText = string.Empty;
+    private string _besoinsTransmisTrendText = string.Empty;
+    private string _totalArticlesDemandesTrendText = string.Empty;
+    private string _demandeursActifsTrendText = string.Empty;
 
     public ObservableCollection<string> StatusOptions { get; } = new() 
     { 
@@ -69,11 +79,57 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
     public ObservableCollection<AdminNeedHistoryItemViewModel> Needs { get; } = new();
 
     // Stats KPIs
-    public int TotalBesoins => _allNeeds.Count;
-    public int BesoinsEnCours => _allNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
-    public int BesoinsTransmis => _allNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
-    public int TotalArticlesDemandes => _allNeeds.Sum(n => n.Details?.Count ?? 0);
-    public int DemandeursActifs => _allNeeds.Select(n => n.RequestedById).Distinct().Count();
+    public int TotalBesoins
+    {
+        get => _totalBesoins;
+        set => SetProperty(ref _totalBesoins, value);
+    }
+    public int BesoinsEnCours
+    {
+        get => _besoinsEnCours;
+        set => SetProperty(ref _besoinsEnCours, value);
+    }
+    public int BesoinsTransmis
+    {
+        get => _besoinsTransmis;
+        set => SetProperty(ref _besoinsTransmis, value);
+    }
+    public int TotalArticlesDemandes
+    {
+        get => _totalArticlesDemandes;
+        set => SetProperty(ref _totalArticlesDemandes, value);
+    }
+    public int DemandeursActifs
+    {
+        get => _demandeursActifs;
+        set => SetProperty(ref _demandeursActifs, value);
+    }
+
+    public string TotalBesoinsTrendText
+    {
+        get => _totalBesoinsTrendText;
+        set => SetProperty(ref _totalBesoinsTrendText, value);
+    }
+    public string BesoinsEnCoursTrendText
+    {
+        get => _besoinsEnCoursTrendText;
+        set => SetProperty(ref _besoinsEnCoursTrendText, value);
+    }
+    public string BesoinsTransmisTrendText
+    {
+        get => _besoinsTransmisTrendText;
+        set => SetProperty(ref _besoinsTransmisTrendText, value);
+    }
+    public string TotalArticlesDemandesTrendText
+    {
+        get => _totalArticlesDemandesTrendText;
+        set => SetProperty(ref _totalArticlesDemandesTrendText, value);
+    }
+    public string DemandeursActifsTrendText
+    {
+        get => _demandeursActifsTrendText;
+        set => SetProperty(ref _demandeursActifsTrendText, value);
+    }
 
     public ICommand ViewDetailsCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -99,14 +155,8 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         {
             var needs = await _unitOfWork.Needs.GetAllWithDetailsAsync();
             _allNeeds = needs.ToList();
+            CalculateStats();
             FilterNeeds();
-
-            // Update stats
-            OnPropertyChanged(nameof(TotalBesoins));
-            OnPropertyChanged(nameof(BesoinsEnCours));
-            OnPropertyChanged(nameof(BesoinsTransmis));
-            OnPropertyChanged(nameof(TotalArticlesDemandes));
-            OnPropertyChanged(nameof(DemandeursActifs));
         }
         finally
         {
@@ -145,6 +195,34 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         {
             Needs.Add(new AdminNeedHistoryItemViewModel(n));
         }
+    }
+
+    private void CalculateStats()
+    {
+        TotalBesoins = _allNeeds.Count;
+        BesoinsEnCours = _allNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
+        BesoinsTransmis = _allNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        TotalArticlesDemandes = _allNeeds.Sum(n => n.Details?.Count ?? 0);
+        DemandeursActifs = _allNeeds.Select(n => n.RequestedById).Distinct().Count();
+
+        // Calculate yesterday's data
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        var yesterdayNeeds = _allNeeds.Where(n => 
+            n.RequestedAt.Date >= yesterday && n.RequestedAt.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayNeeds.Count;
+        int yesterdayEnCours = yesterdayNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
+        int yesterdayTransmis = yesterdayNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        int yesterdayArticles = yesterdayNeeds.Sum(n => n.Details?.Count ?? 0);
+        int yesterdayDemandeurs = yesterdayNeeds.Select(n => n.RequestedById).Distinct().Count();
+
+        // Calculate trend texts
+        TotalBesoinsTrendText = CalculateTrendText(TotalBesoins, yesterdayTotal);
+        BesoinsEnCoursTrendText = CalculateTrendText(BesoinsEnCours, yesterdayEnCours);
+        BesoinsTransmisTrendText = CalculateTrendText(BesoinsTransmis, yesterdayTransmis);
+        TotalArticlesDemandesTrendText = CalculateTrendText(TotalArticlesDemandes, yesterdayArticles);
+        DemandeursActifsTrendText = CalculateTrendText(DemandeursActifs, yesterdayDemandeurs);
     }
 
     private async Task ExecuteViewDetails(AdminNeedHistoryItemViewModel? item)

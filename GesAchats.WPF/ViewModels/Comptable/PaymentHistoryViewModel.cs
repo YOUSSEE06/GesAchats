@@ -136,6 +136,49 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalOperationsReglementCount, value);
     }
 
+    // Trend texts
+    private string _totalPaidMonthTrendText = string.Empty;
+    public string TotalPaidMonthTrendText
+    {
+        get => _totalPaidMonthTrendText;
+        set => SetProperty(ref _totalPaidMonthTrendText, value);
+    }
+
+    private string _pendingInvoicesCountTrendText = string.Empty;
+    public string PendingInvoicesCountTrendText
+    {
+        get => _pendingInvoicesCountTrendText;
+        set => SetProperty(ref _pendingInvoicesCountTrendText, value);
+    }
+
+    private string _latePaymentsCountTrendText = string.Empty;
+    public string LatePaymentsCountTrendText
+    {
+        get => _latePaymentsCountTrendText;
+        set => SetProperty(ref _latePaymentsCountTrendText, value);
+    }
+
+    private string _totalAmountRegleTrendText = string.Empty;
+    public string TotalAmountRegleTrendText
+    {
+        get => _totalAmountRegleTrendText;
+        set => SetProperty(ref _totalAmountRegleTrendText, value);
+    }
+
+    private string _fournisseursPayesCountTrendText = string.Empty;
+    public string FournisseursPayesCountTrendText
+    {
+        get => _fournisseursPayesCountTrendText;
+        set => SetProperty(ref _fournisseursPayesCountTrendText, value);
+    }
+
+    private string _totalOperationsReglementCountTrendText = string.Empty;
+    public string TotalOperationsReglementCountTrendText
+    {
+        get => _totalOperationsReglementCountTrendText;
+        set => SetProperty(ref _totalOperationsReglementCountTrendText, value);
+    }
+
     // Chart Properties
     private ISeries[] _supplierDistribution = Array.Empty<ISeries>();
     public ISeries[] SupplierDistribution
@@ -287,6 +330,32 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
             // KPI 3: Retards Paiement (Dépassement date d'échéance et non payée)
             LatePaymentsCount = invoices.Count(i => i.DueDate.HasValue && i.DueDate.Value < now && i.Status != "Payee" && i.Status != "Rejetee");
+
+            // Calculate yesterday's data for trends
+            DateTime today = DateTime.Today;
+            DateTime yesterday = today.AddDays(-1);
+
+            var yesterdayPayments = allPaymentsList.Where(p => 
+                p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
+            var yesterdayInvoices = invoices.Where(i => 
+                i.CreatedAt.Date >= yesterday && i.CreatedAt.Date < today).ToList();
+
+            decimal yesterdayPaidMonth = yesterdayPayments
+                .Where(p => p.PaymentDate.Month == today.Month && p.PaymentDate.Year == today.Year)
+                .Sum(p => p.AmountPaid);
+            int yesterdayPendingInvoices = yesterdayInvoices.Count(i => i.Status == "EnAttente");
+            int yesterdayLatePayments = yesterdayInvoices.Count(i => i.DueDate.HasValue && i.DueDate.Value < today && i.Status != "Payee" && i.Status != "Rejetee");
+            decimal yesterdayAmountRegle = yesterdayPayments.Sum(p => p.AmountPaid);
+            int yesterdayFournisseursPayes = yesterdayPayments.Select(p => p.SupplierId).Distinct().Count();
+            int yesterdayOperations = yesterdayPayments.Count;
+
+            // Calculate trend texts
+            TotalPaidMonthTrendText = CalculateTrendText(TotalPaidMonth, yesterdayPaidMonth);
+            PendingInvoicesCountTrendText = CalculateTrendText(PendingInvoicesCount, yesterdayPendingInvoices);
+            LatePaymentsCountTrendText = CalculateTrendText(LatePaymentsCount, yesterdayLatePayments);
+            TotalAmountRegleTrendText = CalculateTrendText(TotalAmountRegle, yesterdayAmountRegle);
+            FournisseursPayesCountTrendText = CalculateTrendText(FournisseursPayesCount, yesterdayFournisseursPayes);
+            TotalOperationsReglementCountTrendText = CalculateTrendText(TotalOperationsReglementCount, yesterdayOperations);
         }
         finally
         {

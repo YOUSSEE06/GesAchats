@@ -46,6 +46,12 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
     private int _bcAnnules;
     private decimal _valeurTotaleBc;
     private int _fournisseursActifs;
+    private string _totalBcTrendText = string.Empty;
+    private string _bcValidesTrendText = string.Empty;
+    private string _bcEnAttenteTrendText = string.Empty;
+    private string _bcAnnulesTrendText = string.Empty;
+    private string _valeurTotaleBcTrendText = string.Empty;
+    private string _fournisseursActifsTrendText = string.Empty;
 
     public int TotalBc { get => _totalBc; set => SetProperty(ref _totalBc, value); }
     public int BcValides { get => _bcValides; set => SetProperty(ref _bcValides, value); }
@@ -53,6 +59,37 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
     public int BcAnnules { get => _bcAnnules; set => SetProperty(ref _bcAnnules, value); }
     public decimal ValeurTotaleBc { get => _valeurTotaleBc; set => SetProperty(ref _valeurTotaleBc, value); }
     public int FournisseursActifs { get => _fournisseursActifs; set => SetProperty(ref _fournisseursActifs, value); }
+
+    public string TotalBcTrendText
+    {
+        get => _totalBcTrendText;
+        set => SetProperty(ref _totalBcTrendText, value);
+    }
+    public string BcValidesTrendText
+    {
+        get => _bcValidesTrendText;
+        set => SetProperty(ref _bcValidesTrendText, value);
+    }
+    public string BcEnAttenteTrendText
+    {
+        get => _bcEnAttenteTrendText;
+        set => SetProperty(ref _bcEnAttenteTrendText, value);
+    }
+    public string BcAnnulesTrendText
+    {
+        get => _bcAnnulesTrendText;
+        set => SetProperty(ref _bcAnnulesTrendText, value);
+    }
+    public string ValeurTotaleBcTrendText
+    {
+        get => _valeurTotaleBcTrendText;
+        set => SetProperty(ref _valeurTotaleBcTrendText, value);
+    }
+    public string FournisseursActifsTrendText
+    {
+        get => _fournisseursActifsTrendText;
+        set => SetProperty(ref _fournisseursActifsTrendText, value);
+    }
 
     public void OnNavigatedTo(object parameter)
     {
@@ -138,6 +175,27 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
             BcAnnules = _allOrders.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
             ValeurTotaleBc = pos.Sum(x => x.TotalAmountTTC);
             FournisseursActifs = pos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
+
+            // Calculate yesterday's data
+            DateTime today = DateTime.Today;
+            DateTime yesterday = today.AddDays(-1);
+            var yesterdayPos = pos.Where(n =>
+                n.CreatedAt.Date >= yesterday && n.CreatedAt.Date < today).ToList();
+
+            int yesterdayTotal = yesterdayPos.Count;
+            int yesterdayValides = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Validated);
+            int yesterdayEnAttente = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Pending);
+            int yesterdayAnnules = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
+            decimal yesterdayValeur = yesterdayPos.Sum(x => x.TotalAmountTTC);
+            int yesterdayFournisseurs = yesterdayPos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
+
+            // Calculate trend texts
+            TotalBcTrendText = CalculateTrendText(TotalBc, yesterdayTotal);
+            BcValidesTrendText = CalculateTrendText(BcValides, yesterdayValides);
+            BcEnAttenteTrendText = CalculateTrendText(BcEnAttente, yesterdayEnAttente);
+            BcAnnulesTrendText = CalculateTrendText(BcAnnules, yesterdayAnnules);
+            ValeurTotaleBcTrendText = CalculateTrendText(ValeurTotaleBc, yesterdayValeur);
+            FournisseursActifsTrendText = CalculateTrendText(FournisseursActifs, yesterdayFournisseurs);
 
             // Populate unique suppliers
             Suppliers.Clear();

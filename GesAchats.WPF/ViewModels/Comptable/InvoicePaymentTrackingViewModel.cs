@@ -70,14 +70,93 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         "Tous", "Payée", "Partiellement payée", "En attente"
     };
 
-    public decimal TotalTTC => _allInvoices.Sum(i => i.Invoice.AmountTTC);
-    public decimal TotalPayments => _allInvoices.Sum(i => i.TotalPayments);
-    public decimal TotalBalance => TotalTTC - TotalPayments;
+    private decimal _totalTTC;
+    public decimal TotalTTC
+    {
+        get => _totalTTC;
+        set => SetProperty(ref _totalTTC, value);
+    }
+
+    private decimal _totalPayments;
+    public decimal TotalPayments
+    {
+        get => _totalPayments;
+        set => SetProperty(ref _totalPayments, value);
+    }
+
+    private decimal _totalBalance;
+    public decimal TotalBalance
+    {
+        get => _totalBalance;
+        set => SetProperty(ref _totalBalance, value);
+    }
 
     // Nouveaux KPIs
-    public int PaidInvoicesCount => _allInvoices.Count(i => i.StatusCalculated == "Payée");
-    public int PartialInvoicesCount => _allInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
-    public int BilledSuppliersCount => _allInvoices.Select(i => i.Invoice.SupplierId).Distinct().Count();
+    private int _paidInvoicesCount;
+    public int PaidInvoicesCount
+    {
+        get => _paidInvoicesCount;
+        set => SetProperty(ref _paidInvoicesCount, value);
+    }
+
+    private int _partialInvoicesCount;
+    public int PartialInvoicesCount
+    {
+        get => _partialInvoicesCount;
+        set => SetProperty(ref _partialInvoicesCount, value);
+    }
+
+    private int _billedSuppliersCount;
+    public int BilledSuppliersCount
+    {
+        get => _billedSuppliersCount;
+        set => SetProperty(ref _billedSuppliersCount, value);
+    }
+
+    // Trend texts
+    private string _totalTTCTrendText = string.Empty;
+    public string TotalTTCTrendText
+    {
+        get => _totalTTCTrendText;
+        set => SetProperty(ref _totalTTCTrendText, value);
+    }
+
+    private string _totalPaymentsTrendText = string.Empty;
+    public string TotalPaymentsTrendText
+    {
+        get => _totalPaymentsTrendText;
+        set => SetProperty(ref _totalPaymentsTrendText, value);
+    }
+
+    private string _totalBalanceTrendText = string.Empty;
+    public string TotalBalanceTrendText
+    {
+        get => _totalBalanceTrendText;
+        set => SetProperty(ref _totalBalanceTrendText, value);
+    }
+
+    private string _paidInvoicesCountTrendText = string.Empty;
+    public string PaidInvoicesCountTrendText
+    {
+        get => _paidInvoicesCountTrendText;
+        set => SetProperty(ref _paidInvoicesCountTrendText, value);
+    }
+
+    private string _partialInvoicesCountTrendText = string.Empty;
+    public string PartialInvoicesCountTrendText
+    {
+        get => _partialInvoicesCountTrendText;
+        set => SetProperty(ref _partialInvoicesCountTrendText, value);
+    }
+
+    private string _billedSuppliersCountTrendText = string.Empty;
+    public string BilledSuppliersCountTrendText
+    {
+        get => _billedSuppliersCountTrendText;
+        set => SetProperty(ref _billedSuppliersCountTrendText, value);
+    }
+
+    private List<Payment> _allPayments = new();
 
     public ICommand LoadDataCommand { get; }
     public ICommand ViewInvoiceCommand { get; }
@@ -138,15 +217,12 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             }
             SelectedSupplier = tousSupplier;
 
+            // Store all payments for trend calculation
+            _allPayments = payments.ToList();
+
             ApplyFilters();
 
-            // Update total stats
-            OnPropertyChanged(nameof(TotalTTC));
-            OnPropertyChanged(nameof(TotalPayments));
-            OnPropertyChanged(nameof(TotalBalance));
-            OnPropertyChanged(nameof(PaidInvoicesCount));
-            OnPropertyChanged(nameof(PartialInvoicesCount));
-            OnPropertyChanged(nameof(BilledSuppliersCount));
+            CalculateStats();
         }
         catch (Exception ex)
         {
@@ -220,5 +296,39 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         SelectedStatus = "Tous";
         SelectedDate = null;
         SearchInvoiceNumber = string.Empty;
+    }
+
+    private void CalculateStats()
+    {
+        TotalTTC = _allInvoices.Sum(i => i.Invoice.AmountTTC);
+        TotalPayments = _allInvoices.Sum(i => i.TotalPayments);
+        TotalBalance = TotalTTC - TotalPayments;
+        PaidInvoicesCount = _allInvoices.Count(i => i.StatusCalculated == "Payée");
+        PartialInvoicesCount = _allInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
+        BilledSuppliersCount = _allInvoices.Select(i => i.Invoice.SupplierId).Distinct().Count();
+
+        // Calculate yesterday's data
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+
+        var yesterdayInvoices = _allInvoices.Where(i => 
+            i.Invoice.CreatedAt.Date >= yesterday && i.Invoice.CreatedAt.Date < today).ToList();
+        var yesterdayPayments = _allPayments.Where(p => 
+            p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
+
+        decimal yesterdayTTC = yesterdayInvoices.Sum(i => i.Invoice.AmountTTC);
+        decimal yesterdayPaymentAmount = yesterdayPayments.Sum(p => p.AmountPaid);
+        decimal yesterdayBalance = yesterdayTTC - yesterdayPaymentAmount;
+        int yesterdayPaidCount = yesterdayInvoices.Count(i => i.StatusCalculated == "Payée");
+        int yesterdayPartialCount = yesterdayInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
+        int yesterdaySuppliers = yesterdayInvoices.Select(i => i.Invoice.SupplierId).Distinct().Count();
+
+        // Calculate trend texts
+        TotalTTCTrendText = CalculateTrendText(TotalTTC, yesterdayTTC);
+        TotalPaymentsTrendText = CalculateTrendText(TotalPayments, yesterdayPaymentAmount);
+        TotalBalanceTrendText = CalculateTrendText(TotalBalance, yesterdayBalance);
+        PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
+        PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
+        BilledSuppliersCountTrendText = CalculateTrendText(BilledSuppliersCount, yesterdaySuppliers);
     }
 }

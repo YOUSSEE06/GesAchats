@@ -39,6 +39,7 @@
         <UniformGrid Grid.Row="1" Rows="1" Columns="6" Margin="20,10">
             <ctrls:KpiCard Title="Total payé (Mois)" 
                            Value="{Binding TotalPaidMonth}" 
+                           TrendText="{Binding TotalPaidMonthTrendText}"
                            Unit="MAD"
                            Icon="MoneyBillWave" 
                            IconColor="#4CAF50" 
@@ -46,6 +47,7 @@
 
             <ctrls:KpiCard Title="Factures Attente" 
                            Value="{Binding PendingInvoicesCount}" 
+                           TrendText="{Binding PendingInvoicesCountTrendText}"
                            Unit="factures"
                            Icon="Clock" 
                            IconColor="#FFC107" 
@@ -53,6 +55,7 @@
 
             <ctrls:KpiCard Title="Retards Paiement" 
                            Value="{Binding LatePaymentsCount}" 
+                           TrendText="{Binding LatePaymentsCountTrendText}"
                            Unit="retards"
                            Icon="TriangleExclamation" 
                            IconColor="#F44336" 
@@ -60,6 +63,7 @@
 
             <ctrls:KpiCard Title="Total Réglé" 
                            Value="{Binding TotalAmountRegle}" 
+                           TrendText="{Binding TotalAmountRegleTrendText}"
                            Unit="MAD"
                            Icon="Wallet" 
                            IconColor="#2196F3" 
@@ -67,6 +71,7 @@
 
             <ctrls:KpiCard Title="Fourn. Payés" 
                            Value="{Binding FournisseursPayesCount}" 
+                           TrendText="{Binding FournisseursPayesCountTrendText}"
                            Unit="fournisseurs"
                            Icon="Users" 
                            IconColor="#9C27B0" 
@@ -74,6 +79,7 @@
 
             <ctrls:KpiCard Title="Total Opérations" 
                            Value="{Binding TotalOperationsReglementCount}" 
+                           TrendText="{Binding TotalOperationsReglementCountTrendText}"
                            Unit="règlements"
                            Icon="ListCheck" 
                            IconColor="#607D8B" 
