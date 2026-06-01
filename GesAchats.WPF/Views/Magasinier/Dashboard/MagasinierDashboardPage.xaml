@@ -41,15 +41,7 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <Border Background="White" CornerRadius="8" Padding="2" BorderBrush="#E2E8F0" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton Content="Aujourd'hui" Style="{StaticResource DateFilterButtonStyle}" 
-                                         IsChecked="{Binding SelectedPeriod, Converter={StaticResource EqualityConverter}, ConverterParameter=1}"
-                                         Command="{Binding ChangePeriodCommand}" CommandParameter="1"/>
-                            <RadioButton Content="7 jours" Style="{StaticResource DateFilterButtonStyle}"
-                                         IsChecked="{Binding SelectedPeriod, Converter={StaticResource EqualityConverter}, ConverterParameter=7}"
-                                         Command="{Binding ChangePeriodCommand}" CommandParameter="7"/>
-                            <RadioButton Content="30 jours" Style="{StaticResource DateFilterButtonStyle}"
-                                         IsChecked="{Binding SelectedPeriod, Converter={StaticResource EqualityConverter}, ConverterParameter=30}"
-                                         Command="{Binding ChangePeriodCommand}" CommandParameter="30"/>
+                          
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -306,7 +298,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" 
-                           Text="Bons de commande (7 derniers jours)" 
+                           Text="Bon de commande" 
                            FontSize="16" 
                            FontWeight="SemiBold" 
                            Foreground="{StaticResource MainTextBrush}"
