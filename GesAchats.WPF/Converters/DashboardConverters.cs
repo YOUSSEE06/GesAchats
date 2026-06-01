@@ -98,23 +98,34 @@ namespace GesAchats.WPF.Converters
         {
             if (value is DateTime dateTime)
             {
-                return dateTime.ToString("dd/MM/yyyy", new CultureInfo("fr-FR"));
+                return dateTime.ToString("dd/MM/yyyy HH:mm");
             }
 
-            return "";
+            return string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string stringValue)
-            {
-                if (DateTime.TryParse(stringValue, new CultureInfo("fr-FR"), DateTimeStyles.None, out var result))
-                {
-                    return result;
-                }
-            }
+            throw new NotImplementedException();
+        }
+    }
 
-            return DateTime.Now;
+    /// <summary>
+    /// Détermine si une valeur est positive ou nulle
+    /// </summary>
+    public class IsPositiveConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double d) return d >= 0;
+            if (value is int i) return i >= 0;
+            if (value is decimal m) return m >= 0;
+            return true;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
         }
     }
 

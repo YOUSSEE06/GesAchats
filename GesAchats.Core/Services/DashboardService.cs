@@ -367,6 +367,186 @@ public class DashboardService : IDashboardService
         return result;
     }
 
+    public async Task<ComptableDashboardDto> GetComptableDashboardStatsAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var now = DateTime.UtcNow;
+        var end = endDate ?? now;
+        var start = startDate ?? end.AddMonths(-1);
+        
+        // Calculate duration of current period
+        var duration = end - start;
+        var previousStart = start - duration;
+        var previousEnd = start;
+
+        var dto = new ComptableDashboardDto();
+
+        // 1. KPI Principaux (Current Period)
+        var currentInvoices = await _unitOfWork.Invoices.FindAsync(i => i.InvoiceDate >= start && i.InvoiceDate <= end);
+        var currentBls = await _unitOfWork.DeliveryNotes.FindAsync(b => b.ReceptionDate >= start && b.ReceptionDate <= end);
+
+        // Previous Period for variations
+        var previousInvoices = await _unitOfWork.Invoices.FindAsync(i => i.InvoiceDate >= previousStart && i.InvoiceDate <= previousEnd);
+        var previousBls = await _unitOfWork.DeliveryNotes.FindAsync(b => b.ReceptionDate >= previousStart && b.ReceptionDate <= previousEnd);
+
+        // KPI 1: Total Factures
+        dto.TotalInvoices.Value = currentInvoices.Count();
+        dto.TotalInvoices.VariationPercentage = CalculateEvolution(currentInvoices.Count(), previousInvoices.Count());
+
+        // KPI 2: Factures en attente
+        dto.PendingInvoices.Value = currentInvoices.Count(i => i.Status == "EnAttente");
+        dto.PendingInvoices.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status == "EnAttente"), previousInvoices.Count(i => i.Status == "EnAttente"));
+
+        // KPI 3: Factures validées
+        dto.ValidatedInvoices.Value = currentInvoices.Count(i => i.Status == "Verifiee" || i.Status == "Payee");
+        dto.ValidatedInvoices.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status == "Verifiee" || i.Status == "Payee"), previousInvoices.Count(i => i.Status == "Verifiee" || i.Status == "Payee"));
+
+        // KPI 4: Factures partiellement payées
+        dto.PartiallyPaidInvoices.Value = currentInvoices.Count(i => i.Status == "PartiellementPayee");
+        dto.PartiallyPaidInvoices.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status == "PartiellementPayee"), previousInvoices.Count(i => i.Status == "PartiellementPayee"));
+
+        // KPI 5: Total BL
+        dto.TotalBl.Value = currentBls.Count();
+        dto.TotalBl.VariationPercentage = CalculateEvolution(currentBls.Count(), previousBls.Count());
+
+        // KPI 6: BL validés
+        dto.ValidatedBl.Value = currentBls.Count(b => b.Status == "Valide" || b.Status == "Validé");
+        dto.ValidatedBl.VariationPercentage = CalculateEvolution(currentBls.Count(b => b.Status == "Valide" || b.Status == "Validé"), previousBls.Count(b => b.Status == "Valide" || b.Status == "Validé"));
+
+        // KPI 7: BL en attente
+        dto.PendingBl.Value = currentBls.Count(b => b.Status == "EnAttente" || b.Status == "En attente");
+        dto.PendingBl.VariationPercentage = CalculateEvolution(currentBls.Count(b => b.Status == "EnAttente" || b.Status == "En attente"), previousBls.Count(b => b.Status == "EnAttente" || b.Status == "En attente"));
+
+        // 3. Soldes & Règlements
+        var allPayments = await _unitOfWork.Payments.FindAsync(p => p.PaymentDate >= start && p.PaymentDate <= end);
+        var allInvoicesForBalance = await _unitOfWork.Invoices.FindAsync(i => i.InvoiceDate >= start && i.InvoiceDate <= end);
+        
+        dto.TotalPayments = allPayments.Sum(p => p.AmountPaid);
+        
+        // Summing AmountTTC of all invoices in period
+        decimal totalTtcInPeriod = allInvoicesForBalance.Sum(i => i.AmountTTC);
+        
+        // Soldes = Total TTC - Total Payé (for those invoices)
+        // This is a bit complex as we need to find payments for THESE specific invoices.
+        // Let's simplify by using the logic: TotalBalances = Sum(Invoices.AmountTTC - Payments for those invoices)
+        // Or as requested: Total balances = SUM(Soldes restants)
+        // We'll need to calculate balance per invoice.
+        
+        // Fetch all payments for invoices in the period to calculate their individual balances
+        var invoiceIds = allInvoicesForBalance.Select(i => i.Id).ToList();
+        var paymentsForPeriodInvoices = await _unitOfWork.Payments.FindAsync(p => invoiceIds.Contains(p.InvoiceId));
+        
+        decimal totalPaidForPeriodInvoices = paymentsForPeriodInvoices.Sum(p => p.AmountPaid);
+        dto.TotalBalances = totalTtcInPeriod - totalPaidForPeriodInvoices;
+        dto.RemainingTtcBalance = dto.TotalBalances; // As requested: SUM(Factures.Solde)
+        
+        if (totalTtcInPeriod > 0)
+        {
+            dto.PaymentRatePercentage = (double)(totalPaidForPeriodInvoices / totalTtcInPeriod) * 100;
+        }
+
+        // 4. Graphiques Centraux
+        
+        // A. Répartition par fournisseur
+        var supplierData = allInvoicesForBalance
+            .GroupBy(i => i.Supplier.CompanyName)
+            .Select(g => new DistributionDto { Label = g.Key, Value = (double)g.Sum(i => i.AmountTTC) })
+            .OrderByDescending(d => d.Value)
+            .Take(5)
+            .ToList();
+        dto.SupplierDistribution = supplierData;
+
+        // B. Statut des factures
+        dto.InvoiceStatusDistribution = allInvoicesForBalance
+            .GroupBy(i => i.Status)
+            .Select(g => new DistributionDto { Label = g.Key, Value = g.Count() })
+            .ToList();
+
+        // C. Statut des BL
+        dto.BlStatusDistribution = currentBls
+            .GroupBy(b => b.Status)
+            .Select(g => new DistributionDto { Label = g.Key, Value = g.Count() })
+            .ToList();
+
+        // 5. Évolution des paiements et soldes
+        var dailyPayments = allPayments
+            .GroupBy(p => p.PaymentDate.Date)
+            .Select(g => new TimeSeriesDataDto { Date = g.Key, Value = (double)g.Sum(p => p.AmountPaid) })
+            .OrderBy(d => d.Date)
+            .ToList();
+        dto.PaymentEvolution = dailyPayments;
+
+        // For balance evolution, it's more complex. We'll show daily remaining total balance.
+        // Simplified: daily sum of amountTTC of invoices minus payments.
+        var dailyInvoices = allInvoicesForBalance
+            .GroupBy(i => i.InvoiceDate.Date)
+            .Select(g => new { Date = g.Key, Amount = g.Sum(i => i.AmountTTC) });
+
+        var balanceEvolution = dailyInvoices
+            .Select(i => new TimeSeriesDataDto 
+            { 
+                Date = i.Date, 
+                Value = (double)(i.Amount - allPayments.Where(p => p.PaymentDate.Date == i.Date).Sum(p => p.AmountPaid))
+            })
+            .OrderBy(d => d.Date)
+            .ToList();
+        dto.BalanceEvolution = balanceEvolution;
+
+        // 6. Modes de paiement
+        dto.PaymentModeDistribution = allPayments
+            .GroupBy(p => p.PaymentMethod)
+            .Select(g => new DistributionDto { Label = g.Key, Value = (double)g.Sum(p => p.AmountPaid) })
+            .ToList();
+
+        // 7. Dernières Opérations
+        var recentInvoices = currentInvoices
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(10)
+            .Select(i => new ComptableOperationDto 
+            { 
+                Date = i.InvoiceDate, 
+                Module = "Facture", 
+                Supplier = i.Supplier?.CompanyName ?? "Inconnu", 
+                Reference = i.InvoiceNumber, 
+                AmountTtc = i.AmountTTC, 
+                Status = i.Status 
+            });
+
+        var recentBlOps = currentBls
+            .OrderByDescending(b => b.ReceptionDate)
+            .Take(10)
+            .Select(b => new ComptableOperationDto 
+            { 
+                Date = b.ReceptionDate, 
+                Module = "BL", 
+                Supplier = b.Supplier?.CompanyName ?? "Inconnu", 
+                Reference = b.DeliveryNumber, 
+                AmountTtc = 0, // BL usually don't have total TTC directly in this entity
+                Status = b.Status 
+            });
+
+        var recentPaymentOps = allPayments
+            .OrderByDescending(p => p.PaymentDate)
+            .Take(10)
+            .Select(p => new ComptableOperationDto 
+            { 
+                Date = p.PaymentDate, 
+                Module = "Règlement", 
+                Supplier = p.Supplier?.CompanyName ?? "Inconnu", 
+                Reference = p.PaymentNumber, 
+                AmountTtc = p.AmountPaid, 
+                Status = p.Status 
+            });
+
+        dto.RecentOperations = recentInvoices
+            .Concat(recentBlOps)
+            .Concat(recentPaymentOps)
+            .OrderByDescending(o => o.Date)
+            .Take(10)
+            .ToList();
+
+        return dto;
+    }
+
     private double CalculateEvolution(int current, int? previous)
     {
         if (!previous.HasValue || previous.Value == 0)
