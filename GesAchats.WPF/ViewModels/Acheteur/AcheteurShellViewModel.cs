@@ -12,11 +12,18 @@ public class AcheteurShellViewModel : BaseViewModel
     private readonly IServiceProvider _serviceProvider;
     private readonly INavigationService _navigationService;
     private string _userName = string.Empty;
+    private string _activePage = "Dashboard";
 
     public string UserName
     {
         get => _userName;
         set => SetProperty(ref _userName, value);
+    }
+
+    public string ActivePage
+    {
+        get => _activePage;
+        set => SetProperty(ref _activePage, value);
     }
 
     public ICommand NavigateCommand { get; }
@@ -30,7 +37,12 @@ public class AcheteurShellViewModel : BaseViewModel
         UserName = _userSession.CurrentUser?.FullName ?? "Responsable Achat";
         Title = "Tableau de bord";
 
-        NavigateCommand = new RelayCommand(p => _navigationService.NavigateTo(p?.ToString() ?? "Dashboard"));
+        NavigateCommand = new RelayCommand(p =>
+        {
+            var page = p?.ToString() ?? "Dashboard";
+            ActivePage = page;
+            _navigationService.NavigateTo(page);
+        });
         LogoutCommand = new RelayCommand(_ => ExecuteLogout());
     }
 

@@ -3,67 +3,121 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+        xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
         mc:Ignorable="d"
-        Title="GesAchats - Responsable Achat" Height="750" Width="1300"
-        WindowStartupLocation="CenterScreen">
-    
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../../Resources/Magasinier/MagasinierStyles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
+        Title="GesAchats - Responsable Achat" Height="1080" Width="1920"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI">
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="285"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="#1B2631">
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}">
             <DockPanel>
                 <!-- Logo -->
-                <StackPanel DockPanel.Dock="Top" Margin="20,30">
-                    <TextBlock Text="ACHATS" Foreground="#1ABC9C" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="GesAchats" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <Separator Margin="0,20,0,0" Background="#2C3E50"/>
+                <StackPanel DockPanel.Dock="Top" Margin="28,42,28,20">
+                    <TextBlock Text="GesAchats" Foreground="White" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock Text="ACHATS" Foreground="#94A3B8" FontSize="11" FontWeight="Medium" Margin="0,4,0,0"/>
+                    <Border Height="1" Background="#334155" Margin="0,24,0,0"/>
                 </StackPanel>
 
                 <!-- Navigation -->
-                <StackPanel DockPanel.Dock="Top" Margin="10,0">
-                    <Button Content="&#x1f3e0; Tableau de bord" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
-                    
-                    <TextBlock Text="DEMANDES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
-                    <Button Content="&#x1f4cb; Besoins Magasin" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Besoins"/>
-                    <Button Content="&#x1f4dd; Gestion des Devis" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Devis"/>
-                    
-                    <TextBlock Text="ANALYSES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
-                    <Button Content="&#x1f4b5; Saisie Prix Fournisseurs" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="SaisiePrix"/>
-                    <Button Content="&#x1f4ca; Analyse Comparative" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Analyses"/>
-                    <Button Content="&#x1f4c8; Historique Prix" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Historique"/>
-                    <Button Content="&#x1f3e2; Fournisseurs" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Fournisseurs"/>
+                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16,0">
+                        <!-- Tableau de bord -->
+                        <ctrls:SidebarItem Icon="Gauge" 
+                                           Text="Tableau de bord" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Dashboard"
+                                           Margin="0,0,0,4"/>
+                        
+                        <!-- DEMANDES Section -->
+                        <TextBlock Text="DEMANDES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <ctrls:SidebarItem Icon="ClipboardList" 
+                                           Text="Besoins Magasin" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Besoins}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Besoins"
+                                           Margin="0,0,0,4"/>
+                        <ctrls:SidebarItem Icon="FileInvoiceDollar" 
+                                           Text="Gestion des Devis" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Devis}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Devis"
+                                           Margin="0,0,0,4"/>
+                        
+                        <!-- ANALYSES Section -->
+                        <TextBlock Text="ANALYSES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <ctrls:SidebarItem Icon="MoneyBill" 
+                                           Text="Saisie Prix Fournisseurs" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=SaisiePrix}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="SaisiePrix"
+                                           Margin="0,0,0,4"/>
+                        <ctrls:SidebarItem Icon="ChartLine" 
+                                           Text="Analyse Comparative" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Analyses}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Analyses"
+                                           Margin="0,0,0,4"/>
+                        <ctrls:SidebarItem Icon="History" 
+                                           Text="Historique Prix" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Historique}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Historique"
+                                           Margin="0,0,0,4"/>
 
-                    <TextBlock Text="COMMANDES" Foreground="#566573" FontSize="10" FontWeight="Bold" Margin="15,15,0,5"/>
-                    <Button Content="&#x1f4e6; Bons de Commande" Style="{StaticResource SidebarButtonStyle}"
-                            Command="{Binding NavigateCommand}" CommandParameter="Commandes"/>
+                        <!-- RÉFÉRENTIEL Section -->
+                        <TextBlock Text="RÉFÉRENTIEL" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <ctrls:SidebarItem Icon="Users" 
+                                           Text="Fournisseurs" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Fournisseurs}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Fournisseurs"
+                                           Margin="0,0,0,4"/>
 
-                </StackPanel>
+                        <!-- COMMANDES Section -->
+                        <TextBlock Text="COMMANDES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <ctrls:SidebarItem Icon="CartShopping" 
+                                           Text="Bons de Commande" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Commandes}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Commandes"
+                                           Margin="0,0,0,4"/>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- User & Logout -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="10,20">
-                    <Separator Margin="0,0,0,15" Background="#2C3E50"/>
-                    <TextBlock Text="{Binding UserName}" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <Button Content="&#x1f6aa; Déconnexion" Style="{StaticResource LogoutButtonStyle}"
-                            Command="{Binding LogoutCommand}"/>
+                <StackPanel DockPanel.Dock="Bottom" Margin="16,16">
+                    <Border Height="1" Background="#334155" Margin="0,0,0,16"/>
+                    <Grid Margin="4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <fa:IconImage Grid.Column="0" Icon="User" Width="20" Height="20" Foreground="White" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="14" FontWeight="Medium"/>
+                        </StackPanel>
+                    </Grid>
+                    <Button Margin="0,12,0,0" Padding="12,10" HorizontalAlignment="Stretch" 
+                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                            Command="{Binding LogoutCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <fa:IconImage Grid.Column="0" Icon="ArrowRightFromBracket" Width="18" Height="18" Foreground="#94A3B8"/>
+                            <TextBlock Grid.Column="1" Text="Déconnexion" Foreground="#94A3B8" Margin="12,0,0,0" FontSize="14" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <Grid/>
@@ -71,23 +125,6 @@
         </Border>
 
         <!-- Content Area -->
-        <Grid Grid.Column="1" Background="{StaticResource BackgroundBrush}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="60"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Top Bar -->
-            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" Direction="-90" ShadowDepth="1" Opacity="0.1"/>
-                </Border.Effect>
-                <Grid Margin="20,0">
-                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" Foreground="#1B2631"/>
-                </Grid>
-            </Border>
-
-            <Frame x:Name="MainFrame" Grid.Row="1" NavigationUIVisibility="Hidden"/>
-        </Grid>
+        <Frame x:Name="MainFrame" Grid.Column="1" Background="{StaticResource PageBackgroundBrush}" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>

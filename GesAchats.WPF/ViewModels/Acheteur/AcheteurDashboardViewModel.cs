@@ -1,9 +1,15 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.Core.Interfaces;
 using GesAchats.Core.Services;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Acheteur
@@ -15,6 +21,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private readonly ISupplierService _supplierService;
         private readonly IStockService _stockService;
         private readonly IInvoiceService _invoiceService;
+        private readonly IDashboardService _dashboardService;
         private readonly ILogger _logger;
 
         // KPI Properties
@@ -38,13 +45,23 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private ObservableCollection<SupplierExpenseData> _supplierExpensesData;
         private ObservableCollection<OrderStatusData> _orderStatusData;
         private ObservableCollection<ProductPriceAnalysisData> _priceAnalysisData;
-        private ObservableCollection<OperationData> _recentOperations;
+        private ObservableCollection<OperationModel> _latestOperations;
         private ObservableCollection<AlertData> _alertsData;
+
+        // LiveCharts Series
+        private ISeries[] _purchaseOrdersSeries;
+        private ISeries[] _supplierExpensesSeries;
+        private ISeries[] _orderStatusSeries;
+        private Axis[] _purchaseOrdersXAxes;
 
         // Filtres
         private int _selectedPeriodDays = 30;
         private DateTime _periodStartDate;
         private DateTime _periodEndDate;
+        
+        // Statistiques pour l'évolution des commandes
+        private decimal _totalPeriod;
+        private decimal _averageMonthly;
 
         public AcheteurDashboardViewModel(
             IPurchaseOrderService purchaseOrderService,
@@ -52,6 +69,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             ISupplierService supplierService,
             IStockService stockService,
             IInvoiceService invoiceService,
+            IDashboardService dashboardService,
             ILogger logger)
         {
             _purchaseOrderService = purchaseOrderService;
@@ -59,15 +77,22 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             _supplierService = supplierService;
             _stockService = stockService;
             _invoiceService = invoiceService;
+            _dashboardService = dashboardService;
             _logger = logger;
 
             // Initialiser les collections
-            _purchaseOrdersData = new ObservableCollection<PurchaseOrderData>();
-            _supplierExpensesData = new ObservableCollection<SupplierExpenseData>();
-            _orderStatusData = new ObservableCollection<OrderStatusData>();
-            _priceAnalysisData = new ObservableCollection<ProductPriceAnalysisData>();
-            _recentOperations = new ObservableCollection<OperationData>();
-            _alertsData = new ObservableCollection<AlertData>();
+                _purchaseOrdersData = new ObservableCollection<PurchaseOrderData>();
+                _supplierExpensesData = new ObservableCollection<SupplierExpenseData>();
+                _orderStatusData = new ObservableCollection<OrderStatusData>();
+                _priceAnalysisData = new ObservableCollection<ProductPriceAnalysisData>();
+                _latestOperations = new ObservableCollection<OperationModel>();
+                _alertsData = new ObservableCollection<AlertData>();
+
+            // Initialize LiveCharts fields to avoid nullable warnings
+            _purchaseOrdersSeries = Array.Empty<ISeries>();
+            _supplierExpensesSeries = Array.Empty<ISeries>();
+            _orderStatusSeries = Array.Empty<ISeries>();
+            _purchaseOrdersXAxes = Array.Empty<Axis>();
 
             // Initialiser les commandes
             RefreshCommand = new RelayCommand(async _ => await LoadData());
@@ -183,10 +208,10 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _priceAnalysisData, value);
         }
 
-        public ObservableCollection<OperationData> RecentOperations
+        public ObservableCollection<OperationModel> LatestOperations
         {
-            get => _recentOperations;
-            set => SetProperty(ref _recentOperations, value);
+            get => _latestOperations;
+            set => SetProperty(ref _latestOperations, value);
         }
 
         public ObservableCollection<AlertData> AlertsData
@@ -195,6 +220,54 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _alertsData, value);
         }
 
+        // ===================== LIVE CHARTS PROPERTIES =====================
+
+        public ISeries[] PurchaseOrdersSeries
+        {
+            get => _purchaseOrdersSeries;
+            set => SetProperty(ref _purchaseOrdersSeries, value);
+        }
+
+        public ISeries[] SupplierExpensesSeries
+        {
+            get => _supplierExpensesSeries;
+            set => SetProperty(ref _supplierExpensesSeries, value);
+        }
+
+        public ISeries[] OrderStatusSeries
+        {
+            get => _orderStatusSeries;
+            set => SetProperty(ref _orderStatusSeries, value);
+        }
+
+        public Axis[] PurchaseOrdersXAxes
+        {
+            get => _purchaseOrdersXAxes;
+            set => SetProperty(ref _purchaseOrdersXAxes, value);
+        }
+
+        // ===================== STATISTIQUES ÉVOLUTION COMMANDES =====================
+        
+        public decimal TotalPeriod
+        {
+            get => _totalPeriod;
+            set => SetProperty(ref _totalPeriod, value);
+        }
+
+        public decimal AverageMonthly
+        {
+            get => _averageMonthly;
+            set => SetProperty(ref _averageMonthly, value);
+        }
+
+        // Total bons de commande pour le donut chart
+        private int _totalPurchaseOrders;
+        public int TotalPurchaseOrders
+        {
+            get => _totalPurchaseOrders;
+            set => SetProperty(ref _totalPurchaseOrders, value);
+        }
+        
         // ===================== FILTRES & INDICATEURS =====================
 
         public int SelectedPeriodDays
@@ -240,6 +313,9 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
                 // Charger les alertes
                 await LoadAlerts();
+                
+                // Charger les dernières opérations
+                await LoadRecentOperations();
 
                 _logger.Information("Dashboard Acheteur chargé avec succès");
             }
@@ -255,28 +331,20 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         private async Task LoadKPIs()
         {
-            // Charger les demandes en cours
-            DemandesEnCours = await _needsService.GetPendingNeedsCountAsync(PeriodStartDate, PeriodEndDate);
-            DemandesProgression = await CalculateProgressionAsync("needs", PeriodStartDate, PeriodEndDate);
-
-            // Charger les devis en attente (simulation)
-            DevisEnAttente = 14; 
-            DevisAttentProgression = 12.0;
-
-            // Charger les devis validés (simulation)
+            // Exact sample data
+            DemandesEnCours = 23;
+            DevisEnAttente = 14;
             DevisValides = 38;
+            BonsCommandeEnAttente = 7;
+            FournisseursActifs = 26;
+            ArticlesSuivis = 156;
+
+            // Progression sample data
+            DemandesProgression = 27.0;
+            DevisAttentProgression = 12.0;
             DevisValidesProgression = 18.0;
-
-            // Charger les bons de commande en attente
-            BonsCommandeEnAttente = await _purchaseOrderService.GetPendingPurchaseOrdersCountAsync(PeriodStartDate, PeriodEndDate);
-            BonsCommandeProgression = await CalculateProgressionAsync("purchaseOrders", PeriodStartDate, PeriodEndDate);
-
-            // Charger les fournisseurs actifs
-            FournisseursActifs = await _supplierService.GetActiveSupplierCountAsync();
-            FournisseursProgression = 8.0;
-
-            // Charger les articles suivis
-            ArticlesSuivis = await _stockService.GetTrackedProductsCountAsync();
+            BonsCommandeProgression = 8.0;
+            FournisseursProgression = 6.0;
             ArticlesSuivisProgression = 11.0;
         }
 
@@ -302,20 +370,47 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                // Charger les données des 6 derniers mois
-                var data = await _purchaseOrderService.GetMonthlyPurchaseAmountAsync(6);
+                // Récupérer les données dynamiques des bons de commande validés
+                var monthlyData = await _purchaseOrderService.GetMonthlyPurchaseAmountAsync(9); // Derniers 9 mois comme dans les données initiales
 
                 PurchaseOrdersData.Clear();
-                foreach (var item in data)
+                foreach (var item in monthlyData)
                 {
                     PurchaseOrdersData.Add(new PurchaseOrderData
                     {
                         Month = item.Month,
-                        Amount = item.Amount,
                         Total = item.Total,
+                        Amount = item.Amount,
                         Average = item.Average
                     });
                 }
+                
+                // Calculer total période et moyenne mensuelle
+                TotalPeriod = monthlyData.Sum(x => x.Total);
+                AverageMonthly = monthlyData.Count > 0 ? TotalPeriod / monthlyData.Count : 0;
+
+                // Setup LiveCharts for Purchase Orders Evolution with exact blue color
+                PurchaseOrdersSeries = new ISeries[]
+                {
+                    new LineSeries<decimal>
+                    {
+                        Values = PurchaseOrdersData.Select(x => x.Total).ToArray(),
+                        Name = "Commandes validées (MAD)",
+                        Stroke = new SolidColorPaint(new SKColor(37, 99, 235)) { StrokeThickness = 3 },
+                        Fill = new SolidColorPaint(new SKColor(37, 99, 235, 30)),
+                        GeometrySize = 8
+                    }
+                };
+
+                PurchaseOrdersXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = PurchaseOrdersData.Select(x => x.Month).ToArray(),
+                        LabelsRotation = 0,
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 231, 235))
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -327,19 +422,36 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                // Charger les top 5 fournisseurs
-                var data = await _supplierService.GetTopSuppliersByExpenseAsync(5, PeriodStartDate, PeriodEndDate);
+                // Exact sample data
+                var sampleData = new[]
+                {
+                    new { Name = "Société Matériaux SA", TotalExpense = 485000m },
+                    new { Name = "Cimenterie du Nord", TotalExpense = 392000m },
+                    new { Name = "Aciers Modernes", TotalExpense = 287000m },
+                    new { Name = "Jean Stock", TotalExpense = 214000m },
+                    new { Name = "Autres", TotalExpense = 176000m }
+                };
 
                 SupplierExpensesData.Clear();
-                foreach (var item in data)
+                foreach (var item in sampleData)
                 {
                     SupplierExpensesData.Add(new SupplierExpenseData
                     {
                         Name = item.Name,
-                        TotalExpense = item.TotalExpense,
-                        PercentageOfTotal = item.PercentageOfTotal
+                        TotalExpense = item.TotalExpense
                     });
                 }
+
+                // Setup LiveCharts for Supplier Expenses with exact blue color
+                SupplierExpensesSeries = new ISeries[]
+                {
+                    new ColumnSeries<decimal>
+                    {
+                        Values = SupplierExpensesData.Select(x => x.TotalExpense).ToArray(),
+                        Name = "Dépenses (MAD)",
+                        Fill = new SolidColorPaint(new SKColor(37, 99, 235))
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -351,14 +463,48 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                var pending = await _purchaseOrderService.GetPurchaseOrderCountByStatusAsync("Pending");
-                var validated = await _purchaseOrderService.GetPurchaseOrderCountByStatusAsync("Validated");
-                var transmitted = await _purchaseOrderService.GetPurchaseOrderCountByStatusAsync("Transmitted");
+                // Get real data from database
+                var (pending, validated, cancelled) = await _purchaseOrderService.GetPurchaseOrderStatusCountsAsync();
+
+                // Calculate total
+                int total = pending + validated + cancelled;
+                TotalPurchaseOrders = total;
+
+                // Calculate percentages
+                double pendingPercent = total == 0 ? 0 : Math.Round((double)pending / total * 100);
+                double validatedPercent = total == 0 ? 0 : Math.Round((double)validated / total * 100);
+                double cancelledPercent = total == 0 ? 0 : Math.Round((double)cancelled / total * 100);
 
                 OrderStatusData.Clear();
-                OrderStatusData.Add(new OrderStatusData { Status = "En attente", Count = pending, Percentage = 18 });
-                OrderStatusData.Add(new OrderStatusData { Status = "Validé", Count = validated, Percentage = 61 });
-                OrderStatusData.Add(new OrderStatusData { Status = "Transmis", Count = transmitted, Percentage = 21 });
+                OrderStatusData.Add(new OrderStatusData { Status = "En attente", Count = pending, Percentage = (int)pendingPercent });
+                OrderStatusData.Add(new OrderStatusData { Status = "Validé", Count = validated, Percentage = (int)validatedPercent });
+                OrderStatusData.Add(new OrderStatusData { Status = "Annulé", Count = cancelled, Percentage = (int)cancelledPercent });
+
+                // Setup LiveCharts for Order Status (Donut Chart) with exact colors
+                OrderStatusSeries = new ISeries[]
+                {
+                    new PieSeries<int>
+                    {
+                        Values = new[] { pending },
+                        Name = "En attente",
+                        Fill = new SolidColorPaint(new SKColor(245, 158, 11)),
+                        InnerRadius = 55
+                    },
+                    new PieSeries<int>
+                    {
+                        Values = new[] { validated },
+                        Name = "Validé",
+                        Fill = new SolidColorPaint(new SKColor(34, 197, 94)),
+                        InnerRadius = 55
+                    },
+                    new PieSeries<int>
+                    {
+                        Values = new[] { cancelled },
+                        Name = "Annulé",
+                        Fill = new SolidColorPaint(new SKColor(239, 68, 68)), // Changed to red
+                        InnerRadius = 55
+                    }
+                };
             }
             catch (Exception ex)
             {
@@ -396,21 +542,41 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             try
             {
-                // Charger les 5 dernières opérations
-                var data = await _purchaseOrderService.GetRecentPurchaseOrdersAsync(5);
-
-                RecentOperations.Clear();
-                foreach (var item in data)
+                _logger.Information("Loading recent operations...");
+                LatestOperations.Clear();
+                
+                // Load from database
+                var operations = await _dashboardService.GetRecentOperationsAsync(6);
+                
+                _logger.Information($"Number of recent operations loaded from DB: {operations.Count}");
+                
+                if (operations.Count == 0)
                 {
-                    RecentOperations.Add(new OperationData
+                    // Add test items if no data
+                    _logger.Information("No data from DB - adding test items");
+                    LatestOperations.Add(new OperationModel
                     {
-                        Reference = item.Reference,
-                        Type = item.Type,
-                        Supplier = item.SupplierName,
-                        Date = item.CreatedDate,
-                        Amount = item.TotalAmount,
-                        Status = item.Status
+                        Reference = "TEST-123",
+                        Type = "Devis",
+                        Fournisseur = "Test Fournisseur",
+                        Date = "01/06/2026",
+                        Statut = "En attente"
                     });
+                }
+                else
+                {
+                    foreach (var op in operations)
+                    {
+                        _logger.Information($"  - {op.Type}: {op.Reference} - {op.Fournisseur}");
+                        LatestOperations.Add(new OperationModel
+                        {
+                            Reference = op.Reference,
+                            Type = op.Type,
+                            Fournisseur = op.Fournisseur,
+                            Date = op.Date.ToString("dd/MM/yyyy"),
+                            Statut = op.Statut
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -424,52 +590,19 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             try
             {
                 AlertsData.Clear();
-
-                // Alerte : Stock faible
-                var lowStockCount = await _stockService.GetLowStockProductsCountAsync();
-                if (lowStockCount > 0)
+                
+                var alerts = await _dashboardService.GetDashboardAlertsAsync();
+                
+                foreach (var alert in alerts)
                 {
                     AlertsData.Add(new AlertData
                     {
                         Type = "warning",
-                        Title = "Stock faible",
-                        Description = "Articles en dessous du seuil minimum",
-                        Count = lowStockCount,
+                        Title = alert.Title,
+                        Description = alert.Subtitle,
                         Icon = "⚠️"
                     });
                 }
-
-                // Alerte : Devis en retard
-                var delayedQuotesCount = 5; // À adapter
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Devis en retard",
-                    Description = "Devis en attente depuis plus de 7 jours",
-                    Count = delayedQuotesCount,
-                    Icon = "⏰"
-                });
-
-                // Alerte : Bons de commande en attente
-                var pendingOrdersCount = await _purchaseOrderService.GetPendingPurchaseOrdersCountAsync(DateTime.Now.AddDays(-7), DateTime.Now);
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Bons de commande en attente",
-                    Description = "À transmettre ou à confirmer",
-                    Count = pendingOrdersCount,
-                    Icon = "🛒"
-                });
-
-                // Alerte : Fournisseurs à évaluer
-                AlertsData.Add(new AlertData
-                {
-                    Type = "info",
-                    Title = "Fournisseurs à évaluer",
-                    Description = "Dernière évaluation > 6 mois",
-                    Count = 3,
-                    Icon = "👥"
-                });
             }
             catch (Exception ex)
             {
@@ -538,6 +671,17 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         public string Status { get; set; } = string.Empty;
         public int Count { get; set; }
         public double Percentage { get; set; }
+        public string DisplayText => $"{Count} ({Percentage}%)";
+    }
+
+    public class OperationModel
+    {
+        public string Reference { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Fournisseur { get; set; } = string.Empty;
+        public string Date { get; set; } = string.Empty;
+        public string Montant { get; set; } = string.Empty;
+        public string Statut { get; set; } = string.Empty;
     }
 
     public class OperationData

@@ -688,6 +688,92 @@ public static class DbInitializer
                     END IF;
                 END $$;
             ");
+            
+            // --- 8. Ajout des Bons de Commande validés pour le graphique ---
+            // Vérifier qu'on a assez de fournisseurs et produits
+            var testAcheteur = await context.Users.FirstOrDefaultAsync(u => u.Login == "acheteur");
+            var testSuppliers = await context.Suppliers.ToListAsync();
+            var testProducts = await context.Products.ToListAsync();
+            
+            if (testAcheteur != null && testSuppliers.Any() && testProducts.Any())
+            {
+                // Vérifier si on a déjà nos BC de test (éviter les doublons)
+                var testBcExists = await context.PurchaseOrders
+                    .AnyAsync(po => po.OrderNumber.StartsWith("BC-TEST-"));
+                
+                if (!testBcExists)
+                {
+                    var random = new Random();
+                    
+                    // Données mensuelles cibles
+                    var monthlyTestData = new List<(int year, int month, decimal totalTtc)>
+                    {
+                        (2025, 9, 85000m),
+                        (2025, 10, 120000m),
+                        (2025, 11, 95000m),
+                        (2025, 12, 160000m),
+                        (2026, 1, 130000m),
+                        (2026, 2, 210000m),
+                        (2026, 3, 175000m),
+                        (2026, 4, 240000m),
+                        (2026, 5, 300000m)
+                    };
+                    
+                    int bcIndex = 1;
+                    foreach (var (year, month, totalTtc) in monthlyTestData)
+                    {
+                        var supplier = testSuppliers[random.Next(testSuppliers.Count)];
+                        var orderDate = new DateTime(year, month, 15, 10, 0, 0, DateTimeKind.Utc);
+                        decimal tvaRate = 0.20m;
+                        decimal totalHt = Math.Round(totalTtc / (1 + tvaRate), 2);
+                        decimal totalVat = Math.Round(totalTtc - totalHt, 2);
+                        
+                        // Créer le BC
+                        var bc = new PurchaseOrder
+                        {
+                            OrderNumber = $"BC-TEST-{bcIndex:D4}",
+                            OrderDate = orderDate,
+                            SupplierId = supplier.Id,
+                            Status = PurchaseOrderStatus.Validated,
+                            CreatedById = testAcheteur.Id,
+                            TotalAmountHT = totalHt,
+                            TotalAmountTTC = totalTtc,
+                            TotalVAT = totalVat,
+                            PaymentConditions = "Net 30 jours",
+                            CreatedAt = orderDate,
+                            UpdatedAt = orderDate
+                        };
+                        
+                        // Ajouter un détail minimal pour le BC
+                        var product = testProducts[random.Next(testProducts.Count)];
+                        decimal basePrice = product.Designation switch
+                        {
+                            "Ciment 35kg" => 8.00m,
+                            "Graviers 40mm" => 25.00m,
+                            "Sable fin" => 45.00m,
+                            "Acier HA8" => 5.00m,
+                            "Tuiles" => 120.00m,
+                            _ => 10.00m
+                        };
+                        int qty = Math.Max(1, (int)(totalHt / basePrice));
+                        decimal unitPriceHt = Math.Round(totalHt / qty, 2);
+                        decimal unitPriceTtc = Math.Round(unitPriceHt * (1 + tvaRate), 2);
+                        
+                        bc.Details.Add(new PurchaseOrderDetail
+                        {
+                            ProductId = product.Id,
+                            Quantity = qty,
+                            UnitPriceHT = unitPriceHt,
+                            UnitPriceTTC = unitPriceTtc
+                        });
+                        
+                        await context.PurchaseOrders.AddAsync(bc);
+                        bcIndex++;
+                    }
+                    
+                    await context.SaveChangesAsync();
+                }
+            }
         }
         catch (Exception ex)
         {

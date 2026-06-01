@@ -1,6 +1,25 @@
 namespace GesAchats.Core.Services;
 
 // DTOs for Dashboard
+public class DashboardOperationDto
+{
+    public string Reference { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Fournisseur { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string Statut { get; set; } = string.Empty;
+}
+
+public class DashboardAlertDto
+{
+    public string Type { get; set; } = string.Empty;
+    public string Reference { get; set; } = string.Empty;
+    public string Statut { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Subtitle { get; set; } = string.Empty;
+}
+
 public class MonthlyPurchaseData
 {
     public string Month { get; set; } = string.Empty;

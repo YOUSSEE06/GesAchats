@@ -1,0 +1,17 @@
+2026-06-01 00:40:23.633 +01:00 [INF] Loading recent operations...
+2026-06-01 00:40:23.824 +01:00 [INF] Number of recent operations loaded from DB: 6
+2026-06-01 00:40:23.825 +01:00 [INF]   - Bon de Commande: BC-2026-FDBD - Aciers Modernes
+2026-06-01 00:40:23.825 +01:00 [INF]   - Bon de Commande: BC-2026-3150 - Société Matériaux SA
+2026-06-01 00:40:23.825 +01:00 [INF]   - Bon de Commande: BC-2026-06CD - sdgfs
+2026-06-01 00:40:23.825 +01:00 [INF]   - Devis: DEV-20260531-C9A3 - dfg
+2026-06-01 00:40:23.825 +01:00 [INF]   - Devis: DEV-20260531-6D29 - sdgfs
+2026-06-01 00:40:23.825 +01:00 [INF]   - Devis: DEV-20260531-D449 - Aciers Modernes
+2026-06-01 00:40:23.937 +01:00 [INF] Loading recent operations...
+2026-06-01 00:40:23.985 +01:00 [INF] Number of recent operations loaded from DB: 6
+2026-06-01 00:40:23.986 +01:00 [INF]   - Bon de Commande: BC-2026-FDBD - Aciers Modernes
+2026-06-01 00:40:23.986 +01:00 [INF]   - Bon de Commande: BC-2026-3150 - Société Matériaux SA
+2026-06-01 00:40:23.986 +01:00 [INF]   - Bon de Commande: BC-2026-06CD - sdgfs
+2026-06-01 00:40:23.986 +01:00 [INF]   - Devis: DEV-20260531-C9A3 - dfg
+2026-06-01 00:40:23.986 +01:00 [INF]   - Devis: DEV-20260531-6D29 - sdgfs
+2026-06-01 00:40:23.986 +01:00 [INF]   - Devis: DEV-20260531-D449 - Aciers Modernes
+2026-06-01 00:40:23.986 +01:00 [INF] Dashboard Acheteur chargé avec succès

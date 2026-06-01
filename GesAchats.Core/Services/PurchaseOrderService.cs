@@ -38,31 +38,39 @@ public class PurchaseOrderService : IPurchaseOrderService
 
     public async Task<List<MonthlyPurchaseData>> GetMonthlyPurchaseAmountAsync(int monthCount)
     {
-        var result = new List<MonthlyPurchaseData>();
         var now = DateTime.Now;
+        var startDate = now.AddMonths(-(monthCount - 1));
+        var firstDayOfStartMonth = new DateTime(startDate.Year, startDate.Month, 1);
         
-        for (int i = monthCount - 1; i >= 0; i--)
+        // Get all validated orders
+        var allValidatedOrders = await _unitOfWork.PurchaseOrders.FindAsync(po => 
+            po.Status == PurchaseOrderStatus.Validated);
+        
+        // Create a list of months in order (oldest to newest)
+        var monthlyData = new List<MonthlyPurchaseData>();
+        for (int i = 0; i < monthCount; i++)
         {
-            var monthDate = now.AddMonths(-i);
-            var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
-            var endDate = startDate.AddMonths(1).AddDays(-1);
+            var currentMonth = firstDayOfStartMonth.AddMonths(i);
+            var monthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
             
-            var orders = await _unitOfWork.PurchaseOrders.FindAsync(po =>
-                po.CreatedAt >= startDate && po.CreatedAt <= endDate);
+            // Get orders in this month
+            var ordersInMonth = allValidatedOrders.Where(po => 
+                po.OrderDate >= monthStart && po.OrderDate <= monthEnd).ToList();
             
-            var totalAmount = orders.Sum(po => po.TotalAmountTTC);
-            var avgAmount = orders.Any() ? totalAmount / orders.Count() : 0;
+            var totalAmount = ordersInMonth.Sum(po => po.TotalAmountTTC);
+            var avgAmount = ordersInMonth.Any() ? totalAmount / ordersInMonth.Count : 0;
             
-            result.Add(new MonthlyPurchaseData
+            monthlyData.Add(new MonthlyPurchaseData
             {
-                Month = monthDate.ToString("MMMM yyyy"),
+                Month = currentMonth.ToString("MMMM yyyy"),
                 Amount = totalAmount,
                 Total = totalAmount,
                 Average = avgAmount
             });
         }
         
-        return result;
+        return monthlyData;
     }
 
     public async Task<List<RecentPurchaseOrderData>> GetRecentPurchaseOrdersAsync(int count)
@@ -84,5 +92,16 @@ public class PurchaseOrderService : IPurchaseOrderService
             .ToList();
             
         return recentOrders;
+    }
+
+    public async Task<(int Pending, int Validated, int Cancelled)> GetPurchaseOrderStatusCountsAsync()
+    {
+        var allOrders = await _unitOfWork.PurchaseOrders.GetAllAsync();
+
+        int pending = allOrders.Count(po => po.Status == PurchaseOrderStatus.Pending);
+        int validated = allOrders.Count(po => po.Status == PurchaseOrderStatus.Validated);
+        int cancelled = allOrders.Count(po => po.Status == PurchaseOrderStatus.Cancelled);
+
+        return (pending, validated, cancelled);
     }
 }

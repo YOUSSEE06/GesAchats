@@ -1,0 +1,25 @@
+<UserControl x:Class="GesAchats.WPF.Controls.ChartCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="280" d:DesignWidth="300">
+    <Border Background="{StaticResource CardBackgroundBrush}"
+            CornerRadius="16"
+            Padding="20"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" Opacity="0.08" ShadowDepth="2" Direction="270"/>
+        </Border.Effect>
+        <StackPanel>
+            <TextBlock x:Name="TitleControl" 
+                       FontSize="14" 
+                       FontWeight="Bold" 
+                       Foreground="{StaticResource MainTextBrush}"
+                       Margin="0,0,0,16"/>
+            <ContentPresenter x:Name="ChartContentControl"/>
+        </StackPanel>
+    </Border>
+</UserControl>

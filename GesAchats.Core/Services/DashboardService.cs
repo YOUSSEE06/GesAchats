@@ -17,6 +17,91 @@ public class DashboardService : IDashboardService
         _unitOfWork = unitOfWork;
     }
 
+    public async Task<List<DashboardAlertDto>> GetDashboardAlertsAsync()
+    {
+        var alerts = new List<DashboardAlertDto>();
+
+        // Load Besoins Magasin (Need) with pending status
+        var needs = await _unitOfWork.Needs.FindAsync(n => 
+            n.Status == NeedStatus.ToValidate || 
+            n.Status == NeedStatus.TransmittedToPurchasing ||
+            n.Status == NeedStatus.InPurchase);
+        
+        alerts.AddRange(needs.Select(n => new DashboardAlertDto
+        {
+            Type = "Besoin Magasin",
+            Reference = n.NumeroBesoin,
+            Statut = "En attente",
+            Date = n.RequestedAt,
+            Title = "Besoin magasin en attente",
+            Subtitle = $"{n.NumeroBesoin} • En attente • {n.RequestedAt:dd/MM/yyyy}"
+        }));
+
+        // Load Devis (Quotation) with pending status
+        var quotations = await _unitOfWork.Quotations.GetAllWithSuppliersAsync();
+        alerts.AddRange(quotations
+            .Where(q => q.Status == QuotationStatus.Pending)
+            .Select(q => new DashboardAlertDto
+            {
+                Type = "Devis",
+                Reference = q.ReferenceNumber,
+                Statut = q.Status,
+                Date = q.Date,
+                Title = "Devis en attente",
+                Subtitle = $"{q.ReferenceNumber} • {q.Status} • {q.Date:dd/MM/yyyy}"
+            }));
+
+        // Load Bons de Commande (PurchaseOrder) with pending status
+        var purchaseOrders = await _unitOfWork.PurchaseOrders.GetAllWithSuppliersAsync();
+        alerts.AddRange(purchaseOrders
+            .Where(po => po.Status == PurchaseOrderStatus.Pending)
+            .Select(po => new DashboardAlertDto
+            {
+                Type = "Bon de Commande",
+                Reference = po.OrderNumber,
+                Statut = po.Status,
+                Date = po.OrderDate,
+                Title = "Bon de commande en attente",
+                Subtitle = $"{po.OrderNumber} • {po.Status} • {po.OrderDate:dd/MM/yyyy}"
+            }));
+
+        // Sort by date descending
+        return alerts.OrderByDescending(a => a.Date).ToList();
+    }
+
+    public async Task<List<DashboardOperationDto>> GetRecentOperationsAsync(int count = 6)
+    {
+        var operations = new List<DashboardOperationDto>();
+
+        // Load Quotations (Devis)
+        var quotations = await _unitOfWork.Quotations.GetAllWithSuppliersAsync();
+        operations.AddRange(quotations.Select(q => new DashboardOperationDto
+        {
+            Reference = q.ReferenceNumber,
+            Type = "Devis",
+            Fournisseur = q.Supplier?.CompanyName ?? "Inconnu",
+            Date = q.Date,
+            Statut = q.Status
+        }));
+
+        // Load Purchase Orders (Bons de Commande)
+        var purchaseOrders = await _unitOfWork.PurchaseOrders.GetAllWithSuppliersAsync();
+        operations.AddRange(purchaseOrders.Select(po => new DashboardOperationDto
+        {
+            Reference = po.OrderNumber,
+            Type = "Bon de Commande",
+            Fournisseur = po.Supplier?.CompanyName ?? "Inconnu",
+            Date = po.OrderDate,
+            Statut = po.Status
+        }));
+
+        // Sort by date descending and take top count
+        return operations
+            .OrderByDescending(op => op.Date)
+            .Take(count)
+            .ToList();
+    }
+
     public async Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(int days = 30)
     {
         var stats = new DashboardStatsDto();
