@@ -53,9 +53,13 @@ public partial class AdminShell : Window
 
         if (page is Page wpfPage)
         {
-            if (parameter != null && wpfPage.DataContext is INavigatable navigatable)
+            if (wpfPage is INavigatable navigatablePage)
             {
-                navigatable.OnNavigatedTo(parameter);
+                navigatablePage.OnNavigatedTo(parameter);
+            }
+            else if (wpfPage.DataContext is INavigatable navigatableVm)
+            {
+                navigatableVm.OnNavigatedTo(parameter);
             }
             MainFrame.Navigate(wpfPage);
         }

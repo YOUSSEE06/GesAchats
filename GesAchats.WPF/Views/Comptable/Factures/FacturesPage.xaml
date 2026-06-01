@@ -6,6 +6,8 @@
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Factures"
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
       xmlns:shared="clr-namespace:GesAchats.WPF.Resources.Shared"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Factures Fournisseurs">
@@ -34,33 +36,50 @@
         </Grid.RowDefinitions>
 
         <!-- Zone des statistiques -->
-        <UniformGrid Grid.Row="0" Columns="3" Margin="20,20,20,10">
-            <!-- Montant total -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Montant total" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
-                    <TextBlock Text="{Binding TotalAmount, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#1A3A52"/>
-                </StackPanel>
-            </Border>
+        <UniformGrid Grid.Row="0" Columns="6" Margin="20,20,20,10">
+            <!-- Total Factures -->
+            <ctrls:KpiCard Title="Total Factures" 
+                           Value="{Binding TotalFacturesCount}" 
+                           Icon="FileInvoice" 
+                           IconColor="#2196F3" 
+                           Margin="0,0,10,0"/>
 
-            <!-- En attente -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="5,0,5,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="En attente" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
-                    <TextBlock Text="{Binding PendingAmount, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#FF9800"/>
-                </StackPanel>
-            </Border>
+            <!-- Montant Total TTC -->
+            <ctrls:KpiCard Title="Montant Total TTC" 
+                           Value="{Binding TotalAmount}" 
+                           Unit="MAD"
+                           Icon="FileInvoiceDollar" 
+                           IconColor="#4CAF50" 
+                           Margin="0,0,10,0"/>
 
-            <!-- Taux de paiement -->
-            <Border Background="White" CornerRadius="8" Padding="20" Margin="10,0,0,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Taux de paiement" FontSize="14" Foreground="#757575" Margin="0,0,0,5"/>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <TextBlock Text="{Binding PaymentRate, StringFormat={}{0:N0}%}" FontSize="24" FontWeight="Bold" Foreground="#4CAF50"/>
-                        <ProgressBar Value="{Binding PaymentRate}" Width="100" Height="10" Margin="15,0,0,5" VerticalAlignment="Center" Foreground="#4CAF50" Background="#E8F5E9" BorderThickness="0"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
+            <!-- Factures Payées -->
+            <ctrls:KpiCard Title="Factures Payées" 
+                           Value="{Binding PaidInvoicesCount}" 
+                           Icon="CheckDouble" 
+                           IconColor="#2E7D32" 
+                           Margin="0,0,10,0"/>
+
+            <!-- Factures Partiellement Payées -->
+            <ctrls:KpiCard Title="Factures Part. Payées" 
+                           Value="{Binding PartialInvoicesCount}" 
+                           Icon="HourglassHalf" 
+                           IconColor="#FF9800" 
+                           Margin="0,0,10,0"/>
+
+            <!-- Factures En Attente -->
+            <ctrls:KpiCard Title="Factures En Attente" 
+                           Value="{Binding WaitingInvoicesCount}" 
+                           Icon="Clock" 
+                           IconColor="#F44336" 
+                           Margin="0,0,10,0"/>
+
+            <!-- Solde Total -->
+            <ctrls:KpiCard Title="Solde Total" 
+                           Value="{Binding PendingAmount}" 
+                           Unit="MAD"
+                           Icon="ScaleUnbalanced" 
+                           IconColor="#673AB7" 
+                           Margin="0,0,0,0"/>
         </UniformGrid>
 
         <!-- Zone des filtres et boutons d'action -->

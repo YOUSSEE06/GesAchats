@@ -39,6 +39,21 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
     private string _selectedStatus = string.Empty;
     private DateTime? _searchDate;
 
+    // KPI Properties
+    private int _totalBc;
+    private int _bcValides;
+    private int _bcEnAttente;
+    private int _bcAnnules;
+    private decimal _valeurTotaleBc;
+    private int _fournisseursActifs;
+
+    public int TotalBc { get => _totalBc; set => SetProperty(ref _totalBc, value); }
+    public int BcValides { get => _bcValides; set => SetProperty(ref _bcValides, value); }
+    public int BcEnAttente { get => _bcEnAttente; set => SetProperty(ref _bcEnAttente, value); }
+    public int BcAnnules { get => _bcAnnules; set => SetProperty(ref _bcAnnules, value); }
+    public decimal ValeurTotaleBc { get => _valeurTotaleBc; set => SetProperty(ref _valeurTotaleBc, value); }
+    public int FournisseursActifs { get => _fournisseursActifs; set => SetProperty(ref _fournisseursActifs, value); }
+
     public void OnNavigatedTo(object parameter)
     {
         if (parameter is string status)
@@ -88,6 +103,7 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
     public ICommand InspectCommand { get; }
     public ICommand PrintPdfCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand RefreshCommand { get; }
 
     public AdminOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
@@ -98,6 +114,7 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
         InspectCommand = new RelayCommand(p => ExecuteInspect(p as AdminOrderItemViewModel));
         PrintPdfCommand = new RelayCommand(p => ExecutePrintPdf(p as AdminOrderItemViewModel));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
+        RefreshCommand = new RelayCommand(async _ => await LoadData());
 
         _ = LoadData();
     }
@@ -113,6 +130,14 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
             {
                 _allOrders.Add(new AdminOrderItemViewModel(po));
             }
+
+            // Calculate KPIs
+            TotalBc = _allOrders.Count;
+            BcValides = _allOrders.Count(x => x.Status == PurchaseOrderStatus.Validated);
+            BcEnAttente = _allOrders.Count(x => x.Status == PurchaseOrderStatus.Pending);
+            BcAnnules = _allOrders.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
+            ValeurTotaleBc = pos.Sum(x => x.TotalAmountTTC);
+            FournisseursActifs = pos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
 
             // Populate unique suppliers
             Suppliers.Clear();
@@ -187,6 +212,9 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
             window.DataContext = new OrderDetailsViewModel(poWithDetails);
             window.Owner = Application.Current.MainWindow;
             window.ShowDialog();
+            
+            // Refresh data after inspection in case something changed
+            await LoadData();
         }
         catch (Exception ex)
         {

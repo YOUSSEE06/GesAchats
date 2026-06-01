@@ -101,6 +101,41 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalPaidMonth, value);
     }
 
+    private int _pendingInvoicesCount;
+    public int PendingInvoicesCount
+    {
+        get => _pendingInvoicesCount;
+        set => SetProperty(ref _pendingInvoicesCount, value);
+    }
+
+    private int _latePaymentsCount;
+    public int LatePaymentsCount
+    {
+        get => _latePaymentsCount;
+        set => SetProperty(ref _latePaymentsCount, value);
+    }
+
+    private decimal _totalAmountRegle;
+    public decimal TotalAmountRegle
+    {
+        get => _totalAmountRegle;
+        set => SetProperty(ref _totalAmountRegle, value);
+    }
+
+    private int _fournisseursPayesCount;
+    public int FournisseursPayesCount
+    {
+        get => _fournisseursPayesCount;
+        set => SetProperty(ref _fournisseursPayesCount, value);
+    }
+
+    private int _totalOperationsReglementCount;
+    public int TotalOperationsReglementCount
+    {
+        get => _totalOperationsReglementCount;
+        set => SetProperty(ref _totalOperationsReglementCount, value);
+    }
+
     // Chart Properties
     private ISeries[] _supplierDistribution = Array.Empty<ISeries>();
     public ISeries[] SupplierDistribution
@@ -181,6 +216,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
     public void OnNavigatedTo(object parameter)
     {
+        _ = LoadPaymentsAsync();
     }
 
     private void ViewProof(Payment? payment)
@@ -224,12 +260,35 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
                 p => p.Invoice,
                 p => p.CreatedBy
             );
-            _allPayments = new ObservableCollection<Payment>(payments.OrderByDescending(p => p.PaymentDate));
+            var allPaymentsList = payments.ToList();
+            _allPayments = new ObservableCollection<Payment>(allPaymentsList.OrderByDescending(p => p.PaymentDate));
             ApplyFilters();
             
-            TotalPaidMonth = Payments
-                .Where(p => p.PaymentDate.Month == DateTime.Now.Month && p.PaymentDate.Year == DateTime.Now.Year)
+            // Calcul des KPIs (Données réelles)
+            var now = DateTime.Now;
+            
+            // KPI 1: Total payé (Mois)
+            TotalPaidMonth = allPaymentsList
+                .Where(p => p.PaymentDate.Month == now.Month && p.PaymentDate.Year == now.Year)
                 .Sum(p => p.AmountPaid);
+
+            // KPI 4: Total Réglé
+            TotalAmountRegle = allPaymentsList.Sum(p => p.AmountPaid);
+
+            // KPI 5: Fournisseurs Payés
+            FournisseursPayesCount = allPaymentsList.Select(p => p.SupplierId).Distinct().Count();
+
+            // KPI 6: Total Opérations
+            TotalOperationsReglementCount = allPaymentsList.Count;
+
+            // Pour les factures en attente et retards
+            var invoices = await _unitOfWork.Invoices.GetAllAsync();
+            
+            // KPI 2: Factures Attente
+            PendingInvoicesCount = invoices.Count(i => i.Status == "EnAttente");
+
+            // KPI 3: Retards Paiement (Dépassement date d'échéance et non payée)
+            LatePaymentsCount = invoices.Count(i => i.DueDate.HasValue && i.DueDate.Value < now && i.Status != "Payee" && i.Status != "Rejetee");
         }
         finally
         {

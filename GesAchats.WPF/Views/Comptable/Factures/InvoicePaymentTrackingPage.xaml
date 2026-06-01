@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Comptable.Factures"
       xmlns:vm="clr-namespace:GesAchats.WPF.ViewModels.Comptable"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="PV Comptable - Suivi des Factures et Règlements">
@@ -26,72 +27,52 @@
         </Grid.RowDefinitions>
 
         <!-- Header with Stats -->
-        <Border Grid.Row="0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <UniformGrid Grid.Row="0" Rows="1" Columns="6" Margin="0,0,0,10">
+            <!-- 1. Montant Total TTC -->
+            <ctrls:KpiCard Title="Montant Total TTC" 
+                           Value="{Binding TotalTTC}" 
+                           Unit="MAD"
+                           Icon="FileInvoiceDollar" 
+                           IconColor="#2563EB" 
+                           Margin="0,0,10,0"/>
 
-                <!-- Total TTC -->
-                <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,10,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+            <!-- 2. Total Règlements -->
+            <ctrls:KpiCard Title="Total Règlements" 
+                           Value="{Binding TotalPayments}" 
+                           Unit="MAD"
+                           Icon="HandHoldingDollar" 
+                           IconColor="#10B981" 
+                           Margin="0,0,10,0"/>
 
-                        <Border Grid.Column="0" Width="50" Height="50" CornerRadius="8" Background="#E3F2FD">
-                            <TextBlock Text="💶" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+            <!-- 3. Solde Total -->
+            <ctrls:KpiCard Title="Solde Total" 
+                           Value="{Binding TotalBalance}" 
+                           Unit="MAD"
+                           Icon="ScaleUnbalanced" 
+                           IconColor="#F59E0B" 
+                           Margin="0,0,10,0"/>
 
-                        <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                            <TextBlock Text="Montant Total TTC" Foreground="#616161" FontSize="12"/>
-                            <TextBlock Text="{Binding TotalTTC, StringFormat='{}{0:N2} MAD'}" FontSize="24" FontWeight="Bold" Foreground="#2196F3"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+            <!-- 4. Factures Payées -->
+            <ctrls:KpiCard Title="Factures Payées" 
+                           Value="{Binding PaidInvoicesCount}" 
+                           Icon="CheckDouble" 
+                           IconColor="#059669" 
+                           Margin="0,0,10,0"/>
 
-                <!-- Total Payments -->
-                <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="10,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+            <!-- 5. Factures Partiellement Payées -->
+            <ctrls:KpiCard Title="Factures Part. Payées" 
+                           Value="{Binding PartialInvoicesCount}" 
+                           Icon="HourglassHalf" 
+                           IconColor="#D97706" 
+                           Margin="0,0,10,0"/>
 
-                        <Border Grid.Column="0" Width="50" Height="50" CornerRadius="8" Background="#E8F5E9">
-                            <TextBlock Text="✅" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-
-                        <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                            <TextBlock Text="Total Règlements" Foreground="#616161" FontSize="12"/>
-                            <TextBlock Text="{Binding TotalPayments, StringFormat='{}{0:N2} MAD'}" FontSize="24" FontWeight="Bold" Foreground="#4CAF50"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Total Balance -->
-                <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1" Margin="10,0,0,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0" Width="50" Height="50" CornerRadius="8" Background="#FFF3E0">
-                            <TextBlock Text="📊" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-
-                        <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                            <TextBlock Text="Solde Total" Foreground="#616161" FontSize="12"/>
-                            <TextBlock Text="{Binding TotalBalance, StringFormat='{}{0:N2} MAD'}" FontSize="24" FontWeight="Bold" Foreground="#FF9800"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
-        </Border>
+            <!-- 6. Fournisseurs Facturés -->
+            <ctrls:KpiCard Title="Fournisseurs Facturés" 
+                           Value="{Binding BilledSuppliersCount}" 
+                           Icon="Users" 
+                           IconColor="#4F46E5" 
+                           Margin="0,0,0,0"/>
+        </UniformGrid>
 
         <!-- Filters -->
         <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" Margin="0,20,0,0" BorderBrush="#E0E0E0" BorderThickness="1">

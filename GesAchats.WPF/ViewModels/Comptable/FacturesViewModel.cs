@@ -83,11 +83,39 @@ public class FacturesViewModel : BaseViewModel
     }
 
     // Stats
+    private int _totalFacturesCount;
+    public int TotalFacturesCount
+    {
+        get => _totalFacturesCount;
+        set => SetProperty(ref _totalFacturesCount, value);
+    }
+
     private decimal _totalAmount;
     public decimal TotalAmount
     {
         get => _totalAmount;
         set => SetProperty(ref _totalAmount, value);
+    }
+
+    private int _paidInvoicesCount;
+    public int PaidInvoicesCount
+    {
+        get => _paidInvoicesCount;
+        set => SetProperty(ref _paidInvoicesCount, value);
+    }
+
+    private int _partialInvoicesCount;
+    public int PartialInvoicesCount
+    {
+        get => _partialInvoicesCount;
+        set => SetProperty(ref _partialInvoicesCount, value);
+    }
+
+    private int _waitingInvoicesCount;
+    public int WaitingInvoicesCount
+    {
+        get => _waitingInvoicesCount;
+        set => SetProperty(ref _waitingInvoicesCount, value);
     }
 
     private decimal _pendingAmount;
@@ -134,7 +162,7 @@ public class FacturesViewModel : BaseViewModel
         AddFactureCommand = new RelayCommand(_ => _navigationService.NavigateTo("InvoiceForm"));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
         
-        ViewDetailsCommand = new RelayCommand(_ => 
+        ViewDetailsCommand = new RelayCommand(async _ => 
         {
             if (SelectedFacture == null)
                 return;
@@ -145,6 +173,9 @@ public class FacturesViewModel : BaseViewModel
                 var win = ActivatorUtilities.CreateInstance<FactureDetailsWindow>(scope.ServiceProvider, vm);
                 win.Owner = System.Windows.Application.Current.MainWindow;
                 win.ShowDialog();
+                
+                // Refresh after dialog closes in case something changed
+                await LoadFacturesAsync();
             }
         }, _ => SelectedFacture != null);
 
@@ -263,13 +294,12 @@ public class FacturesViewModel : BaseViewModel
 
     private void CalculateStats()
     {
-        TotalAmount = Factures.Sum(f => f.Invoice.AmountTTC);
-        
-        // Calculer le solde total
-        PendingAmount = Factures.Sum(f => f.Balance);
-        
-        decimal totalPaid = Factures.Sum(f => f.TotalPayments);
-        PaymentRate = TotalAmount > 0 ? (double)(totalPaid / TotalAmount * 100) : 0;
+        TotalFacturesCount = _allFactures.Count;
+        TotalAmount = _allFactures.Sum(f => f.Invoice.AmountTTC);
+        PaidInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "Payée");
+        PartialInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "Partiellement payée");
+        WaitingInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "En attente");
+        PendingAmount = _allFactures.Sum(f => f.Balance);
     }
 
     private void ResetFilters()

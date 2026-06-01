@@ -7,6 +7,7 @@
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
       xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
       xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Suivi des Règlements">
@@ -35,34 +36,49 @@
         </Border>
 
         <!-- Dashboard KPIs -->
-        <Grid Grid.Row="1" Margin="20,15">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <UniformGrid Grid.Row="1" Rows="1" Columns="6" Margin="20,10">
+            <ctrls:KpiCard Title="Total payé (Mois)" 
+                           Value="{Binding TotalPaidMonth}" 
+                           Unit="MAD"
+                           Icon="MoneyBillWave" 
+                           IconColor="#4CAF50" 
+                           Margin="0,0,8,0"/>
 
-            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" Margin="0,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="💰 Total payé ce mois" Foreground="#757575" FontSize="12"/>
-                    <TextBlock Text="{Binding TotalPaidMonth, StringFormat={}{0:N2} €}" FontSize="24" FontWeight="Bold" Foreground="#4CAF50"/>
-                </StackPanel>
-            </Border>
+            <ctrls:KpiCard Title="Factures Attente" 
+                           Value="{Binding PendingInvoicesCount}" 
+                           Unit="factures"
+                           Icon="Clock" 
+                           IconColor="#FFC107" 
+                           Margin="4,0,4,0"/>
 
-            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" Margin="10,0,10,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="⏳ Factures en attente" Foreground="#757575" FontSize="12"/>
-                    <TextBlock Text="3" FontSize="24" FontWeight="Bold" Foreground="#FFC107"/>
-                </StackPanel>
-            </Border>
+            <ctrls:KpiCard Title="Retards Paiement" 
+                           Value="{Binding LatePaymentsCount}" 
+                           Unit="retards"
+                           Icon="TriangleExclamation" 
+                           IconColor="#F44336" 
+                           Margin="4,0,4,0"/>
 
-            <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="20" Margin="10,0,0,0" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="🔴 Retards de paiement" Foreground="#757575" FontSize="12"/>
-                    <TextBlock Text="1" FontSize="24" FontWeight="Bold" Foreground="#F44336"/>
-                </StackPanel>
-            </Border>
-        </Grid>
+            <ctrls:KpiCard Title="Total Réglé" 
+                           Value="{Binding TotalAmountRegle}" 
+                           Unit="MAD"
+                           Icon="Wallet" 
+                           IconColor="#2196F3" 
+                           Margin="4,0,4,0"/>
+
+            <ctrls:KpiCard Title="Fourn. Payés" 
+                           Value="{Binding FournisseursPayesCount}" 
+                           Unit="fournisseurs"
+                           Icon="Users" 
+                           IconColor="#9C27B0" 
+                           Margin="4,0,4,0"/>
+
+            <ctrls:KpiCard Title="Total Opérations" 
+                           Value="{Binding TotalOperationsReglementCount}" 
+                           Unit="règlements"
+                           Icon="ListCheck" 
+                           IconColor="#607D8B" 
+                           Margin="8,0,0,0"/>
+        </UniformGrid>
 
         <!-- Filters -->
         <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="20,15,20,0" BorderBrush="#E0E0E0" BorderThickness="1">

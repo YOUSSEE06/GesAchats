@@ -49,6 +49,19 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
 
     private List<DeliveryNote> _allDeliveryNotes = new();
 
+    // KPI Properties
+    private int _totalBl;
+    private int _blValides;
+    private int _blEnAttente;
+    private int _blAnnules;
+    private int _fournisseursActifs;
+
+    public int TotalBl { get => _totalBl; set => SetProperty(ref _totalBl, value); }
+    public int BlValides { get => _blValides; set => SetProperty(ref _blValides, value); }
+    public int BlEnAttente { get => _blEnAttente; set => SetProperty(ref _blEnAttente, value); }
+    public int BlAnnules { get => _blAnnules; set => SetProperty(ref _blAnnules, value); }
+    public int FournisseursActifs { get => _fournisseursActifs; set => SetProperty(ref _fournisseursActifs, value); }
+
     public string SearchText
     {
         get => _searchText;
@@ -137,6 +150,14 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         {
             var notes = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
             _allDeliveryNotes = notes.OrderByDescending(n => n.ReceptionDate).ToList();
+            
+            // Calculate KPIs
+            TotalBl = _allDeliveryNotes.Count;
+            BlValides = _allDeliveryNotes.Count(n => n.Status == "Valide");
+            BlEnAttente = _allDeliveryNotes.Count(n => n.Status == "EnAttente");
+            BlAnnules = _allDeliveryNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
+            FournisseursActifs = _allDeliveryNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+
             FilterDeliveryNotes();
         }
         finally

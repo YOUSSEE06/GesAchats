@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Admin.NeedsHistory"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="Historique des Besoins - Admin">
@@ -12,6 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Global Header -->
             <RowDefinition Height="Auto"/> <!-- Page Title -->
+            <RowDefinition Height="Auto"/> <!-- KPIs -->
             <RowDefinition Height="Auto"/> <!-- Filters Bar -->
             <RowDefinition Height="*"/>    <!-- Data Table -->
         </Grid.RowDefinitions>
@@ -25,8 +27,41 @@
         <TextBlock Grid.Row="1" Text="HISTORIQUE DES BESOINS" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
+        <!-- 3.0 Zone des KPIs -->
+        <UniformGrid Grid.Row="2" Rows="1" Columns="5" Margin="25,10">
+            <ctrls:KpiCard Title="Total Besoins" 
+                           Value="{Binding TotalBesoins}" 
+                           Icon="ClipboardList" 
+                           IconColor="#2563EB" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Besoins En Cours" 
+                           Value="{Binding BesoinsEnCours}" 
+                           Icon="Clock" 
+                           IconColor="#F59E0B" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Besoins Transmis" 
+                           Value="{Binding BesoinsTransmis}" 
+                           Icon="Share" 
+                           IconColor="#10B981" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Articles Demandés" 
+                           Value="{Binding TotalArticlesDemandes}" 
+                           Icon="BoxesStacked" 
+                           IconColor="#8B5CF6" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Demandeurs Actifs" 
+                           Value="{Binding DemandeursActifs}" 
+                           Icon="Users" 
+                           IconColor="#6366F1" 
+                           Margin="0,0,0,0"/>
+        </UniformGrid>
+
         <!-- 3.1 Filtres -->
-        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,5,25,10" Padding="15,10">
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,5,25,10" Padding="15,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/> <!-- Search Icon -->
@@ -72,7 +107,7 @@
         </Border>
 
         <!-- 3.2 Zone principale - Tableau -->
-        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding Needs}" 
                       Style="{StaticResource ModernDataGrid}">
                 <DataGrid.Columns>

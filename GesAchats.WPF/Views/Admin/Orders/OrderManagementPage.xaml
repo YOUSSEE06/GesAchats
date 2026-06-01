@@ -4,6 +4,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="Gestion des Bons de Commande">
@@ -17,6 +19,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Global Header -->
             <RowDefinition Height="Auto"/> <!-- Page Title -->
+            <RowDefinition Height="Auto"/> <!-- KPIs -->
             <RowDefinition Height="Auto"/> <!-- Form / Filters -->
             <RowDefinition Height="*"/>    <!-- Table -->
         </Grid.RowDefinitions>
@@ -30,8 +33,48 @@
         <TextBlock Grid.Row="1" Text="Gestion des Bons de Commande" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
-        <!-- 3.1 Formulaire de saisie / filtres -->
-        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,10">
+        <!-- 3.1 Zone des KPIs -->
+        <UniformGrid Grid.Row="2" Rows="1" Columns="6" Margin="25,10">
+            <ctrls:KpiCard Title="Total BC" 
+                           Value="{Binding TotalBc}" 
+                           Icon="CartShopping" 
+                           IconColor="#2563EB" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BC Validés" 
+                           Value="{Binding BcValides}" 
+                           Icon="CheckCircle" 
+                           IconColor="#10B981" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BC En attente" 
+                           Value="{Binding BcEnAttente}" 
+                           Icon="Clock" 
+                           IconColor="#F59E0B" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BC Annulés" 
+                           Value="{Binding BcAnnules}" 
+                           Icon="Ban" 
+                           IconColor="#EF4444" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Valeur Totale" 
+                           Value="{Binding ValeurTotaleBc}" 
+                           Unit="MAD"
+                           Icon="MoneyBill" 
+                           IconColor="#8B5CF6" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Fournisseurs actifs" 
+                           Value="{Binding FournisseursActifs}" 
+                           Icon="Users" 
+                           IconColor="#1E293B" 
+                           Margin="0,0,0,0"/>
+        </UniformGrid>
+
+        <!-- 3.2 Formulaire de saisie / filtres -->
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10">
             <StackPanel Margin="5">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -88,7 +131,7 @@
 
 
         <!-- 3.3 Tableau des BC -->
-        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding Orders}" 
                       Style="{StaticResource ModernDataGrid}">
                 <DataGrid.Columns>

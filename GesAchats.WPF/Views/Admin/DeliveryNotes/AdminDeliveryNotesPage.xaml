@@ -3,6 +3,8 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="Réception des Bons de Livraison (BL)">
@@ -11,6 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Global Header -->
             <RowDefinition Height="Auto"/> <!-- Page Title -->
+            <RowDefinition Height="Auto"/> <!-- KPIs -->
             <RowDefinition Height="Auto"/> <!-- Filters -->
             <RowDefinition Height="*"/>    <!-- Table -->
         </Grid.RowDefinitions>
@@ -24,8 +27,41 @@
         <TextBlock Grid.Row="1" Text="Réception des Bons de Livraison (BL)" FontSize="20" FontWeight="SemiBold" 
                    Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
 
+        <!-- 3.1 Zone des KPIs -->
+        <UniformGrid Grid.Row="2" Rows="1" Columns="5" Margin="25,10">
+            <ctrls:KpiCard Title="Total BL" 
+                           Value="{Binding TotalBl}" 
+                           Icon="Truck" 
+                           IconColor="#2563EB" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BL Validés" 
+                           Value="{Binding BlValides}" 
+                           Icon="CheckCircle" 
+                           IconColor="#10B981" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BL En attente" 
+                           Value="{Binding BlEnAttente}" 
+                           Icon="Clock" 
+                           IconColor="#F59E0B" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="BL Annulés" 
+                           Value="{Binding BlAnnules}" 
+                           Icon="Ban" 
+                           IconColor="#EF4444" 
+                           Margin="0,0,14,0"/>
+
+            <ctrls:KpiCard Title="Fournisseurs actifs" 
+                           Value="{Binding FournisseursActifs}" 
+                           Icon="Users" 
+                           IconColor="#6366F1" 
+                           Margin="0,0,0,0"/>
+        </UniformGrid>
+
         <!-- 3.2 Zone de filtrage -->
-        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Margin="25,10">
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10">
             <StackPanel Margin="15">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -73,7 +109,7 @@
         </Border>
 
         <!-- 3.2 Tableau des BL -->
-        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="25,10,25,25">
             <DataGrid ItemsSource="{Binding DeliveryNotes}" 
                       Style="{StaticResource ModernDataGrid}"
                       HeadersVisibility="Column"
