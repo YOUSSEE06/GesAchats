@@ -6,8 +6,13 @@
         xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
         xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
         mc:Ignorable="d"
-        Title="GesAchats - Responsable Achat" Height="1080" Width="1920"
+        Title="GesAchats - Responsable Achat"
+        WindowState="Maximized"
+        ResizeMode="CanResize"
+        SizeToContent="Manual"
         WindowStartupLocation="CenterScreen"
+        MinWidth="900"
+        MinHeight="600"
         FontFamily="Segoe UI">
 
     <Grid>

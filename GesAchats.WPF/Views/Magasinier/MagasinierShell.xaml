@@ -6,8 +6,13 @@
         xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
         xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
         mc:Ignorable="d"
-        Title="GesAchats - Espace Magasinier" Height="1080" Width="1920"
-        WindowStartupLocation="CenterScreen">
+        Title="GesAchats - Espace Magasinier"
+        WindowState="Maximized"
+        ResizeMode="CanResize"
+        SizeToContent="Manual"
+        WindowStartupLocation="CenterScreen"
+        MinWidth="900"
+        MinHeight="600">
     
     <Window.Resources>
         <ResourceDictionary>

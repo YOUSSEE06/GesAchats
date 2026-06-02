@@ -4,13 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="650" Width="600"
+        Title="{Binding Title}"
+        WindowState="Maximized"
+        ResizeMode="CanResize"
+        SizeToContent="Manual"
         WindowStartupLocation="CenterScreen"
+        MinWidth="900"
+        MinHeight="600"
         Background="{StaticResource BackgroundBrush}">
     
-    <Grid>
-        <Border Margin="50" Background="{StaticResource SurfaceBrush}" CornerRadius="20" 
-                MaxWidth="450" VerticalAlignment="Center">
+    <Grid HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch">
+        <Border Width="500" Background="{StaticResource SurfaceBrush}" CornerRadius="20" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="30" Direction="-90" RenderingBias="Quality" ShadowDepth="5" Opacity="0.15"/>
             </Border.Effect>
