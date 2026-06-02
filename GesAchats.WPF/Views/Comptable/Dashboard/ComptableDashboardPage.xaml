@@ -34,12 +34,14 @@
         </ResourceDictionary>
     </Page.Resources>
 
-
-=======
     <Grid Background="#F8FAFC">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24">
->>>>>>> c7c3effe90fd58ac9733b9b9b755a9e36cc8b347
                 
                 <!-- Header with Date Filters -->
                 <Grid Margin="0,0,0,24">
@@ -382,7 +384,7 @@
         </ScrollViewer>
         
         <!-- Loading Overlay -->
-        <Grid Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Grid.Row="1" Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border Background="White" CornerRadius="12" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="15" Opacity="0.2" ShadowDepth="0"/>
@@ -393,6 +395,5 @@
                 </StackPanel>
             </Border>
         </Grid>
->>>>>>> c7c3effe90fd58ac9733b9b9b755a9e36cc8b347
     </Grid>
 </Page>
