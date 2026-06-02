@@ -136,4 +136,4 @@ CREATE TABLE reglements (
 
 -- 5. Seed Initial
 INSERT INTO "Roles" ("Code", "Label", "Description") VALUES ('ADMIN', 'Administrateur', 'Administrateur Système');
-INSERT INTO "Users" ("Login", "FullName", "Email", "PasswordHash", "RoleId") VALUES ('admin', 'Administrateur Système', 'admin@gesachats.com', '0000', 1);
+INSERT INTO "Users" ("Login", "FullName", "Email", "PasswordHash", "RoleId") VALUES ('admin', 'Administrateur Système', 'youssefoularbi628@gmail.com', '0000', 1);

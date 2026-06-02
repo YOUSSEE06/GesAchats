@@ -1,22 +1,18 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using System.Windows.Media;
 
 namespace GesAchats.WPF.Converters;
 
-public class BooleanToBrushConverter : IValueConverter
+public class GreaterOrEqualConverter : IValueConverter
 {
-    public Brush TrueBrush { get; set; } = new SolidColorBrush(Colors.Green);
-    public Brush FalseBrush { get; set; } = new SolidColorBrush(Colors.Red);
-
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is bool boolValue)
+        if (value is int intValue && int.TryParse(parameter?.ToString(), out int compareValue))
         {
-            return boolValue ? TrueBrush : FalseBrush;
+            return intValue >= compareValue;
         }
-        return FalseBrush;
+        return false;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

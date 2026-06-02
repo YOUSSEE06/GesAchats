@@ -1,20 +1,23 @@
+using System.Windows;
 using System.Windows.Input;
 using GesAchats.Core.Interfaces;
-using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Base;
+using GesAchats.WPF.Views.Auth;
+using Serilog;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Auth;
 
 public class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
-    private string _username = string.Empty;
+    private string _loginOrEmail = string.Empty;
     private string _errorMessage = string.Empty;
 
-    public string Username
+    public string LoginOrEmail
     {
-        get => _username;
-        set => SetProperty(ref _username, value);
+        get => _loginOrEmail;
+        set => SetProperty(ref _loginOrEmail, value);
     }
 
     public string ErrorMessage
@@ -23,50 +26,88 @@ public class LoginViewModel : BaseViewModel
         set => SetProperty(ref _errorMessage, value);
     }
 
-    public ICommand LoginCommand { get; }
+    public CommunityToolkit.Mvvm.Input.IRelayCommand<object?> LoginCommand { get; }
+    public CommunityToolkit.Mvvm.Input.IRelayCommand ForgotPasswordCommand { get; }
 
     public LoginViewModel(IAuthService authService)
     {
         _authService = authService;
-        LoginCommand = new RelayCommand(async p => await ExecuteLogin(p), _ => !IsBusy);
+        LoginCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand<object?>(ExecuteLoginAsync, CanExecuteLogin);
+        ForgotPasswordCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(ExecuteForgotPassword);
         Title = "Connexion - GesAchats";
     }
 
-    private async Task ExecuteLogin(object? parameter)
+    private bool CanExecuteLogin(object? parameter) => !IsBusy;
+
+    private async Task ExecuteLoginAsync(object? parameter)
     {
         var passwordBox = parameter as System.Windows.Controls.PasswordBox;
         if (passwordBox == null) return;
 
         string password = passwordBox.Password;
 
-        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrWhiteSpace(LoginOrEmail))
         {
-            ErrorMessage = "Veuillez saisir votre identifiant et votre mot de passe.";
+            ErrorMessage = "Veuillez saisir votre email ou identifiant.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            ErrorMessage = "Veuillez saisir votre mot de passe.";
             return;
         }
 
         IsBusy = true;
         ErrorMessage = string.Empty;
+        LoginCommand.NotifyCanExecuteChanged();
 
         try
         {
-            var user = await _authService.LoginAsync(Username, password);
+            var user = await _authService.LoginAsync(LoginOrEmail, password);
             if (user != null)
             {
+                Log.Information("Connexion réussie pour {LoginOrEmail}", LoginOrEmail);
                 NavigationRouter.GoToRole(user);
             }
             else
             {
-                ErrorMessage = "Identifiants invalides.";
+                ErrorMessage = "Identifiants incorrects.";
             }
+        }
+        catch (InvalidOperationException ex)
+        {
+            ErrorMessage = ex.Message;
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Une erreur est survenue : {ex.Message}";
+            Log.Error(ex, "Erreur inattendue lors de la connexion");
+            ErrorMessage = "Une erreur est survenue. Veuillez réessayer.";
         }
         finally
         {
             IsBusy = false;
+            LoginCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private void ExecuteForgotPassword()
+    {
+        try
+        {
+            var serviceProvider = ((App)Application.Current).ServiceProvider;
+            var resetWindow = serviceProvider.GetRequiredService<ResetPasswordWindow>();
+            resetWindow.Show();
+
+            var currentLoginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+            currentLoginWindow?.Hide();
+
+            resetWindow.Closed += (s, e) => currentLoginWindow?.Show();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error opening forgot password window");
+            ErrorMessage = "Une erreur est survenue. Veuillez réessayer.";
         }
     }
 }

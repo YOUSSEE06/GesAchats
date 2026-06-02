@@ -287,6 +287,14 @@ public partial class App : Application
             options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")),
             ServiceLifetime.Transient);
 
+        // Configuration Smtp
+        var smtpSettings = Configuration.GetSection("Smtp").Get<GesAchats.Core.Helpers.SmtpSettings>();
+        if (smtpSettings == null)
+        {
+            smtpSettings = new GesAchats.Core.Helpers.SmtpSettings();
+        }
+        services.AddSingleton(smtpSettings);
+
         // Injection des dépendances Data & Services
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -300,6 +308,7 @@ public partial class App : Application
         services.AddTransient<IPdfGeneratorService, PdfGeneratorService>();
         services.AddTransient<IQuotationPdfService, QuotationPdfService>();
         services.AddTransient<IEmailService, EmailService>();
+        services.AddTransient<IEmailVerificationService, EmailVerificationService>();
         services.AddTransient<IConformityService, ConformityService>();
         services.AddTransient<IFileStorageService>(s => new FileStorageService(AppDomain.CurrentDomain.BaseDirectory));
         
@@ -317,6 +326,7 @@ public partial class App : Application
 
         // ViewModels - Focus Magasinier
         services.AddTransient<LoginViewModel>();
+        services.AddTransient<ResetPasswordViewModel>();
         services.AddTransient<MagasinierShellViewModel>();
         services.AddTransient<MagasinierDashboardViewModel>();
         services.AddTransient<DeliveryNotesViewModel>();
@@ -370,6 +380,7 @@ public partial class App : Application
 
         // Views - Focus Magasinier
         services.AddTransient<LoginWindow>();
+        services.AddTransient<ResetPasswordWindow>();
         services.AddTransient<MagasinierShell>();
         services.AddTransient<MagasinierDashboardPage>();
         services.AddTransient<StockPage>();

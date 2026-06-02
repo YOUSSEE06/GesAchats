@@ -28,6 +28,7 @@ public class GesAchatsDbContext : DbContext
     public DbSet<Magasin> Magasins => Set<Magasin>();
     public DbSet<StockExit> StockExits => Set<StockExit>();
     public DbSet<DashboardKpiSnapshot> DashboardKpiSnapshots => Set<DashboardKpiSnapshot>();
+    public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

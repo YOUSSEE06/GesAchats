@@ -25,15 +25,27 @@
                            HorizontalAlignment="Center" Margin="0,0,0,40"/>
 
                 <StackPanel Margin="0,0,0,25">
-                    <TextBlock Text="Identifiant" Margin="0,0,0,10" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
-                             Padding="15,12" FontSize="16" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"/>
-                </StackPanel>
+            <TextBlock Text="Email / Identifiant" Margin="0,0,0,10" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBox Text="{Binding LoginOrEmail, UpdateSourceTrigger=PropertyChanged}" 
+                     Padding="15,12" FontSize="16" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"/>
+        </StackPanel>
 
                 <StackPanel Margin="0,0,0,15">
                     <TextBlock Text="Mot de passe" Margin="0,0,0,10" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <PasswordBox x:Name="TxtPassword" Padding="15,12" FontSize="16" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"/>
                 </StackPanel>
+
+                <Button Content="Mot de passe oublié ?"
+                        Command="{Binding ForgotPasswordCommand}"
+                        Background="Transparent"
+                        Foreground="{StaticResource PrimaryBrush}"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        HorizontalAlignment="Right"
+                        Margin="0,0,0,20"
+                        BorderThickness="0"
+                        Cursor="Hand">
+                </Button>
 
                 <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}" 
                            TextWrapping="Wrap" Margin="0,10,0,20" MinHeight="40" FontSize="14"

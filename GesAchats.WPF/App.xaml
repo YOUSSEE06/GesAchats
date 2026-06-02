@@ -31,6 +31,7 @@
             <conv:NumberFormatConverter x:Key="NumberFormatConverter"/>
             <conv:StatusToBackgroundConverter x:Key="StatusToBackgroundConverter"/>
             <conv:StatusToForegroundConverter x:Key="StatusToForegroundConverter"/>
+            <conv:GreaterOrEqualConverter x:Key="GreaterOrEqualConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

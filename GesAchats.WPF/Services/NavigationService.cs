@@ -6,6 +6,7 @@ namespace GesAchats.WPF.Services;
 public interface INavigationService
 {
     void NavigateTo(string pageName, object? parameter = null);
+    void GoBack();
     event Action<string, object?>? OnNavigate;
 }
 
@@ -28,5 +29,10 @@ public class NavigationService : INavigationService
     public void NavigateTo(string pageName, object? parameter = null)
     {
         OnNavigate?.Invoke(pageName, parameter);
+    }
+
+    public void GoBack()
+    {
+        // For now, we don't have a navigation stack, but we can leave this for future expansion
     }
 }

@@ -34,6 +34,7 @@ public class UnitOfWork : IUnitOfWork
         AuditLogs = new Repository<AuditLog>(_context);
         StockExits = new StockExitRepository(_context);
         DashboardKpiSnapshots = new Repository<DashboardKpiSnapshot>(_context);
+        EmailVerificationCodes = new Repository<EmailVerificationCode>(_context);
     }
 
     public IUserRepository Users { get; private set; }
@@ -55,6 +56,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<AuditLog> AuditLogs { get; private set; }
     public IStockExitRepository StockExits { get; private set; }
     public IRepository<DashboardKpiSnapshot> DashboardKpiSnapshots { get; private set; }
+    public IRepository<EmailVerificationCode> EmailVerificationCodes { get; private set; }
 
     public async Task<int> CompleteAsync()
     {
