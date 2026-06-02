@@ -263,10 +263,9 @@ public partial class App : Application
                     ");
                 }
             }
-            catch (Exception dbEx)
+            catch (Exception)
             {
-                MessageBox.Show($"Avertissement : Impossible d'initialiser la base de données.\n\nErreur : {dbEx.Message}", 
-                    "Avertissement Base de Données", MessageBoxButton.OK, MessageBoxImage.Warning);
+                // No warning dialog - just continue silently
             }
 
                 // Démarrage de l'interface utilisateur

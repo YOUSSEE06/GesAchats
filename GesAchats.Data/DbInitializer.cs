@@ -587,67 +587,6 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
             }
 
-            // 6. Insertion d'un historique complet de besoins pour le Magasinier
-            // On régénère si on n'a pas de détails (le cas du screenshot de l'utilisateur)
-            if (!await context.Set<NeedDetail>().AnyAsync())
-            { 
-                var magasinier = await context.Users.FirstOrDefaultAsync(u => u.Login == "magasinier");
-                var products = await context.Products.ToListAsync();
-                var random = new Random();
-
-                // Nettoyage des anciens besoins vides
-                var oldNeeds = await context.Needs.ToListAsync();
-                context.Needs.RemoveRange(oldNeeds);
-                await context.SaveChangesAsync();
-
-                if (magasinier != null && products.Any())
-                { 
-                    // Création de 15 listes de besoins avec différents statuts, en s'assurant d'avoir des besoins transmis
-                    for (int i = 1; i <= 15; i++)
-                    {
-                        NeedStatus status;
-                        // Les 5 premiers besoins sont garantis d'être transmis ou en cours d'achat
-                        if (i <= 5)
-                        {
-                            status = i % 2 == 0 ? NeedStatus.TransmittedToPurchasing : NeedStatus.InPurchase;
-                        }
-                        else
-                        {
-                            status = (NeedStatus)random.Next(0, 6);
-                        }
-                        
-                        var need = new Need
-                        {
-                            NumeroBesoin = $"BES-2024-{i:D3}",
-                            Description = $"Demande de réapprovisionnement #{i} - {DateTime.Now:MM/yyyy}",
-                            Status = status,
-                            RequestedById = magasinier.Id,
-                            RequestedAt = DateTime.UtcNow.AddDays(-i * 3),
-                            DateTransmission = status >= NeedStatus.TransmittedToPurchasing ? DateTime.UtcNow.AddDays(-i * 3).AddHours(random.Next(1, 5)) : null,
-                            UpdatedAt = DateTime.UtcNow.AddDays(-i * 3)
-                        };
-                        await context.Needs.AddAsync(need);
-                        await context.SaveChangesAsync();
-
-                        // Ajouter 3 à 7 articles par besoin pour un rendu dense
-                        int articleCount = random.Next(3, 8);
-                        var selectedProducts = products.OrderBy(x => random.Next()).Take(articleCount).ToList();
-
-                        foreach (var prod in selectedProducts)
-                        {
-                            await context.Set<NeedDetail>().AddAsync(new NeedDetail
-                            {
-                                NeedId = need.Id,
-                                ProductId = prod.Id,
-                                Quantity = random.Next(10, 100),
-                                IsNewProduct = random.Next(0, 10) > 8
-                            });
-                        }
-                    }
-                    await context.SaveChangesAsync();
-                }
-            }
-
             // 7. Initialisation des tables Bons de Livraison (BL)
             await context.Database.ExecuteSqlRawAsync(@"
                 DO $$ 
