@@ -97,6 +97,27 @@ public class EqualityConverter : IValueConverter
     }
 }
 
+public class CurrencyFormatterConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null) return "0.00 MAD";
+        
+        decimal amount = 0;
+        if (value is decimal m) amount = m;
+        else if (value is double d) amount = (decimal)d;
+        else if (value is float f) amount = (decimal)f;
+        else if (value is int i) amount = i;
+
+        return $"{amount:N2} MAD";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public class ConformityToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

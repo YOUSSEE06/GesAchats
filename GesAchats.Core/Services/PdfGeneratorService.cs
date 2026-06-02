@@ -264,7 +264,7 @@ public class PdfGeneratorService : IPdfGeneratorService
         html.AppendLine($"        <p>Fournisseur : {reglement.Supplier?.CompanyName}</p>");
         html.AppendLine($"        <p>Facture associée : {reglement.Invoice?.InvoiceNumber}</p>");
         html.AppendLine($"        <p>Mode de paiement : {reglement.PaymentMethod}</p>");
-        html.AppendLine($"        <div class='amount'>Montant réglé : {reglement.AmountPaid:N2} €</div>");
+        html.AppendLine($"        <div class='amount'>Montant réglé : {reglement.AmountPaid:N2} MAD</div>");
         if (!string.IsNullOrEmpty(reglement.ReferenceNumber))
             html.AppendLine($"        <p>Référence transaction : {reglement.ReferenceNumber}</p>");
         html.AppendLine("    </div>");

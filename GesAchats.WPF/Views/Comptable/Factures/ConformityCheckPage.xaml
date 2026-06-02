@@ -68,10 +68,10 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Article" Binding="{Binding ArticleName}" Width="*"/>
                             <DataGridTextColumn Header="BC Qté" Binding="{Binding QuantityOrdered}" Width="80"/>
-                            <DataGridTextColumn Header="BC PU" Binding="{Binding PriceOrdered, StringFormat={}{0:N2} €}" Width="80"/>
+                            <DataGridTextColumn Header="BC PU" Binding="{Binding PriceOrdered, StringFormat={}{0:N2} MAD}" Width="100"/>
                             <DataGridTextColumn Header="BL Qté" Binding="{Binding QuantityReceived}" Width="80"/>
                             <DataGridTextColumn Header="Fact. Qté" Binding="{Binding QuantityInvoiced}" Width="80"/>
-                            <DataGridTextColumn Header="Fact. PU" Binding="{Binding PriceInvoiced, StringFormat={}{0:N2} €}" Width="80"/>
+                            <DataGridTextColumn Header="Fact. PU" Binding="{Binding PriceInvoiced, StringFormat={}{0:N2} MAD}" Width="100"/>
                             <DataGridTemplateColumn Header="Statut" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
