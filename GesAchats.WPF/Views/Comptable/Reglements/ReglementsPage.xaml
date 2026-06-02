@@ -36,7 +36,7 @@
         </Border>
 
         <!-- Dashboard KPIs -->
-        <UniformGrid Grid.Row="1" Rows="1" Columns="6" Margin="20,10">
+        <UniformGrid Grid.Row="1" Rows="1" Columns="5" Margin="20,10">
             <ctrls:KpiCard Title="Total payé (Mois)" 
                            Value="{Binding TotalPaidMonth}" 
                            TrendText="{Binding TotalPaidMonthTrendText}"
@@ -51,14 +51,6 @@
                            Unit="factures"
                            Icon="Clock" 
                            IconColor="#FFC107" 
-                           Margin="4,0,4,0"/>
-
-            <ctrls:KpiCard Title="Retards Paiement" 
-                           Value="{Binding LatePaymentsCount}" 
-                           TrendText="{Binding LatePaymentsCountTrendText}"
-                           Unit="retards"
-                           Icon="TriangleExclamation" 
-                           IconColor="#F44336" 
                            Margin="4,0,4,0"/>
 
             <ctrls:KpiCard Title="Total Réglé" 
