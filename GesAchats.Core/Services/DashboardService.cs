@@ -42,6 +42,23 @@ public class DashboardService : IDashboardService
         
         return status;
     }
+    
+    private string NormalizePaymentMode(string paymentMethod)
+    {
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+            return "Autre";
+            
+        var normalized = paymentMethod.Trim().ToLowerInvariant();
+        
+        if (normalized.Contains("cheque") || normalized.Contains("chèque"))
+            return "Chèque";
+        if (normalized.Contains("virement"))
+            return "Virement";
+        if (normalized.Contains("lettre") && (normalized.Contains("echange") || normalized.Contains("échange")))
+            return "Lettre d'échange";
+            
+        return "Autre";
+    }
 
     public async Task<List<DashboardAlertDto>> GetDashboardAlertsAsync()
     {
@@ -492,10 +509,11 @@ public class DashboardService : IDashboardService
             .ToList();
         dto.BalanceEvolution = dailyBalance;
 
-        // 6. Modes de paiement
-        dto.PaymentModeDistribution = currentPayments
-            .GroupBy(p => p.PaymentMethod)
+        // 6. Modes de paiement (use allPayments to match KPI Total des règlements TTC)
+        dto.PaymentModeDistribution = allPayments
+            .GroupBy(p => NormalizePaymentMode(p.PaymentMethod))
             .Select(g => new DistributionDto { Label = g.Key, Value = (double)g.Sum(p => p.AmountPaid) })
+            .OrderByDescending(d => d.Value)
             .ToList();
 
         // 7. Dernières Opérations (filtered to only show those needing follow-up)
