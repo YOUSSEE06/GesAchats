@@ -15,10 +15,11 @@ public class ComptableDashboardDto
     public KpiItemDto PendingBl { get; set; } = new();
 
     // 3. Soldes & Règlements
-    public decimal TotalPayments { get; set; }
+    public decimal MontantTotalTTC { get; set; } // Sum of all invoice TTC
+    public decimal TotalPayments { get; set; } // Sum of all payments made
     public decimal TotalBalances { get; set; }
-    public decimal RemainingTtcBalance { get; set; }
-    public double PaymentRatePercentage { get; set; }
+    public decimal RemainingTtcBalance { get; set; } // MontantTotalTTC - TotalPayments
+    public double PaymentRatePercentage { get; set; } // (TotalPayments / MontantTotalTTC)*100
 
     // 4. Graphiques Centraux (Données)
     public List<DistributionDto> SupplierDistribution { get; set; } = new();

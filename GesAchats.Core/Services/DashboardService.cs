@@ -427,22 +427,27 @@ public class DashboardService : IDashboardService
         var allPayments = await _unitOfWork.Payments.GetAllIncludingAsync(p => p.Supplier);
         var currentPayments = allPayments.Where(p => p.PaymentDate >= start && p.PaymentDate <= end).ToList();
         
-        dto.TotalPayments = currentPayments.Sum(p => p.AmountPaid);
+        // Montant total TTC: Sum of all invoice AmountTTC (not just current period, but ALL invoices?)
+        // Wait, let's check original code's intent: let's sum all invoices, not just current period? Let's check allInvoices.
+        decimal montantTotalTTC = allInvoices.Sum(i => i.AmountTTC);
+        dto.MontantTotalTTC = montantTotalTTC;
         
-        // Summing AmountTTC of all invoices in current period
-        decimal totalTtcInPeriod = currentInvoices.Sum(i => i.AmountTTC);
+        // Total des règlements TTC: Sum of all payments made (allPayments, not just current period)
+        decimal totalDesReglementsTTC = allPayments.Sum(p => p.AmountPaid);
+        dto.TotalPayments = totalDesReglementsTTC;
         
-        // Soldes = Total TTC - Total Payé for THESE specific invoices
-        var currentInvoiceIds = currentInvoices.Select(i => i.Id).ToList();
-        var paymentsForCurrentInvoices = allPayments.Where(p => currentInvoiceIds.Contains(p.InvoiceId)).ToList();
+        // Soldes restants: MontantTotalTTC - TotalDesReglementsTTC
+        dto.RemainingTtcBalance = montantTotalTTC - totalDesReglementsTTC;
+        dto.TotalBalances = dto.RemainingTtcBalance;
         
-        decimal totalPaidForCurrentInvoices = paymentsForCurrentInvoices.Sum(p => p.AmountPaid);
-        dto.TotalBalances = totalTtcInPeriod - totalPaidForCurrentInvoices;
-        dto.RemainingTtcBalance = dto.TotalBalances;
-        
-        if (totalTtcInPeriod > 0)
+        // Taux de paiement: (TotalDesReglementsTTC / MontantTotalTTC) *100, avoiding division by zero
+        if (montantTotalTTC > 0)
         {
-            dto.PaymentRatePercentage = (double)(totalPaidForCurrentInvoices / totalTtcInPeriod) * 100;
+            dto.PaymentRatePercentage = (double)(totalDesReglementsTTC / montantTotalTTC) * 100;
+        }
+        else
+        {
+            dto.PaymentRatePercentage = 0;
         }
 
         // 4. Graphiques Centraux
@@ -493,10 +498,16 @@ public class DashboardService : IDashboardService
             .Select(g => new DistributionDto { Label = g.Key, Value = (double)g.Sum(p => p.AmountPaid) })
             .ToList();
 
-        // 7. Dernières Opérations
-        var recentInvoices = currentInvoices
+        // 7. Dernières Opérations (filtered to only show those needing follow-up)
+        var filteredInvoices = currentInvoices
+            .Where(i => 
+                (i.Status != null && 
+                 (i.Status.Equals("EnAttente", StringComparison.OrdinalIgnoreCase) || 
+                  i.Status.Equals("En attente", StringComparison.OrdinalIgnoreCase) || 
+                  i.Status.Equals("PartiellementPayee", StringComparison.OrdinalIgnoreCase) || 
+                  i.Status.Equals("Partiellement payée", StringComparison.OrdinalIgnoreCase)))
+            )
             .OrderByDescending(i => i.InvoiceDate)
-            .Take(10)
             .Select(i => new ComptableOperationDto 
             { 
                 Date = i.InvoiceDate, 
@@ -507,9 +518,13 @@ public class DashboardService : IDashboardService
                 Status = i.Status 
             });
 
-        var recentBlOps = currentBls
+        var filteredBls = currentBls
+            .Where(b => 
+                (b.Status != null && 
+                 (b.Status.Equals("EnAttente", StringComparison.OrdinalIgnoreCase) || 
+                  b.Status.Equals("En attente", StringComparison.OrdinalIgnoreCase)))
+            )
             .OrderByDescending(b => b.ReceptionDate)
-            .Take(10)
             .Select(b => new ComptableOperationDto 
             { 
                 Date = b.ReceptionDate, 
@@ -520,24 +535,10 @@ public class DashboardService : IDashboardService
                 Status = b.Status 
             });
 
-        var recentPaymentOps = currentPayments
-            .OrderByDescending(p => p.PaymentDate)
-            .Take(10)
-            .Select(p => new ComptableOperationDto 
-            { 
-                Date = p.PaymentDate, 
-                Module = "Règlement", 
-                Supplier = p.Supplier?.CompanyName ?? "Inconnu", 
-                Reference = p.PaymentNumber, 
-                AmountTtc = p.AmountPaid, 
-                Status = p.Status 
-            });
-
-        dto.RecentOperations = recentInvoices
-            .Concat(recentBlOps)
-            .Concat(recentPaymentOps)
+        // Do not include Règlement operations as they represent completed payments
+        dto.RecentOperations = filteredInvoices
+            .Concat(filteredBls)
             .OrderByDescending(o => o.Date)
-            .Take(7)
             .ToList();
 
         return dto;

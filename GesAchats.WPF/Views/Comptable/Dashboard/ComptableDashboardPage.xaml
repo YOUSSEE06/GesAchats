@@ -20,6 +20,8 @@
             </ResourceDictionary.MergedDictionaries>
             
             <conv:IsPositiveConverter x:Key="IsPositiveConverter"/>
+            <conv:ProgressBarWidthConverter x:Key="ProgressBarWidthConverter"/>
+            <conv:SkiaColorToBrushConverter x:Key="SkiaColorToBrushConverter"/>
             
             <Style x:Key="MetricCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="White"/>
@@ -30,6 +32,39 @@
                 <Style.Resources>
                     <DropShadowEffect x:Key="Shadow" BlurRadius="10" Opacity="0.05" ShadowDepth="2" Direction="270"/>
                 </Style.Resources>
+            </Style>
+
+            <!-- Custom ProgressBar Style for Taux de paiement -->
+            <Style x:Key="ModernProgressBar" TargetType="ProgressBar">
+                <Setter Property="Height" Value="16"/>
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Background" Value="#E2E8F0"/>
+                <Setter Property="Minimum" Value="0"/>
+                <Setter Property="Maximum" Value="100"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ProgressBar">
+                            <Grid Height="{TemplateBinding Height}">
+                                <Border x:Name="PART_Track" 
+                                        Background="{TemplateBinding Background}" 
+                                        CornerRadius="8"/>
+                                <Rectangle x:Name="PART_Indicator" 
+                                           Fill="{TemplateBinding Foreground}" 
+                                           HorizontalAlignment="Left"
+                                           RadiusX="8"
+                                           RadiusY="8">
+                                    <Rectangle.Width>
+                                        <MultiBinding Converter="{StaticResource ProgressBarWidthConverter}">
+                                            <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="ActualWidth"/>
+                                            <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Value"/>
+                                            <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Maximum"/>
+                                        </MultiBinding>
+                                    </Rectangle.Width>
+                                </Rectangle>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </ResourceDictionary>
     </Page.Resources>
@@ -111,33 +146,38 @@
                             <ColumnDefinition Width="1.5*"/>
                         </Grid.ColumnDefinitions>
                         
+                        <!-- Montant total TTC -->
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Total des règlements" Foreground="#64748B" FontSize="13"/>
-                            <TextBlock Text="{Binding Data.TotalPayments, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#0F172A" Margin="0,4,0,0"/>
+                            <TextBlock Text="Montant total TTC" Foreground="#64748B" FontSize="13"/>
+                            <TextBlock Text="{Binding Data.MontantTotalTTC, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#0F172A" Margin="0,4,0,0"/>
                         </StackPanel>
                         
                         <Separator Grid.Column="1" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0"/>
                         
+                        <!-- Total des règlements TTC -->
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Total des soldes" Foreground="#64748B" FontSize="13"/>
-                            <TextBlock Text="{Binding Data.TotalBalances, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#EF4444" Margin="0,4,0,0"/>
+                            <TextBlock Text="Total des règlements TTC" Foreground="#64748B" FontSize="13"/>
+                            <TextBlock Text="{Binding Data.TotalPayments, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#22C55E" Margin="0,4,0,0"/>
                         </StackPanel>
                         
                         <Separator Grid.Column="3" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0"/>
 
+                        <!-- Soldes restants TTC -->
                         <StackPanel Grid.Column="4">
                             <TextBlock Text="Soldes restants TTC" Foreground="#64748B" FontSize="13"/>
-                            <TextBlock Text="{Binding Data.RemainingTtcBalance, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#0F172A" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Data.RemainingTtcBalance, StringFormat={}{0:N2} MAD}" FontSize="24" FontWeight="Bold" Foreground="#EF4444" Margin="0,4,0,0"/>
                         </StackPanel>
                         
                         <Separator Grid.Column="5" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0"/>
                         
                         <StackPanel Grid.Column="6">
                             <Grid>
-                                <TextBlock Text="Taux de paiement" Foreground="#64748B" FontSize="13"/>
-                                <TextBlock Text="{Binding Data.PaymentRatePercentage, StringFormat={}{0:N1}%}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}"/>
+                                <TextBlock Text="Taux de paiement" Foreground="#64748B" FontSize="14"/>
+                                <TextBlock Text="{Binding Data.PaymentRatePercentage, StringFormat={}{0:N1}%}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="16" Foreground="{StaticResource PrimaryBrush}"/>
                             </Grid>
-                            <ProgressBar Value="{Binding Data.PaymentRatePercentage}" Height="10" Margin="0,8,0,0" Foreground="{StaticResource PrimaryBrush}" Background="#E2E8F0"/>
+                            <ProgressBar Style="{StaticResource ModernProgressBar}" 
+                                         Value="{Binding Data.PaymentRatePercentage}" 
+                                         Margin="0,10,0,0"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -158,13 +198,31 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Répartition des règlements par fournisseur" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
-                            <Grid Grid.Row="1" Height="280">
-                                <lvc:PieChart Series="{Binding SupplierDistributionSeries}" LegendPosition="Bottom" InitialRotation="-90"/>
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,30">
-                                    <TextBlock Text="{Binding TotalSupplierAmount, StringFormat={}{0:N0} MAD}" FontSize="18" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                            <TextBlock Grid.Row="0" Text="Montants par mode de paiement" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Left: Donut + Total -->
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding PaymentModePieSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalPaymentModeAmount, StringFormat={}{0:N0} MAD}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
                                 </StackPanel>
+                                <!-- Right: Custom Legend -->
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding PaymentModePieSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </Grid>
                         </Grid>
                     </Border>
@@ -177,12 +235,30 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="Statut des factures" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
-                            <Grid Grid.Row="1" Height="280">
-                                <lvc:PieChart Series="{Binding InvoiceStatusSeries}" LegendPosition="Bottom" InitialRotation="-90"/>
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,30">
-                                    <TextBlock Text="{Binding TotalInvoicesCount}" FontSize="22" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Left: Donut + Total -->
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding InvoiceStatusSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalInvoicesCount}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
                                 </StackPanel>
+                                <!-- Right: Custom Legend -->
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding InvoiceStatusSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </Grid>
                         </Grid>
                     </Border>
@@ -195,188 +271,183 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="Statut des bons de livraison" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
-                            <Grid Grid.Row="1" Height="280">
-                                <lvc:PieChart Series="{Binding BlStatusSeries}" LegendPosition="Bottom" InitialRotation="-90"/>
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,30">
-                                    <TextBlock Text="{Binding TotalBlCount}" FontSize="22" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Left: Donut + Total -->
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding BlStatusSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalBlCount}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
                                 </StackPanel>
+                                <!-- Right: Custom Legend -->
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding BlStatusSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </Grid>
                         </Grid>
                     </Border>
                 </Grid>
 
-                <!-- 5 & 6. EVOLUTION & MODES -->
-                <Grid Margin="0,0,0,24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <!-- Chart 4 -->
-                    <Border Grid.Column="0" Margin="0,0,12,0" Style="{StaticResource MetricCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Évolution des paiements et des soldes" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
-                            <lvc:CartesianChart Grid.Row="1" Series="{Binding PaymentEvolutionSeries}" XAxes="{Binding XAxes}" Height="300" LegendPosition="Bottom"/>
-                        </Grid>
-                    </Border>
-                    
-                    <!-- Chart 5 -->
-                    <Border Grid.Column="1" Margin="6,0,0,0" Style="{StaticResource MetricCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Montants par mode de paiement" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
-                            <lvc:CartesianChart Grid.Row="1" Series="{Binding PaymentModeSeries}" 
-                                                XAxes="{Binding PaymentModeXAxes}"
-                                                Height="300" 
-                                                LegendPosition="Hidden"
-                                                TooltipPosition="Top"/>
-                        </Grid>
-                    </Border>
-                </Grid>
+                <!-- 5. EVOLUTION -->
+                <Border Margin="0,0,0,24" Style="{StaticResource MetricCardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Évolution des paiements et des soldes" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                        <lvc:CartesianChart Grid.Row="1" Series="{Binding PaymentEvolutionSeries}" XAxes="{Binding XAxes}" Height="300" LegendPosition="Bottom"/>
+                    </Grid>
+                </Border>
 
                 <!-- 7. DERNIÈRES OPÉRATIONS -->
                 <Border Style="{StaticResource MetricCardStyle}">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="Dernières Opérations" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        <TextBlock DockPanel.Dock="Top" Text="Alertes &amp; points d'attention" Foreground="#071B3A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
                         
-                        <DataGrid Style="{StaticResource ModernDataGrid}" 
-                                  ItemsSource="{Binding Data.RecentOperations}" 
-                                  RowHeight="40"
-                                  VerticalScrollBarVisibility="Disabled"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  ClipToBounds="False">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="DATE" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
-                                
-                                <DataGridTemplateColumn Header="MODULE" Width="1.5*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" ClipToBounds="False">
-                                                <fa:IconImage Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center">
-                                                    <fa:IconImage.Style>
-                                                        <Style TargetType="fa:IconImage">
-                                                            <Setter Property="Icon" Value="FileInvoice"/>
-                                                            <Setter Property="Foreground" Value="#64748B"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Module}" Value="Facture">
-                                                                    <Setter Property="Icon" Value="FileInvoice"/>
-                                                                    <Setter Property="Foreground" Value="#2563EB"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Module}" Value="BL">
-                                                                    <Setter Property="Icon" Value="Truck"/>
-                                                                    <Setter Property="Foreground" Value="#F59E0B"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Module}" Value="Règlement">
-                                                                    <Setter Property="Icon" Value="CreditCard"/>
-                                                                    <Setter Property="Foreground" Value="#10B981"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </fa:IconImage.Style>
-                                                </fa:IconImage>
-                                                <TextBlock Text="{Binding Module}" VerticalAlignment="Center" FontSize="13"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="280">
+                            <DataGrid Style="{StaticResource ModernDataGrid}" 
+                                      ItemsSource="{Binding Data.RecentOperations}" 
+                                      RowHeight="40"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      ClipToBounds="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="DATE" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="1*"/>
+                                    
+                                    <DataGridTemplateColumn Header="MODULE" Width="1.5*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" ClipToBounds="False">
+                                                    <fa:IconImage Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <fa:IconImage.Style>
+                                                            <Style TargetType="fa:IconImage">
+                                                                <Setter Property="Icon" Value="FileInvoice"/>
+                                                                <Setter Property="Foreground" Value="#64748B"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="Facture">
+                                                                        <Setter Property="Icon" Value="FileInvoice"/>
+                                                                        <Setter Property="Foreground" Value="#2563EB"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="BL">
+                                                                        <Setter Property="Icon" Value="Truck"/>
+                                                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="Règlement">
+                                                                        <Setter Property="Icon" Value="CreditCard"/>
+                                                                        <Setter Property="Foreground" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </fa:IconImage.Style>
+                                                    </fa:IconImage>
+                                                    <TextBlock Text="{Binding Module}" VerticalAlignment="Center" FontSize="13"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier}" Width="2*"/>
-                                
-                                <DataGridTextColumn Header="RÉFÉRENCE" Binding="{Binding Reference}" Width="1.2*">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                    <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier}" Width="2*"/>
+                                    
+                                    <DataGridTextColumn Header="RÉFÉRENCE" Binding="{Binding Reference}" Width="1.2*">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTextColumn Header="MONTANT TTC" Binding="{Binding AmountTtc, StringFormat={}{0:N2} MAD}" Width="1.5*">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                    <DataGridTextColumn Header="MONTANT TTC" Binding="{Binding AmountTtc, StringFormat={}{0:N2} MAD}" Width="1.5*">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Header="STATUT" Width="180" MinWidth="180">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ClipToBounds="False">
-                                                <Border CornerRadius="12" 
-                                                        Padding="12,0" 
-                                                        Height="26"
-                                                        VerticalAlignment="Center" 
-                                                        HorizontalAlignment="Center" 
-                                                        MinWidth="110" 
-                                                        ClipToBounds="False"
-                                                        SnapsToDevicePixels="True"
-                                                        UseLayoutRounding="True">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#94A3B8"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Payee">
-                                                                    <Setter Property="Background" Value="#10B981"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Payée">
-                                                                    <Setter Property="Background" Value="#10B981"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Validé">
-                                                                    <Setter Property="Background" Value="#10B981"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Valide">
-                                                                    <Setter Property="Background" Value="#10B981"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="EnAttente">
-                                                                    <Setter Property="Background" Value="#F59E0B"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="En attente">
-                                                                    <Setter Property="Background" Value="#F59E0B"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="PartiellementPayee">
-                                                                    <Setter Property="Background" Value="#F97316"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Partiellement payée">
-                                                                    <Setter Property="Background" Value="#F97316"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Rejetée">
-                                                                    <Setter Property="Background" Value="#EF4444"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Rejetee">
-                                                                    <Setter Property="Background" Value="#EF4444"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <TextBlock Text="{Binding Status}" 
-                                                               Foreground="White" 
-                                                               FontSize="11" 
-                                                               FontWeight="Bold" 
-                                                               TextTrimming="None" 
-                                                               TextWrapping="NoWrap" 
-                                                               HorizontalAlignment="Center" 
-                                                               VerticalAlignment="Center"
-                                                               TextOptions.TextFormattingMode="Display"
-                                                               TextOptions.TextRenderingMode="ClearType"
-                                                               SnapsToDevicePixels="True"/>
-                                                </Border>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                    <DataGridTemplateColumn Header="STATUT" Width="180" MinWidth="180">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ClipToBounds="False">
+                                                    <Border CornerRadius="12" 
+                                                            Padding="12,0" 
+                                                            Height="26"
+                                                            VerticalAlignment="Center" 
+                                                            HorizontalAlignment="Center" 
+                                                            MinWidth="110" 
+                                                            ClipToBounds="False"
+                                                            SnapsToDevicePixels="True"
+                                                            UseLayoutRounding="True">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#94A3B8"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Payee">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Payée">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Validé">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Valide">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="EnAttente">
+                                                                        <Setter Property="Background" Value="#F59E0B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="En attente">
+                                                                        <Setter Property="Background" Value="#F59E0B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="PartiellementPayee">
+                                                                        <Setter Property="Background" Value="#F97316"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Partiellement payée">
+                                                                        <Setter Property="Background" Value="#F97316"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Rejetée">
+                                                                        <Setter Property="Background" Value="#EF4444"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Rejetee">
+                                                                        <Setter Property="Background" Value="#EF4444"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding Status}" 
+                                                                   Foreground="White" 
+                                                                   FontSize="11" 
+                                                                   FontWeight="Bold" 
+                                                                   TextTrimming="None" 
+                                                                   TextWrapping="NoWrap" 
+                                                                   HorizontalAlignment="Center" 
+                                                                   VerticalAlignment="Center"
+                                                                   TextOptions.TextFormattingMode="Display"
+                                                                   TextOptions.TextRenderingMode="ClearType"
+                                                                   SnapsToDevicePixels="True"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
 

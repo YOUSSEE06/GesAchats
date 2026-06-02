@@ -44,16 +44,13 @@ public partial class ComptableDashboardViewModel : ObservableObject
     private IEnumerable<ISeries> _paymentEvolutionSeries = [];
 
     [ObservableProperty]
-    private IEnumerable<ISeries> _paymentModeSeries = [];
+    private IEnumerable<ISeries> _paymentModePieSeries = [];
 
     [ObservableProperty]
     private Axis[] _xAxes = [];
 
     [ObservableProperty]
-    private Axis[] _paymentModeXAxes = [];
-
-    [ObservableProperty]
-    private double _totalSupplierAmount;
+    private double _totalPaymentModeAmount;
 
     [ObservableProperty]
     private double _totalInvoicesCount;
@@ -94,17 +91,21 @@ public partial class ComptableDashboardViewModel : ObservableObject
 
     private void UpdateCharts()
     {
-        TotalSupplierAmount = Data.SupplierDistribution.Sum(d => d.Value);
+        TotalPaymentModeAmount = Data.PaymentModeDistribution.Sum(d => d.Value);
         TotalInvoicesCount = Data.InvoiceStatusDistribution.Sum(d => d.Value);
         TotalBlCount = Data.BlStatusDistribution.Sum(d => d.Value);
 
-        // 1. Supplier Distribution (Doughnut)
-        SupplierDistributionSeries = Data.SupplierDistribution.Select(d => new PieSeries<double>
+        // 1. Payment Mode Distribution (Doughnut)
+        PaymentModePieSeries = Data.PaymentModeDistribution.Select(d => new PieSeries<double>
         {
             Values = new[] { d.Value },
             Name = d.Label,
             InnerRadius = 55,
-            ToolTipLabelFormatter = point => $"{point.Coordinate.PrimaryValue:N2} MAD"
+            ToolTipLabelFormatter = point => $"{point.Coordinate.PrimaryValue:N2} MAD",
+            Fill = d.Label.Contains("Virement") ? new SolidColorPaint(new SKColor(34, 197, 94)) :
+                   d.Label.Contains("Chèque") || d.Label.Contains("Cheque") ? new SolidColorPaint(new SKColor(245, 158, 11)) :
+                   d.Label.Contains("Lettre") ? new SolidColorPaint(new SKColor(59, 130, 246)) :
+                   new SolidColorPaint(new SKColor(100, 116, 139))
         }).ToList();
 
         // 2. Invoice Status (Doughnut)
@@ -177,42 +178,6 @@ public partial class ComptableDashboardViewModel : ObservableObject
             }
         };
 
-        // 5. Modes de Paiement (Bar)
-        PaymentModeSeries = Data.PaymentModeDistribution.Select((d, index) => 
-        {
-            var values = new double?[Data.PaymentModeDistribution.Count];
-            for (int i = 0; i < values.Length; i++) values[i] = 0;
-            values[index] = d.Value;
 
-            return (ISeries)new ColumnSeries<double?>
-            {
-                Values = values,
-                Name = d.Label,
-                Padding = 15,
-                MaxBarWidth = 60,
-                Rx = 8,
-                Ry = 8,
-                DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
-                DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:N2} MAD",
-                DataLabelsPaint = new SolidColorPaint(new SKColor(15, 23, 42)),
-                DataLabelsSize = 12,
-                Fill = d.Label.Contains("Virement") ? new SolidColorPaint(new SKColor(34, 197, 94)) :
-                       d.Label.Contains("Chèque") || d.Label.Contains("Cheque") ? new SolidColorPaint(new SKColor(245, 158, 11)) :
-                       d.Label.Contains("Lettre") ? new SolidColorPaint(new SKColor(59, 130, 246)) :
-                       new SolidColorPaint(new SKColor(100, 116, 139))
-            };
-        }).ToArray();
-
-        PaymentModeXAxes = new[]
-        {
-            new Axis
-            {
-                Labels = Data.PaymentModeDistribution.Select(d => d.Label).ToArray(),
-                LabelsRotation = 0,
-                TextSize = 13,
-                LabelsPaint = new SolidColorPaint(new SKColor(15, 23, 42)),
-                SeparatorsPaint = null
-            }
-        };
     }
 }
