@@ -24,7 +24,7 @@ namespace GesAchats.WPF.ViewModels
     public partial class ChartBarData : ObservableObject
     {
         [ObservableProperty]
-        private string _label;
+        private string _label = string.Empty;
 
         [ObservableProperty]
         private int _value;
@@ -33,6 +33,6 @@ namespace GesAchats.WPF.ViewModels
         private double _barHeight;
 
         [ObservableProperty]
-        private Brush _barColor;
+        private Brush _barColor = Brushes.Transparent;
     }
 }

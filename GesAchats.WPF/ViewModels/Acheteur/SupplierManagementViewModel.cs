@@ -76,10 +76,10 @@ public class SupplierManagementViewModel : BaseViewModel
             var searchLower = SearchText.ToLower();
             filtered = filtered.Where(s => 
                 s.CompanyName.ToLower().Contains(searchLower) || 
-                s.ContactName.ToLower().Contains(searchLower) ||
-                s.Email.ToLower().Contains(searchLower) ||
-                s.Phone.ToLower().Contains(searchLower) ||
-                s.City.ToLower().Contains(searchLower));
+                (s.ContactName != null && s.ContactName.ToLower().Contains(searchLower)) ||
+                (s.Email != null && s.Email.ToLower().Contains(searchLower)) ||
+                (s.Phone != null && s.Phone.ToLower().Contains(searchLower)) ||
+                (s.City != null && s.City.ToLower().Contains(searchLower)));
         }
         
         Suppliers.Clear();

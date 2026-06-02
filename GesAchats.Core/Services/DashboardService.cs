@@ -54,6 +54,8 @@ public class DashboardService : IDashboardService
             return "Chèque";
         if (normalized.Contains("virement"))
             return "Virement";
+        if (normalized.Contains("espece") || normalized.Contains("espèce"))
+            return "Espèce";
         if (normalized.Contains("lettre") && (normalized.Contains("echange") || normalized.Contains("échange")))
             return "Lettre d'échange";
             
@@ -569,5 +571,242 @@ public class DashboardService : IDashboardService
             return current > 0 ? 100 : 0;
         }
         return Math.Round(((double)(current - previous.Value) / previous.Value) * 100, 1);
+    }
+
+    // Admin Dashboard Method
+    public async Task<AdminDashboardDto> GetAdminDashboardDataAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        Log.Information("Loading Admin Dashboard Data...");
+        var now = DateTime.UtcNow;
+        var end = endDate ?? now;
+        var start = startDate ?? end.AddMonths(-1);
+        
+        // Calculate duration for previous period
+        var duration = end - start;
+        var previousStart = start - duration;
+        var previousEnd = start;
+
+        // Load all data
+        Log.Information("Fetching products...");
+        var products = await _unitOfWork.Products.GetAllAsync();
+        Log.Information($"Fetched {products.Count()} products");
+        
+        Log.Information("Fetching needs...");
+        var needs = await _unitOfWork.Needs.GetAllAsync();
+        Log.Information($"Fetched {needs.Count()} needs");
+        var currentNeeds = needs.Where(n => n.RequestedAt >= start && n.RequestedAt <= end).ToList();
+        
+        Log.Information("Fetching stock exits...");
+        var stockExits = await _unitOfWork.StockExits.GetAllAsync();
+        Log.Information($"Fetched {stockExits.Count()} stock exits");
+        var currentStockExits = stockExits.Where(s => s.ExitDate >= start && s.ExitDate <= end).ToList();
+        
+        Log.Information("Fetching delivery notes...");
+        var deliveryNotes = await _unitOfWork.DeliveryNotes.GetAllAsync();
+        Log.Information($"Fetched {deliveryNotes.Count()} delivery notes");
+        var currentDeliveryNotes = deliveryNotes.Where(d => d.ReceptionDate >= start && d.ReceptionDate <= end).ToList();
+        
+        Log.Information("Fetching purchase orders...");
+        var purchaseOrders = await _unitOfWork.PurchaseOrders.GetAllAsync();
+        Log.Information($"Fetched {purchaseOrders.Count()} purchase orders");
+        var currentPurchaseOrders = purchaseOrders.Where(p => p.OrderDate >= start && p.OrderDate <= end).ToList();
+        
+        Log.Information("Fetching invoices...");
+        var invoices = await _unitOfWork.Invoices.GetAllAsync();
+        Log.Information($"Fetched {invoices.Count()} invoices");
+        var currentInvoices = invoices.Where(i => i.InvoiceDate >= start && i.InvoiceDate <= end).ToList();
+        
+        Log.Information("Fetching payments...");
+        var payments = await _unitOfWork.Payments.GetAllAsync();
+        Log.Information($"Fetched {payments.Count()} payments");
+        var currentPayments = payments.Where(p => p.PaymentDate >= start && p.PaymentDate <= end).ToList();
+        
+        Log.Information("Fetching suppliers...");
+        var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
+        Log.Information($"Fetched {suppliers.Count()} suppliers");
+
+        // Get previous period counts for evolution
+        var previousProductsCount = products.Count(p => p.CreatedAt >= previousStart && p.CreatedAt <= previousEnd);
+        var previousNeedsCount = needs.Count(n => n.RequestedAt >= previousStart && n.RequestedAt <= previousEnd);
+        var previousStockExitsCount = stockExits.Count(s => s.ExitDate >= previousStart && s.ExitDate <= previousEnd);
+        var previousDeliveryNotesCount = deliveryNotes.Count(d => d.ReceptionDate >= previousStart && d.ReceptionDate <= previousEnd);
+        var previousPurchaseOrdersCount = purchaseOrders.Count(p => p.OrderDate >= previousStart && p.OrderDate <= previousEnd);
+        var previousInvoicesCount = invoices.Count(i => i.InvoiceDate >= previousStart && i.InvoiceDate <= previousEnd);
+        var previousPaidInvoicesCount = invoices.Count(i => i.InvoiceDate >= previousStart && i.InvoiceDate <= previousEnd && i.Status?.Contains("Payée") == true);
+        var previousPendingInvoicesCount = invoices.Count(i => i.InvoiceDate >= previousStart && i.InvoiceDate <= previousEnd && i.Status?.Contains("En attente") == true);
+        var previousPaymentsTotal = payments.Where(p => p.PaymentDate >= previousStart && p.PaymentDate <= previousEnd).Sum(p => p.AmountPaid);
+        var previousActiveSuppliersCount = suppliers.Count(s => s.IsActive && s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd);
+
+        var dto = new AdminDashboardDto();
+
+        // 1. First Row KPIs (Current Period)
+        dto.Produits.Value = products.Count(); // Total products, not just current period
+        dto.Produits.VariationPercentage = CalculateEvolution(products.Count(), previousProductsCount > 0 ? previousProductsCount : null);
+
+        dto.StockTotal.Value = (double)products.Sum(p => p.CurrentStock); // Total stock, not just current period
+        dto.StockTotal.VariationPercentage = 12.3; // Placeholder for now
+
+        dto.Besoins.Value = currentNeeds.Count();
+        dto.Besoins.VariationPercentage = CalculateEvolution(currentNeeds.Count(), previousNeedsCount > 0 ? previousNeedsCount : null);
+
+        dto.SortiesDeStock.Value = currentStockExits.Count();
+        dto.SortiesDeStock.VariationPercentage = CalculateEvolution(currentStockExits.Count(), previousStockExitsCount > 0 ? previousStockExitsCount : null);
+
+        dto.BonsDeLivraison.Value = currentDeliveryNotes.Count();
+        dto.BonsDeLivraison.VariationPercentage = CalculateEvolution(currentDeliveryNotes.Count(), previousDeliveryNotesCount > 0 ? previousDeliveryNotesCount : null);
+
+        dto.BonsDeCommande.Value = currentPurchaseOrders.Count();
+        dto.BonsDeCommande.VariationPercentage = CalculateEvolution(currentPurchaseOrders.Count(), previousPurchaseOrdersCount > 0 ? previousPurchaseOrdersCount : null);
+
+        // 2. Second Row KPIs (Current Period)
+        dto.FacturesTotal.Value = currentInvoices.Count();
+        dto.FacturesTotal.VariationPercentage = CalculateEvolution(currentInvoices.Count(), previousInvoicesCount > 0 ? previousInvoicesCount : null);
+
+        dto.FacturesPayees.Value = currentInvoices.Count(i => i.Status?.Contains("Payée") == true);
+        dto.FacturesPayees.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status?.Contains("Payée") == true), previousPaidInvoicesCount > 0 ? previousPaidInvoicesCount : null);
+
+        dto.FacturesEnAttente.Value = currentInvoices.Count(i => i.Status?.Contains("En attente") == true);
+        dto.FacturesEnAttente.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status?.Contains("En attente") == true), previousPendingInvoicesCount > 0 ? previousPendingInvoicesCount : null);
+
+        var totalPaid = currentPayments.Sum(p => p.AmountPaid);
+        dto.TotalRegle.Value = (double)totalPaid;
+        dto.TotalRegle.VariationPercentage = previousPaymentsTotal > 0 
+            ? Math.Round(((double)(totalPaid - previousPaymentsTotal) / (double)previousPaymentsTotal) * 100, 1) 
+            : (totalPaid > 0 ? 100 : 0);
+
+        // Solde Total: Sum all invoices (total TTC) minus all payments (total paid) - regardless of period, like Comptable
+        dto.SoldeTotal.Value = (double)(invoices.Sum(i => i.AmountTTC) - payments.Sum(p => p.AmountPaid));
+        dto.SoldeTotal.VariationPercentage = -4.2; // Placeholder
+
+        dto.FournisseursActifs.Value = suppliers.Count(s => s.IsActive); // Total active suppliers
+        dto.FournisseursActifs.VariationPercentage = CalculateEvolution(suppliers.Count(s => s.IsActive), previousActiveSuppliersCount > 0 ? previousActiveSuppliersCount : null);
+
+        // 3. Charts Data
+        // Operation Distribution (Bar Chart) - Current Period - matching reference photo
+        dto.OperationDistribution = new List<DistributionDto>
+        {
+            new DistributionDto { Label = "Stock", Value = (double)products.Sum(p => p.CurrentStock) }, // Stock Total
+            new DistributionDto { Label = "Besoins", Value = currentNeeds.Count() },
+            new DistributionDto { Label = "Sorties", Value = currentStockExits.Count() },
+            new DistributionDto { Label = "BL", Value = currentDeliveryNotes.Count() },
+            new DistributionDto { Label = "BC", Value = currentPurchaseOrders.Count() },
+            new DistributionDto { Label = "Factures", Value = currentInvoices.Count() },
+            new DistributionDto { Label = "Paiements", Value = currentPayments.Count() }
+        };
+
+        // Stock Status (Donut Chart) - Always all products (since stock is current)
+        int okCount = 0;
+        int alertCount = 0;
+        int ruptureCount = 0;
+        foreach (var product in products)
+        {
+            if (product.CurrentStock > product.MinimumStock) okCount++;
+            else if (product.CurrentStock > 0) alertCount++;
+            else ruptureCount++;
+        }
+        dto.StockStatus = new List<DistributionDto>
+        {
+            new DistributionDto { Label = "OK", Value = okCount },
+            new DistributionDto { Label = "Alerte", Value = alertCount },
+            new DistributionDto { Label = "Rupture", Value = ruptureCount }
+        };
+
+        // Invoice Status (Donut Chart) - Current Period
+        dto.InvoiceStatus = new List<DistributionDto>
+        {
+            new DistributionDto { Label = "Payée", Value = currentInvoices.Count(i => i.Status?.Contains("Payée") == true) },
+            new DistributionDto { Label = "Partiellement payée", Value = currentInvoices.Count(i => i.Status?.Contains("Partiellement") == true) },
+            new DistributionDto { Label = "En attente", Value = currentInvoices.Count(i => i.Status?.Contains("En attente") == true) }
+        };
+
+        // Monthly Stock Movements (Line Chart) - Let's use current period, or last 6 months? Let's keep last 6 months
+        for (int i = 5; i >= 0; i--)
+        {
+            var monthDate = end.AddMonths(-i);
+            var firstDay = new DateTime(monthDate.Year, monthDate.Month, 1);
+            var lastDay = firstDay.AddMonths(1).AddDays(-1);
+
+            var incoming = deliveryNotes
+                .Where(d => d.ReceptionDate >= firstDay && d.ReceptionDate <= lastDay)
+                .Sum(d => d.ReceivedQuantity);
+            var outgoing = stockExits
+                .Where(s => s.ExitDate >= firstDay && s.ExitDate <= lastDay)
+                .Sum(s => s.Quantity);
+
+            dto.MonthlyIncoming.Add(new TimeSeriesDataDto { Date = firstDay, Value = (double)incoming });
+            dto.MonthlyOutgoing.Add(new TimeSeriesDataDto { Date = firstDay, Value = (double)outgoing });
+        }
+
+        // Payment Method Distribution (Donut Chart) - Current Period
+        dto.PaymentMethodDistribution = currentPayments
+            .GroupBy(p => NormalizePaymentMode(p.PaymentMethod))
+            .Select(g => new DistributionDto { Label = g.Key, Value = (double)g.Sum(p => p.AmountPaid) })
+            .ToList();
+
+        // 4. Recent Activities - Current Period
+        var activities = new List<AdminRecentActivityDto>();
+        activities.AddRange(currentNeeds.Select(n => new AdminRecentActivityDto
+        {
+            Date = n.RequestedAt,
+            Module = "Besoin",
+            Reference = n.NumeroBesoin,
+            Description = n.Description ?? "Demande de besoin",
+            Status = n.Status switch
+            {
+                NeedStatus.Draft => "Brouillon",
+                NeedStatus.ToValidate => "À valider",
+                NeedStatus.TransmittedToPurchasing => "Transmis à l'achat",
+                NeedStatus.Validated => "Validé",
+                NeedStatus.InPurchase => "En cours d'achat",
+                NeedStatus.Cancelled => "Annulé",
+                NeedStatus.Rejected => "Rejeté",
+                NeedStatus.Relaunched => "Relancé",
+                _ => "En attente"
+            }
+        }));
+        activities.AddRange(currentDeliveryNotes.Select(d => new AdminRecentActivityDto
+        {
+            Date = d.ReceptionDate,
+            Module = "BL",
+            Reference = d.DeliveryNumber,
+            Description = "Bon de livraison",
+            Status = d.Status ?? "En attente"
+        }));
+        activities.AddRange(currentPurchaseOrders.Select(p => new AdminRecentActivityDto
+        {
+            Date = p.OrderDate,
+            Module = "BC",
+            Reference = p.OrderNumber,
+            Description = "Bon de commande",
+            Status = p.Status ?? "En attente"
+        }));
+        activities.AddRange(currentInvoices.Select(i => new AdminRecentActivityDto
+        {
+            Date = i.InvoiceDate,
+            Module = "Facture",
+            Reference = i.InvoiceNumber,
+            Description = $"Facture de {i.AmountTTC:F2} MAD",
+            Status = i.Status ?? "En attente"
+        }));
+        activities.AddRange(currentPayments.Select(p => new AdminRecentActivityDto
+        {
+            Date = p.PaymentDate,
+            Module = "Paiement",
+            Reference = p.PaymentNumber,
+            Description = $"Paiement de {p.AmountPaid:F2} MAD",
+            Status = p.Status ?? "Effectué"
+        }));
+        activities.AddRange(currentStockExits.Select(s => new AdminRecentActivityDto
+        {
+            Date = s.ExitDate,
+            Module = "Sortie Stock",
+            Reference = $"Sortie-{s.Id}",
+            Description = s.Reason ?? "Sortie de stock",
+            Status = "Effectuée"
+        }));
+        dto.RecentActivities = activities.OrderByDescending(a => a.Date).Take(10).ToList();
+        
+        Log.Information("Admin Dashboard Data loaded successfully!");
+        return dto;
     }
 }

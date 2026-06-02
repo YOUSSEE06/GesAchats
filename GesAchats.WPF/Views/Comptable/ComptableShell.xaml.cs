@@ -46,11 +46,11 @@ public partial class ComptableShell : Window
         {
             if (page is INavigatable navigatable)
             {
-                navigatable.OnNavigatedTo(parameter);
+                navigatable.OnNavigatedTo(parameter!);
             }
             else if (page.DataContext is INavigatable navigatableVm)
             {
-                navigatableVm.OnNavigatedTo(parameter);
+                navigatableVm.OnNavigatedTo(parameter!);
             }
             MainFrame.Navigate(page);
         }

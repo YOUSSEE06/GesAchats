@@ -211,4 +211,20 @@
         </Setter>
     </Style>
 
+    <!-- Reusable Status Badge DataTemplate -->
+    <DataTemplate x:Key="StatusBadgeTemplate">
+        <Border CornerRadius="20" 
+                Padding="14,8" 
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Left"
+                SnapsToDevicePixels="True"
+                Background="{Binding Converter={StaticResource StatusToBackgroundConverter}}">
+            <TextBlock Text="{Binding}" 
+                       FontSize="12" 
+                       FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"
+                       Foreground="{Binding Converter={StaticResource StatusToForegroundConverter}}"/>
+        </Border>
+    </DataTemplate>
+
 </ResourceDictionary>

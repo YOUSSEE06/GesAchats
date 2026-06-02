@@ -3,128 +3,545 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GesAchats.WPF.Views.Admin.Dashboard"
+      xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
       xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
       xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
       mc:Ignorable="d" 
-      d:DesignHeight="800" d:DesignWidth="1200"
-      Title="Tableau de bord Administrateur">
+      d:DesignHeight="1200" d:DesignWidth="1200"
+      Title="Tableau de bord Général">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Shared/Colors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <conv:IsPositiveConverter x:Key="IsPositiveConverter"/>
+            <conv:SkiaColorToBrushConverter x:Key="SkiaColorToBrushConverter"/>
+
+            <Style x:Key="MetricCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="15"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Style.Resources>
+                    <DropShadowEffect x:Key="Shadow" BlurRadius="10" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+                </Style.Resources>
+            </Style>
+            
+            <!-- Custom Modern DataGrid Style -->
+            <Style x:Key="ModernDataGrid" TargetType="DataGrid">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="RowBackground" Value="White"/>
+                <Setter Property="AlternationCount" Value="2"/>
+                <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+                <Setter Property="HeadersVisibility" Value="Column"/>
+                <Setter Property="CanUserAddRows" Value="False"/>
+                <Setter Property="CanUserDeleteRows" Value="False"/>
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="GridLinesVisibility" Value="None"/>
+                <Setter Property="AutoGenerateColumns" Value="False"/>
+                <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+            </Style>
+            
+            <Style x:Key="ModernDataGridHeader" TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#F8FAFC"/>
+                <Setter Property="Foreground" Value="#64748B"/>
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Height" Value="40"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+            
+            <Style x:Key="ModernDataGridCell" TargetType="DataGridCell">
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Foreground" Value="#0F172A"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="#0F172A"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
 
     <Grid Background="#F8FAFC">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24">
+                
+                <!-- Header -->
+                <Grid Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Tableau de bord Général" FontSize="28" FontWeight="Bold" Foreground="#0F172A"/>
+                <TextBlock Text="Vue d'ensemble des statistiques de l'application" Foreground="#64748B" FontSize="14" Margin="0,4,0,0"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <DatePicker SelectedDate="{Binding StartDate}" 
+                            Width="160" Margin="0,0,12,0"
+                            VerticalContentAlignment="Center"
+                            Height="35"/>
+                <DatePicker SelectedDate="{Binding EndDate}" 
+                            Width="160" Margin="0,0,12,0"
+                            VerticalContentAlignment="Center"
+                            Height="35"/>
+                <Button Command="{Binding RefreshCommand}" 
+                        Style="{StaticResource MaterialDesignRaisedButton}" 
+                        Background="{StaticResource PrimaryBrush}" 
+                        BorderBrush="{StaticResource PrimaryBrush}"
+                        Height="35">
+                    <StackPanel Orientation="Horizontal">
+                        <fa:IconImage Icon="Sync" Width="14" Height="14" Foreground="White" Margin="0,0,8,0"/>
+                        <TextBlock Text="Actualiser"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
-        <!-- KPI Cards Section -->
-        <UniformGrid Grid.Row="0" Columns="4" Margin="25,25,25,10">
-            <!-- Montant Total -->
-            <Border Style="{StaticResource ModernCard}" Margin="0,0,15,0" Padding="15">
-                <Grid>
+                <!-- 1. First Row of KPIs (6 cards) -->
+                <Grid Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="💰" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Montant Total" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding TotalAmount}" FontSize="20" FontWeight="Bold" Foreground="#22C55E"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
 
-            <!-- Paiements -->
-            <Border Style="{StaticResource ModernCard}" Margin="0,0,15,0" Padding="15">
-                <Grid>
+                    <controls:KpiCard Grid.Column="0" Margin="0,0,8,0" 
+                                      Title="Produits" 
+                                      Value="{Binding Data.Produits.Value}" 
+                                      Icon="Box" 
+                                      IconColor="#3B82F6" 
+                                      TrendText="{Binding ProduitsTrend}" 
+                                      IsPositiveTrend="{Binding ProduitsIsPositive}"/>
+                    <controls:KpiCard Grid.Column="1" Margin="4,0,8,0" 
+                                      Title="Stock Total" 
+                                      Value="{Binding Data.StockTotal.Value}" 
+                                      Icon="Warehouse" 
+                                      IconColor="#22C55E" 
+                                      TrendText="{Binding StockTotalTrend}" 
+                                      IsPositiveTrend="{Binding StockTotalIsPositive}"/>
+                    <controls:KpiCard Grid.Column="2" Margin="4,0,8,0" 
+                                      Title="Besoins" 
+                                      Value="{Binding Data.Besoins.Value}" 
+                                      Icon="List" 
+                                      IconColor="#8B5CF6" 
+                                      TrendText="{Binding BesoinsTrend}" 
+                                      IsPositiveTrend="{Binding BesoinsIsPositive}"/>
+                    <controls:KpiCard Grid.Column="3" Margin="4,0,8,0" 
+                                      Title="Sorties de stock" 
+                                      Value="{Binding Data.SortiesDeStock.Value}" 
+                                      Icon="ArrowRightFromBracket" 
+                                      IconColor="#EF4444" 
+                                      TrendText="{Binding SortiesStockTrend}" 
+                                      IsPositiveTrend="{Binding SortiesStockIsPositive}"/>
+                    <controls:KpiCard Grid.Column="4" Margin="4,0,8,0" 
+                                      Title="Bons de livraison" 
+                                      Value="{Binding Data.BonsDeLivraison.Value}" 
+                                      Icon="Truck" 
+                                      IconColor="#60A5FA" 
+                                      TrendText="{Binding BonsLivraisonTrend}" 
+                                      IsPositiveTrend="{Binding BonsLivraisonIsPositive}"/>
+                    <controls:KpiCard Grid.Column="5" Margin="4,0,0,0" 
+                                      Title="Bons de commande" 
+                                      Value="{Binding Data.BonsDeCommande.Value}" 
+                                      Icon="CartShopping" 
+                                      IconColor="#A78BFA" 
+                                      TrendText="{Binding BonsCommandeTrend}" 
+                                      IsPositiveTrend="{Binding BonsCommandeIsPositive}"/>
+                </Grid>
+
+                <!-- 2. Second Row of KPIs (6 cards) -->
+                <Grid Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="🛒" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Paiements" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding PaymentCount}" FontSize="20" FontWeight="Bold" Foreground="#3B82F6"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
 
-            <!-- Fournisseurs -->
-            <Border Style="{StaticResource ModernCard}" Margin="0,0,15,0" Padding="15">
-                <Grid>
+                    <controls:KpiCard Grid.Column="0" Margin="0,0,8,0" 
+                                      Title="Factures total" 
+                                      Value="{Binding Data.FacturesTotal.Value}" 
+                                      Icon="FileInvoice" 
+                                      IconColor="#F59E0B" 
+                                      TrendText="{Binding FacturesTotalTrend}" 
+                                      IsPositiveTrend="{Binding FacturesTotalIsPositive}"/>
+                    <controls:KpiCard Grid.Column="1" Margin="4,0,8,0" 
+                                      Title="Factures payées" 
+                                      Value="{Binding Data.FacturesPayees.Value}" 
+                                      Icon="CheckCircle" 
+                                      IconColor="#22C55E" 
+                                      TrendText="{Binding FacturesPayeesTrend}" 
+                                      IsPositiveTrend="{Binding FacturesPayeesIsPositive}"/>
+                    <controls:KpiCard Grid.Column="2" Margin="4,0,8,0" 
+                                      Title="Factures en attente" 
+                                      Value="{Binding Data.FacturesEnAttente.Value}" 
+                                      Icon="Clock" 
+                                      IconColor="#F59E0B" 
+                                      TrendText="{Binding FacturesEnAttenteTrend}" 
+                                      IsPositiveTrend="{Binding FacturesEnAttenteIsPositive}"/>
+                    <controls:KpiCard Grid.Column="3" Margin="4,0,8,0" 
+                                      Title="Total réglé" 
+                                      Value="{Binding Data.TotalRegle.Value}" 
+                                      Unit="MAD"
+                                      Icon="Wallet" 
+                                      IconColor="#10B981" 
+                                      TrendText="{Binding TotalRegleTrend}" 
+                                      IsPositiveTrend="{Binding TotalRegleIsPositive}"/>
+                    <controls:KpiCard Grid.Column="4" Margin="4,0,8,0" 
+                                      Title="Solde total" 
+                                      Value="{Binding Data.SoldeTotal.Value}" 
+                                      Unit="MAD"
+                                      Icon="ScaleBalanced" 
+                                      IconColor="#EF4444" 
+                                      TrendText="{Binding SoldeTotalTrend}" 
+                                      IsPositiveTrend="{Binding SoldeTotalIsPositive}"/>
+                    <controls:KpiCard Grid.Column="5" Margin="4,0,0,0" 
+                                      Title="Fournisseurs actifs" 
+                                      Value="{Binding Data.FournisseursActifs.Value}" 
+                                      Icon="Users" 
+                                      IconColor="#3B82F6" 
+                                      TrendText="{Binding FournisseursActifsTrend}" 
+                                      IsPositiveTrend="{Binding FournisseursActifsIsPositive}"/>
+                </Grid>
+
+                <!-- 3. First Row of Charts (3 charts) -->
+                <Grid Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="🏢" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Fournisseurs" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding SupplierCount}" FontSize="20" FontWeight="Bold" Foreground="#F59E0B"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    
+                    <!-- 1. Répartition des opérations (Column Chart) -->
+                    <Border Grid.Column="0" Margin="0,0,12,0" Style="{StaticResource MetricCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Répartition des opérations" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding OperationDistributionSeries}" XAxes="{Binding XAxes}" Height="200" LegendPosition="Hidden"/>
+                        </Grid>
+                    </Border>
 
-            <!-- Moyenne -->
-            <Border Style="{StaticResource ModernCard}" Padding="15">
-                <Grid>
+                    <!-- 2. État du stock (Doughnut Chart) -->
+                    <Border Grid.Column="1" Margin="6,0,12,0" Style="{StaticResource MetricCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="État du stock" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding StockStatusSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalStockStatusCount}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding StockStatusSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- 3. Statut des factures (Doughnut Chart) -->
+                    <Border Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource MetricCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Statut des factures" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding InvoiceStatusSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalInvoiceStatusCount}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding InvoiceStatusSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- 4. Second Row of Charts (2 charts) -->
+                <Grid Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="💳" FontSize="24" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Moyenne" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding AverageAmount}" FontSize="20" FontWeight="Bold" Foreground="#8B5CF6"/>
-                    </StackPanel>
+
+                    <!-- 4. Entrées et sorties du stock (Line Chart) -->
+                    <Border Grid.Column="0" Margin="0,0,12,0" Style="{StaticResource MetricCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Entrées et sorties du stock" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding MonthlyMovementsSeries}" XAxes="{Binding MonthlyXAxes}" Height="250" LegendPosition="Bottom"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 5. Répartition par mode de paiement (Doughnut Chart) -->
+                    <Border Grid.Column="1" Margin="6,0,0,0" Style="{StaticResource MetricCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Répartition par mode de paiement" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,12" HorizontalAlignment="Left"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <lvc:PieChart Series="{Binding PaymentMethodSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180"/>
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding TotalPaymentMethodAmount, StringFormat={}{0:N2} MAD}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding PaymentMethodSeries}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                                <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Grid>
+                    </Border>
                 </Grid>
-            </Border>
-        </UniformGrid>
 
-        <!-- Toggle Button -->
-        <Button Grid.Row="1" 
-                Command="{Binding ToggleChartsCommand}" 
-                HorizontalAlignment="Left" 
-                Margin="25,10,25,10"
-                Style="{StaticResource ModernPrimaryButton}"
-                Background="#3B82F6">
-            <TextBlock Text="{Binding ShowCharts, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='Masquer les graphes|Afficher les graphes'}" 
-                       Foreground="White"/>
-        </Button>
-
-        <!-- Charts Section -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Visibility="{Binding ShowCharts, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid Margin="25,10,25,25">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="400"/>
-                    <RowDefinition Height="400"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Row 1: Distribution & Modes -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource ModernCard}" Margin="0,0,15,15">
+                <!-- 5. Recent Activities -->
+                <Border Style="{StaticResource MetricCardStyle}">
                     <DockPanel>
-                        <TextBlock Text="Distribution par Fournisseur" DockPanel.Dock="Top" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <lvc:PieChart Series="{Binding SupplierDistribution}" LegendPosition="Right" />
+                        <TextBlock DockPanel.Dock="Top" Text="Activités récentes" Foreground="#0F172A" FontWeight="Bold" FontSize="16" Margin="0,0,0,16"/>
+                        
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                            <DataGrid Style="{StaticResource ModernDataGrid}"
+                                      ItemsSource="{Binding Data.RecentActivities}" 
+                                      AutoGenerateColumns="False" 
+                                      IsReadOnly="True" 
+                                      RowHeight="50" 
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      ClipToBounds="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Date" 
+                                                        Binding="{Binding Date, StringFormat=dd/MM/yyyy HH:mm}" 
+                                                        Width="1.3*"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}"/>
+                                    
+                                    <DataGridTemplateColumn Header="Module" Width="1.5*"
+                                                            HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                            CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" ClipToBounds="False">
+                                                    <Border Width="28" Height="28" 
+                                                            CornerRadius="14" 
+                                                            Margin="0,0,10,0"
+                                                            VerticalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#64748B"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="Besoin">
+                                                                        <Setter Property="Background" Value="#8B5CF6"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="BL">
+                                                                        <Setter Property="Background" Value="#F59E0B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="BC">
+                                                                        <Setter Property="Background" Value="#60A5FA"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="Facture">
+                                                                        <Setter Property="Background" Value="#2563EB"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Module}" Value="Paiement">
+                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <fa:IconImage Width="14" Height="14" 
+                                                                      VerticalAlignment="Center" 
+                                                                      HorizontalAlignment="Center"
+                                                                      Foreground="White">
+                                                            <fa:IconImage.Style>
+                                                                <Style TargetType="fa:IconImage">
+                                                                    <Setter Property="Icon" Value="FileInvoice"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Module}" Value="Besoin">
+                                                                            <Setter Property="Icon" Value="List"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Module}" Value="BL">
+                                                                            <Setter Property="Icon" Value="Truck"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Module}" Value="BC">
+                                                                            <Setter Property="Icon" Value="CartShopping"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Module}" Value="Facture">
+                                                                            <Setter Property="Icon" Value="FileInvoice"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Module}" Value="Paiement">
+                                                                            <Setter Property="Icon" Value="Wallet"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </fa:IconImage.Style>
+                                                        </fa:IconImage>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Module}" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="Référence" 
+                                                        Binding="{Binding Reference}" 
+                                                        Width="1.3*"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="14"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <DataGridTextColumn Header="Description" 
+                                                        Binding="{Binding Description}" 
+                                                        Width="2*"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="14"/>
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <DataGridTemplateColumn Header="Statut" Width="1.2*"
+                                                            HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                            CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="20" 
+                                                        Padding="14,8" 
+                                                        VerticalAlignment="Center" 
+                                                        HorizontalAlignment="Left"
+                                                        SnapsToDevicePixels="True"
+                                                        Background="{Binding Status, Converter={StaticResource StatusToBackgroundConverter}}">
+                                                    <TextBlock Text="{Binding Status}" 
+                                                               FontSize="12" 
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{Binding Status, Converter={StaticResource StatusToForegroundConverter}}"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
 
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource ModernCard}" Margin="0,0,0,15">
-                    <DockPanel>
-                        <TextBlock Text="Modes de Paiement" DockPanel.Dock="Top" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <lvc:CartesianChart Series="{Binding PaymentMethods}" XAxes="{Binding XAxesMethods}" />
-                    </DockPanel>
-                </Border>
+                <!-- Footer Notes -->
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" 
+                               Text="{Binding LastUpdated, StringFormat='Données mises à jour le {0:dd/MM/yyyy} à {0:HH:mm}'}" 
+                               FontSize="11" 
+                               Foreground="#94A3B8"/>
+                    <TextBlock Grid.Column="1" 
+                               Text="Toutes les données sont exprimées en MAD" 
+                               FontSize="11" 
+                               Foreground="#94A3B8"/>
+                </Grid>
 
-                <!-- Row 2: Paiements par Date -->
-                <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource ModernCard}">
-                    <DockPanel>
-                        <TextBlock Text="Paiements par Date" DockPanel.Dock="Top" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <lvc:CartesianChart Series="{Binding PaymentsByDate}" XAxes="{Binding XAxesPayments}" />
-                    </DockPanel>
-                </Border>
-            </Grid>
+            </StackPanel>
         </ScrollViewer>
+        
+        <!-- Loading Overlay -->
+        <Grid Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Panel.ZIndex="1000">
+            <Border Background="White" CornerRadius="12" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="15" Opacity="0.2" ShadowDepth="0"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar IsIndeterminate="True" Width="24" Height="24"/>
+                    <TextBlock Text="Chargement des données..." Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Page>

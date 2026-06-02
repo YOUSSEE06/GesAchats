@@ -12,4 +12,7 @@ public interface IDashboardService
     Task<List<DashboardOperationDto>> GetRecentOperationsAsync(int count = 6);
     Task<List<DashboardAlertDto>> GetDashboardAlertsAsync();
     Task<AcheteurKpiDto> GetAcheteurKpisAsync();
+    
+    // Admin Dashboard method
+    Task<AdminDashboardDto> GetAdminDashboardDataAsync(DateTime? startDate = null, DateTime? endDate = null);
 }

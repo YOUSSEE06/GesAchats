@@ -29,6 +29,8 @@
             <conv:ValueToColorConverter x:Key="ValueToColorConverter"/>
             <conv:AlertTypeToIconConverter x:Key="AlertTypeToIconConverter"/>
             <conv:NumberFormatConverter x:Key="NumberFormatConverter"/>
+            <conv:StatusToBackgroundConverter x:Key="StatusToBackgroundConverter"/>
+            <conv:StatusToForegroundConverter x:Key="StatusToForegroundConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

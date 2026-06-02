@@ -365,19 +365,81 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
             }
 
-            // 5. Articles de test (Ciment, Graviers, etc.)
+            // 5. Articles de test (Ciment, Graviers, etc.) - 25+ produits
             if (!await context.Products.AnyAsync())
             {
                 var magasinPrincipal = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Principal");
                 var magasinAnnex = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Annex");
+                var magasinSud = await context.Magasins.FirstAsync(m => m.Nom == "Magasin Sud");
                 
                 var products = new List<Product>
                 {
+                    // Gros Oeuvre (12)
                     new Product { Designation = "Ciment 35kg", CurrentStock = 10, MinimumStock = 50, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Ciment 25kg", CurrentStock = 15, MinimumStock = 40, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Chaux hydratée", CurrentStock = 25, MinimumStock = 30, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Plâtre de Paris", CurrentStock = 30, MinimumStock = 25, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Mortier pré-mélangé", CurrentStock = 60, MinimumStock = 35, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Béton prêt à l'emploi", CurrentStock = 20, MinimumStock = 15, Unit = "m3", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Additif pour béton", CurrentStock = 45, MinimumStock = 25, Unit = "l", Category = "Gros Oeuvre", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Ciment blanc", CurrentStock = 30, MinimumStock = 20, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Imperméabilisant", CurrentStock = 35, MinimumStock = 20, Unit = "l", Category = "Gros Oeuvre", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Mastic bitumineux", CurrentStock = 28, MinimumStock = 18, Unit = "kg", Category = "Gros Oeuvre", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Laitier cimentaire", CurrentStock = 40, MinimumStock = 22, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Argile expansée", CurrentStock = 32, MinimumStock = 18, Unit = "sac", Category = "Gros Oeuvre", MagasinId = magasinPrincipal.Id },
+
+                    // Granulats (8)
                     new Product { Designation = "Graviers 40mm", CurrentStock = 0, MinimumStock = 20, Unit = "m3", Category = "Granulats", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Graviers 20mm", CurrentStock = 15, MinimumStock = 18, Unit = "m3", Category = "Granulats", MagasinId = magasinPrincipal.Id },
                     new Product { Designation = "Sable fin", CurrentStock = 100, MinimumStock = 30, Unit = "m3", Category = "Granulats", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Sable grossier", CurrentStock = 50, MinimumStock = 25, Unit = "m3", Category = "Granulats", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Cailloux 80mm", CurrentStock = 12, MinimumStock = 10, Unit = "m3", Category = "Granulats", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Gravier calcaire", CurrentStock = 25, MinimumStock = 15, Unit = "m3", Category = "Granulats", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Mortier de pose", CurrentStock = 48, MinimumStock = 30, Unit = "sac", Category = "Granulats", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Granit concassé", CurrentStock = 18, MinimumStock = 12, Unit = "m3", Category = "Granulats", MagasinId = magasinSud.Id },
+
+                    // Ferraillage (6)
                     new Product { Designation = "Acier HA8", CurrentStock = 5, MinimumStock = 100, Unit = "barre", Category = "Ferraillage", MagasinId = magasinAnnex.Id },
-                    new Product { Designation = "Tuiles", CurrentStock = 200, MinimumStock = 100, Unit = "pcs", Category = "Couverture", MagasinId = magasinPrincipal.Id }
+                    new Product { Designation = "Acier HA10", CurrentStock = 12, MinimumStock = 80, Unit = "barre", Category = "Ferraillage", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Acier HA12", CurrentStock = 8, MinimumStock = 70, Unit = "barre", Category = "Ferraillage", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Acier HA16", CurrentStock = 3, MinimumStock = 40, Unit = "barre", Category = "Ferraillage", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Acier HA20", CurrentStock = 6, MinimumStock = 30, Unit = "barre", Category = "Ferraillage", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Grillage soudé 15x15", CurrentStock = 20, MinimumStock = 15, Unit = "m²", Category = "Ferraillage", MagasinId = magasinPrincipal.Id },
+
+                    // Couverture (5)
+                    new Product { Designation = "Tuiles", CurrentStock = 200, MinimumStock = 100, Unit = "pcs", Category = "Couverture", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Tuiles de rive", CurrentStock = 80, MinimumStock = 50, Unit = "pcs", Category = "Couverture", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Tôle ondulée", CurrentStock = 40, MinimumStock = 30, Unit = "m²", Category = "Couverture", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Bardeau d'asphalte", CurrentStock = 60, MinimumStock = 40, Unit = "m²", Category = "Couverture", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Nappe de protection", CurrentStock = 35, MinimumStock = 25, Unit = "m²", Category = "Couverture", MagasinId = magasinSud.Id },
+
+                    // Menuiserie (5)
+                    new Product { Designation = "Poutre en bois 200x200", CurrentStock = 15, MinimumStock = 10, Unit = "m", Category = "Menuiserie", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Planche de coffrage", CurrentStock = 200, MinimumStock = 150, Unit = "m²", Category = "Menuiserie", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Madrier 100x200", CurrentStock = 25, MinimumStock = 15, Unit = "m", Category = "Menuiserie", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Planche rabotée 25x200", CurrentStock = 50, MinimumStock = 30, Unit = "m", Category = "Menuiserie", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Contreplaqué 18mm", CurrentStock = 40, MinimumStock = 25, Unit = "m²", Category = "Menuiserie", MagasinId = magasinAnnex.Id },
+
+                    // Fixations (5)
+                    new Product { Designation = "Vis 5x50mm", CurrentStock = 500, MinimumStock = 300, Unit = "pcs", Category = "Fixations", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Boulon 12x100mm", CurrentStock = 300, MinimumStock = 200, Unit = "pcs", Category = "Fixations", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Vis à bois 8x100mm", CurrentStock = 350, MinimumStock = 220, Unit = "pcs", Category = "Fixations", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Écrou et boulon M16", CurrentStock = 200, MinimumStock = 120, Unit = "pcs", Category = "Fixations", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Clous Beton 150mm", CurrentStock = 400, MinimumStock = 280, Unit = "kg", Category = "Fixations", MagasinId = magasinPrincipal.Id },
+
+                    // Plomberie (5)
+                    new Product { Designation = "Tuyau PVC 110mm", CurrentStock = 50, MinimumStock = 30, Unit = "m", Category = "Plomberie", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Coud PVC 90° 110mm", CurrentStock = 30, MinimumStock = 20, Unit = "pcs", Category = "Plomberie", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Raccord PVC 110mm", CurrentStock = 25, MinimumStock = 15, Unit = "pcs", Category = "Plomberie", MagasinId = magasinSud.Id },
+                    new Product { Designation = "Tuyau PEHD 63mm", CurrentStock = 45, MinimumStock = 28, Unit = "m", Category = "Plomberie", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Raccord compression 63mm", CurrentStock = 28, MinimumStock = 18, Unit = "pcs", Category = "Plomberie", MagasinId = magasinAnnex.Id },
+
+                    // Électricité (5)
+                    new Product { Designation = "Câble électrique 2.5mm²", CurrentStock = 200, MinimumStock = 150, Unit = "m", Category = "Électricité", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Interrupteur double", CurrentStock = 80, MinimumStock = 50, Unit = "pcs", Category = "Électricité", MagasinId = magasinAnnex.Id },
+                    new Product { Designation = "Prise de courant 16A", CurrentStock = 90, MinimumStock = 60, Unit = "pcs", Category = "Électricité", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Coffret électrique", CurrentStock = 10, MinimumStock = 5, Unit = "pcs", Category = "Électricité", MagasinId = magasinPrincipal.Id },
+                    new Product { Designation = "Disjoncteur 20A", CurrentStock = 35, MinimumStock = 20, Unit = "pcs", Category = "Électricité", MagasinId = magasinSud.Id }
                 };
                 await context.Products.AddRangeAsync(products);
                 await context.SaveChangesAsync();
@@ -413,14 +475,33 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
             }
 
-            // 7. Fournisseurs et Devis de test
+            // 7. Fournisseurs et Devis de test - 10+ fournisseurs
             if (!await context.Suppliers.AnyAsync())
             {
                 var suppliers = new List<Supplier>
                 {
                     new Supplier { CompanyName = "Société Matériaux SA", Email = "contact@societemat.com", City = "Casablanca", IsActive = true, Rating = 4.5m, AverageDeliveryDelay = 3 },
                     new Supplier { CompanyName = "Cimenterie du Nord", Email = "sales@cimentnord.com", City = "Tanger", IsActive = true, Rating = 4.0m, AverageDeliveryDelay = 5 },
-                    new Supplier { CompanyName = "Aciers Modernes", Email = "info@aciersmod.com", City = "Rabat", IsActive = true, Rating = 3.5m, AverageDeliveryDelay = 2 }
+                    new Supplier { CompanyName = "Aciers Modernes", Email = "info@aciersmod.com", City = "Rabat", IsActive = true, Rating = 3.5m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "Granulats Marocains", Email = "ventes@granulats.ma", City = "Marrakech", IsActive = true, Rating = 4.2m, AverageDeliveryDelay = 4 },
+                    new Supplier { CompanyName = "Menuiserie du Sud", Email = "contact@menusud.ma", City = "Agadir", IsActive = true, Rating = 3.8m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Plomberie Express", Email = "ventes@plomberieexpress.ma", City = "Fès", IsActive = true, Rating = 4.1m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "Électricité Pro", Email = "contact@elecpro.ma", City = "Meknès", IsActive = true, Rating = 3.9m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Couverture Royale", Email = "ventes@couvertureroyale.ma", City = "Oujda", IsActive = true, Rating = 4.3m, AverageDeliveryDelay = 5 },
+                    new Supplier { CompanyName = "Fixations Internationales", Email = "sales@fixationsint.ma", City = "Kenitra", IsActive = true, Rating = 3.7m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "BTP Services", Email = "contact@btpservices.ma", City = "Tétouan", IsActive = true, Rating = 4.0m, AverageDeliveryDelay = 4 },
+                    new Supplier { CompanyName = "Matériaux de Construction", Email = "ventes@materiauxconstruction.ma", City = "Safi", IsActive = true, Rating = 4.4m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Beton Maroc", Email = "contact@betonmaroc.ma", City = "Beni Mellal", IsActive = true, Rating = 4.1m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Bois et Scierie du Centre", Email = "ventes@boiscentre.ma", City = "Khouribga", IsActive = true, Rating = 3.6m, AverageDeliveryDelay = 4 },
+                    new Supplier { CompanyName = "Quincaillerie Moderne", Email = "contact@quincaillerie.ma", City = "El Jadida", IsActive = true, Rating = 4.2m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "Produits Industriels du Sud", Email = "ventes@industrielsud.ma", City = "Errachidia", IsActive = true, Rating = 3.8m, AverageDeliveryDelay = 6 },
+                    new Supplier { CompanyName = "Équipements de Chantier", Email = "contact@equipementchantier.ma", City = "Nador", IsActive = true, Rating = 4.0m, AverageDeliveryDelay = 4 },
+                    new Supplier { CompanyName = "Cimenterie Atlas", Email = "sales@cimentatlas.ma", City = "Ouarzazate", IsActive = true, Rating = 4.3m, AverageDeliveryDelay = 5 },
+                    new Supplier { CompanyName = "Tôlerie et Métallurgie", Email = "contact@tolerie.ma", City = "Kénitra", IsActive = true, Rating = 3.9m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Isolation Thermique", Email = "ventes@isolation.ma", City = "Taza", IsActive = true, Rating = 4.1m, AverageDeliveryDelay = 3 },
+                    new Supplier { CompanyName = "Fournitures de Bureau et Chantier", Email = "contact@fournitures.ma", City = "Salé", IsActive = true, Rating = 4.0m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "Sécurité et Protection", Email = "ventes@securite.ma", City = "Mohammedia", IsActive = true, Rating = 4.2m, AverageDeliveryDelay = 2 },
+                    new Supplier { CompanyName = "Transport Logistique BTP", Email = "contact@transportbtp.ma", City = "Casablanca", IsActive = true, Rating = 3.7m, AverageDeliveryDelay = 1 }
                 };
                 await context.Suppliers.AddRangeAsync(suppliers);
                 await context.SaveChangesAsync();
@@ -647,6 +728,7 @@ public static class DbInitializer
                     // Données mensuelles cibles
                     var monthlyTestData = new List<(int year, int month, decimal totalTtc)>
                     {
+                        (2025, 8, 65000m),
                         (2025, 9, 85000m),
                         (2025, 10, 120000m),
                         (2025, 11, 95000m),
@@ -655,7 +737,9 @@ public static class DbInitializer
                         (2026, 2, 210000m),
                         (2026, 3, 175000m),
                         (2026, 4, 240000m),
-                        (2026, 5, 300000m)
+                        (2026, 5, 300000m),
+                        (2026, 6, 280000m),
+                        (2026, 7, 250000m)
                     };
                     
                     int bcIndex = 1;
@@ -730,15 +814,14 @@ public static class DbInitializer
 
                             if (testBcs.Any())
                             {
-                                // Create 3 test BLs with recent dates
-                                var blDates = new List<DateTime>
+                                // Create 35 test BLs with recent dates
+                                var blDates = new List<DateTime>();
+                                for (int i = 1; i <= 35; i++)
                                 {
-                                    DateTime.UtcNow.AddDays(-1),
-                                    DateTime.UtcNow.AddDays(-3),
-                                    DateTime.UtcNow.AddDays(-7)
-                                };
+                                    blDates.Add(DateTime.UtcNow.AddDays(-randomBl.Next(1, 90)));
+                                }
 
-                                for (int i = 1; i <= 3; i++)
+                                for (int i = 1; i <= 35; i++)
                                 {
                                     var bc = testBcs[randomBl.Next(testBcs.Count)];
                                     var firstDetail = bc.Details.FirstOrDefault();
@@ -781,6 +864,147 @@ public static class DbInitializer
                         }
                     }
                 }
+            }
+
+            // --- 10. Ajouter des Besoins supplémentaires (50+ besoins) ---
+            if (await context.Needs.CountAsync() < 50)
+            {
+                var magasinier = await context.Users.FirstAsync(u => u.Login == "magasinier");
+                var products = await context.Products.ToListAsync();
+                var random = new Random();
+                for (int i = 5; i <= 55; i++)
+                {
+                    var product = products[random.Next(products.Count)];
+                    var need = new Need
+                    {
+                        NumeroBesoin = $"#BES-{i:D3}",
+                        Unit = product.Unit,
+                        Description = $"Besoin de {product.Designation}",
+                        ProductId = product.Id,
+                        Quantity = random.Next(10, 200),
+                        Status = (NeedStatus)random.Next(0, 6),
+                        RequestedById = magasinier.Id,
+                        Reason = (NeedReason)random.Next(0, 3),
+                            Priority = (NeedPriority)random.Next(0, 3),
+                            RequestedAt = DateTime.UtcNow.AddDays(-random.Next(0, 60)),
+                            UpdatedAt = DateTime.UtcNow.AddDays(-random.Next(0, 60))
+                    };
+
+                    // Ajouter des détails de besoin
+                    for (int j = 0; j < random.Next(1, 4); j++)
+                    {
+                        var detailProduct = products[random.Next(products.Count)];
+                        need.Details.Add(new NeedDetail
+                        {
+                            ProductId = detailProduct.Id,
+                            Quantity = random.Next(5, 100),
+                            IsNewProduct = random.Next(0, 2) == 1,
+                            UnitPriceHT = random.Next(50, 500)
+                        });
+                    }
+                    await context.Needs.AddAsync(need);
+                }
+                await context.SaveChangesAsync();
+            }
+
+            // --- 11. Ajouter des Factures (50+ factures) ---
+            if (await context.Invoices.CountAsync() < 50)
+            {
+                var suppliers = await context.Suppliers.ToListAsync();
+                var users = await context.Users.ToListAsync();
+                var deliveryNotes = await context.DeliveryNotes.ToListAsync();
+                var purchaseOrders = await context.PurchaseOrders.ToListAsync();
+                var random = new Random();
+                for (int i = 1; i <= 55; i++)
+                {
+                    var supplier = suppliers[random.Next(suppliers.Count)];
+                    var invoiceDate = DateTime.UtcNow.AddDays(-random.Next(1, 120));
+                    var statuses = new[] { "Payée", "En attente", "Partiellement payée", "Validée" };
+                    var invoice = new Invoice
+                    {
+                        InvoiceNumber = $"FAC-2026-{i:D4}",
+                        ExternalInvoiceNumber = $"EXT-{supplier.Id}-{i}",
+                        SupplierId = supplier.Id,
+                        InvoiceDate = invoiceDate,
+                        ReceptionDate = invoiceDate.AddDays(random.Next(1, 5)),
+                        AmountHT = random.Next(500, 20000),
+                        TaxRate = 20m,
+                        AmountTTC = random.Next(600, 24000),
+                        Status = statuses[random.Next(statuses.Length)],
+                        CreatedById = users[random.Next(users.Count)].Id,
+                        CreatedAt = invoiceDate,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    if (deliveryNotes.Any() && random.Next(0, 2) == 1)
+                    {
+                        invoice.DeliveryNoteId = deliveryNotes[random.Next(deliveryNotes.Count)].Id;
+                    }
+
+                    if (purchaseOrders.Any() && random.Next(0, 2) == 1)
+                    {
+                        invoice.PurchaseOrderId = purchaseOrders[random.Next(purchaseOrders.Count)].Id;
+                    }
+
+                    await context.Invoices.AddAsync(invoice);
+                }
+                await context.SaveChangesAsync();
+            }
+
+            // --- 12. Ajouter des Paiements (25+ paiements) ---
+            if (await context.Payments.CountAsync() < 25)
+            {
+                var invoices = await context.Invoices.ToListAsync();
+                var suppliers = await context.Suppliers.ToListAsync();
+                var users = await context.Users.ToListAsync();
+                var random = new Random();
+                for (int i = 1; i <= 30; i++)
+                {
+                    var invoice = invoices[random.Next(invoices.Count)];
+                    var paymentMethods = new[] { "Virement", "Chèque", "Espèce" };
+                    var payment = new Payment
+                    {
+                        PaymentNumber = $"REG-2026-{i:D4}",
+                        InvoiceId = invoice.Id,
+                        SupplierId = invoice.SupplierId,
+                        PaymentDate = invoice.InvoiceDate.AddDays(random.Next(1, 60)),
+                        AmountPaid = random.Next(100, (int)invoice.AmountTTC),
+                        PaymentMethod = paymentMethods[random.Next(paymentMethods.Length)],
+                        Status = random.Next(0, 2) == 1 ? "Validé" : "En attente",
+                        CreatedById = users[random.Next(users.Count)].Id,
+                        CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 60)),
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    await context.Payments.AddAsync(payment);
+                }
+                await context.SaveChangesAsync();
+            }
+
+            // --- 13. Ajouter des Sorties de Stock (200+ mouvements) ---
+            if (await context.StockExits.CountAsync() < 200)
+            {
+                var products = await context.Products.ToListAsync();
+                var users = await context.Users.ToListAsync();
+                var random = new Random();
+                for (int i = 1; i <= 220; i++)
+                {
+                    var product = products[random.Next(products.Count)];
+                    var qty = random.Next(1, 50);
+                    var exitDate = DateTime.UtcNow.AddDays(-random.Next(0, 120));
+                    var stockExit = new StockExit
+                    {
+                        ProductId = product.Id,
+                        Quantity = qty,
+                        ExitDate = exitDate,
+                        Reason = "Sortie de stock pour projet",
+                        ProjectOrChantier = $"Projet {random.Next(1, 20)}",
+                        StockAfterExit = Math.Max(0, product.CurrentStock - qty),
+                        CreatedById = users[random.Next(users.Count)].Id,
+                        CreatedAt = exitDate
+                    };
+                    await context.StockExits.AddAsync(stockExit);
+                }
+                await context.SaveChangesAsync();
             }
         }
         catch (Exception ex)

@@ -37,6 +37,15 @@
                 <StackPanel DockPanel.Dock="Top" Margin="10,0">
                     <Button Style="{StaticResource SidebarButtonStyle}"
                             Command="{Binding NavigateCommand}" 
+                            CommandParameter="Dashboard">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" Margin="0,0,10,0"/>
+                            <TextBlock Text="Dashboard"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <Button Style="{StaticResource SidebarButtonStyle}"
+                            Command="{Binding NavigateCommand}" 
                             CommandParameter="StockGlobal">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📦" Margin="0,0,10,0"/>

@@ -95,7 +95,7 @@
                         <DataGridTemplateColumn Header="Quantité" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Quantity, StringFormat=-{0}}" Foreground="#F44336" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding Quantity}" Foreground="#F44336" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
