@@ -15,10 +15,10 @@
         </Border.Effect>
         <StackPanel>
             <TextBlock x:Name="TitleControl" 
-                       FontSize="14" 
-                       FontWeight="Bold" 
-                       Foreground="{StaticResource MainTextBrush}"
-                       Margin="0,0,0,16"/>
+                       FontSize="16" 
+                       FontWeight="SemiBold" 
+                       Foreground="#1E293B"
+                       Margin="0,0,0,12"/>
             <ContentPresenter x:Name="ChartContentControl"/>
         </StackPanel>
     </Border>

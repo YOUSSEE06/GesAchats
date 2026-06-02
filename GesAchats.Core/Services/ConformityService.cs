@@ -54,7 +54,7 @@ public class ConformityService : IConformityService
                     if (detail.UnitPriceHT != poDetail.UnitPriceHT)
                     {
                         result.Status = "PriceMismatch";
-                        result.Message = $"Écart de prix : Facturé {detail.UnitPriceHT}€ vs Commandé {poDetail.UnitPriceHT}€";
+                        result.Message = $"Écart de prix : Facturé {detail.UnitPriceHT} MAD vs Commandé {poDetail.UnitPriceHT} MAD";
                     }
                 }
                 else
