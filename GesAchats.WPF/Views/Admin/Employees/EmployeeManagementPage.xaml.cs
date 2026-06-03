@@ -19,5 +19,22 @@ public partial class EmployeeManagementPage : Page
                 vm.CurrentAdminPassword = AdminPasswordBox.Password;
             }
         };
+
+        // Bind new password PasswordBoxes to ViewModel
+        AdminNewPasswordBox.PasswordChanged += (sender, args) =>
+        {
+            if (DataContext is EmployeeManagementViewModel vm)
+            {
+                vm.NewAdminPassword = AdminNewPasswordBox.Password;
+            }
+        };
+
+        AdminConfirmPasswordBox.PasswordChanged += (sender, args) =>
+        {
+            if (DataContext is EmployeeManagementViewModel vm)
+            {
+                vm.ConfirmAdminPassword = AdminConfirmPasswordBox.Password;
+            }
+        };
     }
 }

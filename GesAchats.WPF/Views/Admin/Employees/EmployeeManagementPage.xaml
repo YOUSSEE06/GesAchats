@@ -12,6 +12,7 @@
     <Page.Resources>
         <ResourceDictionary>
             <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <conv:BooleanToBrushConverter x:Key="CheckToBrush" TrueBrush="#10B981" FalseBrush="#64748B"/>
             <Style x:Key="MetricCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="CornerRadius" Value="12"/>
@@ -359,7 +360,7 @@
                                             <TextBlock Text="Modifier email"/>
                                         </StackPanel>
                                     </Button>
-                                    <Button Style="{StaticResource SecondaryButton}">
+                                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ShowAdminPasswordChangeCommand}">
                                         <StackPanel Orientation="Horizontal">
                                             <fa:IconImage Icon="Key" Width="14" Height="14" Margin="0,0,6,0"/>
                                             <TextBlock Text="Changer mot de passe"/>
@@ -446,6 +447,218 @@
                                                     </StackPanel>
                                                 </Button>
                                                 <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminEmailEditCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Password Change Message -->
+                                <TextBlock Text="{Binding AdminPasswordChangeMessage}" 
+                                           DockPanel.Dock="Top" 
+                                           FontSize="13" 
+                                           Foreground="#DC2626" 
+                                           Margin="0,0,0,12"
+                                           Visibility="{Binding AdminPasswordChangeMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+                                <!-- Sub-section: Secure Password Modification (Hidden by default) -->
+                                <Border DockPanel.Dock="Top" 
+                                        Background="#F0FDFA" 
+                                        Padding="16" 
+                                        CornerRadius="10"
+                                        Visibility="{Binding IsAdminPasswordChangeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel>
+                                        <TextBlock Text="Changer mon mot de passe (sécurisé)" FontSize="14" FontWeight="SemiBold" Foreground="#0D9488" Margin="0,0,0,12"/>
+                                        
+                                        <!-- Step 1: Send Code -->
+                                        <StackPanel Visibility="{Binding IsPasswordChangeSendCodeStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Email administrateur" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding AdminEmail}" IsEnabled="False"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding SendAdminPasswordCodeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="PaperPlane" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Envoyer code de vérification"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminPasswordChangeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Step 2: Verify Code -->
+                                        <StackPanel Visibility="{Binding IsPasswordChangeVerifyCodeStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Email administrateur" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding AdminEmail}" IsEnabled="False"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Code de vérification" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding AdminPasswordVerificationCode, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding VerifyAdminPasswordCodeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Shield" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Vérifier le code"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminPasswordChangeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Step 3: New Password -->
+                                        <StackPanel Visibility="{Binding IsPasswordChangeNewPasswordStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Nouveau mot de passe" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <PasswordBox x:Name="AdminNewPasswordBox" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1" FontSize="13" VerticalContentAlignment="Center"/>
+                                                <!-- Password Strength UI -->
+                                                <StackPanel Margin="12,10,0,0">
+                                                    <!-- Strength Bar -->
+                                                    <Grid Height="8" Margin="0,0,0,10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" Margin="0,0,2,0" CornerRadius="4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AdminPasswordScore, Converter={StaticResource GreaterOrEqualConverter}, ConverterParameter=1}" Value="True">
+                                                                            <Setter Property="Background" Value="#DC2626"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <Border Grid.Column="1" Margin="2,0,2,0" CornerRadius="4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AdminPasswordScore, Converter={StaticResource GreaterOrEqualConverter}, ConverterParameter=2}" Value="True">
+                                                                            <Setter Property="Background" Value="#F59E0B"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <Border Grid.Column="2" Margin="2,0,2,0" CornerRadius="4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AdminPasswordScore, Converter={StaticResource GreaterOrEqualConverter}, ConverterParameter=3}" Value="True">
+                                                                            <Setter Property="Background" Value="#F59E0B"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <Border Grid.Column="3" Margin="2,0,2,0" CornerRadius="4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AdminPasswordScore, Converter={StaticResource GreaterOrEqualConverter}, ConverterParameter=4}" Value="True">
+                                                                            <Setter Property="Background" Value="#0D9488"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <Border Grid.Column="4" Margin="2,0,0,0" CornerRadius="4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding AdminPasswordScore, Converter={StaticResource GreaterOrEqualConverter}, ConverterParameter=5}" Value="True">
+                                                                            <Setter Property="Background" Value="#10B981"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- Strength Label -->
+                                                    <TextBlock Text="{Binding AdminPasswordStrengthLabel}" FontWeight="Bold" FontSize="14" Margin="0,0,0,10">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AdminPasswordStrengthLabel}" Value="Moyen">
+                                                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding AdminPasswordStrengthLabel}" Value="Bon">
+                                                                        <Setter Property="Foreground" Value="#0D9488"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding AdminPasswordStrengthLabel}" Value="Fort">
+                                                                        <Setter Property="Foreground" Value="#10B981"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <!-- Checklist -->
+                                                    <StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
+                                                            <TextBlock Text="✓ " Foreground="{Binding HasAdminMinLength, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                            <TextBlock Text="Au moins 8 caractères" Foreground="{Binding HasAdminMinLength, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
+                                                            <TextBlock Text="✓ " Foreground="{Binding HasAdminLowercase, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                            <TextBlock Text="Une lettre minuscule" Foreground="{Binding HasAdminLowercase, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
+                                                            <TextBlock Text="✓ " Foreground="{Binding HasAdminUppercase, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                            <TextBlock Text="Une lettre majuscule" Foreground="{Binding HasAdminUppercase, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
+                                                            <TextBlock Text="✓ " Foreground="{Binding HasAdminDigit, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                            <TextBlock Text="Un chiffre" Foreground="{Binding HasAdminDigit, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,3">
+                                                            <TextBlock Text="✓ " Foreground="{Binding HasAdminSpecialCharacter, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                            <TextBlock Text="Un caractère spécial" Foreground="{Binding HasAdminSpecialCharacter, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Confirmer le mot de passe" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <PasswordBox x:Name="AdminConfirmPasswordBox" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1" FontSize="13" VerticalContentAlignment="Center"/>
+                                                <StackPanel Orientation="Horizontal" Margin="12,5,0,0">
+                                                    <TextBlock Text="✓ " Foreground="{Binding DoAdminPasswordsMatch, Converter={StaticResource CheckToBrush}}" FontWeight="Bold" FontSize="13"/>
+                                                    <TextBlock Text="Les mots de passe correspondent" Foreground="{Binding DoAdminPasswordsMatch, Converter={StaticResource CheckToBrush}}" FontSize="13"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding ConfirmAdminPasswordChangeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Check" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Valider et changer le mot de passe"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminPasswordChangeCommand}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
                                                         <TextBlock Text="Annuler"/>

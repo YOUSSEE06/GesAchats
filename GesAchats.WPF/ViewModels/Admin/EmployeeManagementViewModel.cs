@@ -24,6 +24,13 @@ public enum AdminEmailEditStep
     Code
 }
 
+public enum AdminPasswordChangeStep
+{
+    SendCode,
+    VerifyCode,
+    NewPassword
+}
+
 public partial class EmployeeManagementViewModel : ObservableObject
 {
     private readonly IEmployeeService _employeeService;
@@ -122,11 +129,74 @@ public partial class EmployeeManagementViewModel : ObservableObject
     [ObservableProperty]
     private string _adminEmailEditMessage = string.Empty;
 
+    // Password Change Properties
+    [ObservableProperty]
+    private bool _isAdminPasswordChangeVisible;
+
+    private AdminPasswordChangeStep _currentAdminPasswordChangeStep = AdminPasswordChangeStep.SendCode;
+    public AdminPasswordChangeStep CurrentAdminPasswordChangeStep
+    {
+        get => _currentAdminPasswordChangeStep;
+        set
+        {
+            SetProperty(ref _currentAdminPasswordChangeStep, value);
+            OnPropertyChanged(nameof(IsPasswordChangeSendCodeStep));
+            OnPropertyChanged(nameof(IsPasswordChangeVerifyCodeStep));
+            OnPropertyChanged(nameof(IsPasswordChangeNewPasswordStep));
+        }
+    }
+
+    [ObservableProperty]
+    private string _adminPasswordVerificationCode = string.Empty;
+
+    [ObservableProperty]
+    private string _newAdminPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _confirmAdminPassword = string.Empty;
+
+    [ObservableProperty]
+    private bool _adminPasswordCodeVerified;
+
+    [ObservableProperty]
+    private int _adminPasswordScore;
+
+    [ObservableProperty]
+    private string _adminPasswordStrengthLabel = "Faible";
+
+    [ObservableProperty]
+    private bool _hasAdminMinLength;
+
+    [ObservableProperty]
+    private bool _hasAdminLowercase;
+
+    [ObservableProperty]
+    private bool _hasAdminUppercase;
+
+    [ObservableProperty]
+    private bool _hasAdminDigit;
+
+    [ObservableProperty]
+    private bool _hasAdminSpecialCharacter;
+
+    [ObservableProperty]
+    private bool _isAdminPasswordStrong;
+
+    [ObservableProperty]
+    private bool _doAdminPasswordsMatch;
+
+    [ObservableProperty]
+    private string _adminPasswordChangeMessage = string.Empty;
+
+    // Visibility Properties
     public bool IsAddEmployeeInfoStep => CurrentAddEmployeeStep == AddEmployeeStep.Info;
     public bool IsAddEmployeeCodeStep => CurrentAddEmployeeStep == AddEmployeeStep.Code;
     public bool IsPasswordStep => CurrentAdminEmailEditStep == AdminEmailEditStep.Password;
     public bool IsNewEmailStep => CurrentAdminEmailEditStep == AdminEmailEditStep.NewEmail;
     public bool IsCodeStep => CurrentAdminEmailEditStep == AdminEmailEditStep.Code;
+    public bool IsPasswordChangeSendCodeStep => CurrentAdminPasswordChangeStep == AdminPasswordChangeStep.SendCode;
+    public bool IsPasswordChangeVerifyCodeStep => CurrentAdminPasswordChangeStep == AdminPasswordChangeStep.VerifyCode;
+    public bool IsPasswordChangeNewPasswordStep => CurrentAdminPasswordChangeStep == AdminPasswordChangeStep.NewPassword;
 
     public EmployeeManagementViewModel(IEmployeeService employeeService, ILogger logger, IUnitOfWork unitOfWork, IUserSession userSession, IEmailVerificationService emailVerificationService)
     {
@@ -373,6 +443,213 @@ public partial class EmployeeManagementViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+    #region Password Change
+    [RelayCommand]
+    private void ShowAdminPasswordChange()
+    {
+        IsAdminPasswordChangeVisible = true;
+        CurrentAdminPasswordChangeStep = AdminPasswordChangeStep.SendCode;
+        AdminPasswordCodeVerified = false;
+        AdminPasswordVerificationCode = string.Empty;
+        NewAdminPassword = string.Empty;
+        ConfirmAdminPassword = string.Empty;
+        AdminPasswordChangeMessage = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelAdminPasswordChange()
+    {
+        IsAdminPasswordChangeVisible = false;
+        CurrentAdminPasswordChangeStep = AdminPasswordChangeStep.SendCode;
+        AdminPasswordCodeVerified = false;
+        AdminPasswordVerificationCode = string.Empty;
+        NewAdminPassword = string.Empty;
+        ConfirmAdminPassword = string.Empty;
+        AdminPasswordChangeMessage = "Action annulée.";
+    }
+
+    [RelayCommand]
+    private async Task SendAdminPasswordCode()
+    {
+        try
+        {
+            IsBusy = true;
+            AdminPasswordChangeMessage = string.Empty;
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminPasswordChangeMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            // Send verification code using existing service
+            var result = await _emailVerificationService.SendVerificationCodeAsync(_userSession.CurrentUser.Email);
+            if (result.success)
+            {
+                CurrentAdminPasswordChangeStep = AdminPasswordChangeStep.VerifyCode;
+                AdminPasswordChangeMessage = "Code de vérification envoyé avec succès.";
+            }
+            else
+            {
+                AdminPasswordChangeMessage = result.message;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error sending admin password change code");
+            AdminPasswordChangeMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task VerifyAdminPasswordCode()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(AdminPasswordVerificationCode))
+            {
+                AdminPasswordChangeMessage = "Veuillez saisir le code de vérification.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminPasswordChangeMessage = string.Empty;
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminPasswordChangeMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            var verifyResult = await _emailVerificationService.VerifyCodeOnlyAsync(_userSession.CurrentUser.Email, AdminPasswordVerificationCode);
+            if (!verifyResult.success)
+            {
+                AdminPasswordChangeMessage = verifyResult.message;
+                return;
+            }
+
+            AdminPasswordCodeVerified = true;
+            CurrentAdminPasswordChangeStep = AdminPasswordChangeStep.NewPassword;
+            AdminPasswordChangeMessage = "Code vérifié avec succès. Veuillez saisir votre nouveau mot de passe.";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error verifying admin password change code");
+            AdminPasswordChangeMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmAdminPasswordChange()
+    {
+        try
+        {
+            if (!AdminPasswordCodeVerified)
+            {
+                AdminPasswordChangeMessage = "Le code n'a pas été vérifié.";
+                return;
+            }
+
+            if (!IsAdminPasswordStrong)
+            {
+                AdminPasswordChangeMessage = "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.";
+                return;
+            }
+
+            if (!DoAdminPasswordsMatch)
+            {
+                AdminPasswordChangeMessage = "Les mots de passe ne correspondent pas.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminPasswordChangeMessage = string.Empty;
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminPasswordChangeMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            // Reset password using existing service
+            var resetResult = await _emailVerificationService.ResetPasswordAsync(_userSession.CurrentUser.Email, AdminPasswordVerificationCode, NewAdminPassword);
+            if (!resetResult.success)
+            {
+                AdminPasswordChangeMessage = resetResult.message;
+                return;
+            }
+
+            // Update session user (though password won't change)
+            var currentAdmin = await _unitOfWork.Users.GetByIdAsync(_userSession.CurrentUser.Id);
+            _userSession.StartSession(currentAdmin);
+
+            IsAdminPasswordChangeVisible = false;
+            CurrentAdminPasswordChangeStep = AdminPasswordChangeStep.SendCode;
+            AdminPasswordCodeVerified = false;
+            AdminPasswordVerificationCode = string.Empty;
+            NewAdminPassword = string.Empty;
+            ConfirmAdminPassword = string.Empty;
+            AdminPasswordChangeMessage = "Mot de passe modifié avec succès.";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error confirming admin password change");
+            AdminPasswordChangeMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void CalculateAdminPasswordStrength()
+    {
+        var password = NewAdminPassword;
+        HasAdminMinLength = password.Length >= 8;
+        HasAdminLowercase = Regex.IsMatch(password, @"[a-z]");
+        HasAdminUppercase = Regex.IsMatch(password, @"[A-Z]");
+        HasAdminDigit = Regex.IsMatch(password, @"[0-9]");
+        HasAdminSpecialCharacter = Regex.IsMatch(password, @"[^\w\d]");
+
+        AdminPasswordScore = 0;
+        if (HasAdminMinLength) AdminPasswordScore++;
+        if (HasAdminLowercase) AdminPasswordScore++;
+        if (HasAdminUppercase) AdminPasswordScore++;
+        if (HasAdminDigit) AdminPasswordScore++;
+        if (HasAdminSpecialCharacter) AdminPasswordScore++;
+
+        AdminPasswordStrengthLabel = AdminPasswordScore switch
+        {
+            0 or 1 => "Faible",
+            2 or 3 => "Moyen",
+            4 => "Bon",
+            5 => "Fort",
+            _ => "Faible"
+        };
+
+        IsAdminPasswordStrong = AdminPasswordScore == 5;
+        DoAdminPasswordsMatch = NewAdminPassword == ConfirmAdminPassword;
+    }
+
+    partial void OnNewAdminPasswordChanged(string value)
+    {
+        CalculateAdminPasswordStrength();
+    }
+
+    partial void OnConfirmAdminPasswordChanged(string value)
+    {
+        DoAdminPasswordsMatch = NewAdminPassword == ConfirmAdminPassword;
+    }
+    #endregion
 
     [RelayCommand]
     private async Task LoadRolesAsync()
