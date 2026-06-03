@@ -16,8 +16,10 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Shared/Colors.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <conv:SkiaColorToBrushConverter x:Key="SkiaColorToBrushConverter"/>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -105,11 +107,12 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="➕ Ajouter un règlement" 
+                    <Button Content="+ Ajouter un règlement" 
                             Command="{Binding AddPaymentCommand}" 
                             Style="{StaticResource MaterialDesignRaisedButton}" 
                             Background="{StaticResource SuccessBrush}"
-                            Padding="10,4" Margin="0,0,10,0"/>
+                            Padding="10,4" Margin="0,0,10,0"
+                            Visibility="{Binding CanAddReglement, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <Button Command="{Binding ToggleChartsCommand}" 
                             Style="{StaticResource MaterialDesignOutlinedButton}" 
                             Padding="10,4" Margin="0,0,10,0"
@@ -128,26 +131,41 @@
                 Visibility="{Binding ShowCharts, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Distribution Fournisseur -->
+                <!-- Répartition par mode de paiement (Doughnut Chart) -->
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="📊 Distribution par fournisseur" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                    <lvc:PieChart Series="{Binding SupplierDistribution}" Height="220" LegendPosition="Bottom" />
+                    <TextBlock Text="💳 Répartition par mode de paiement" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Left"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <lvc:PieChart Series="{Binding PaymentMethodSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180" />
+                            <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding TotalPaymentMethodAmount, StringFormat={}{0:N2} MAD}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding PaymentMethodSeries}" VerticalAlignment="Center">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                        <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Fill, Converter={StaticResource SkiaColorToBrushConverter}}"/>
+                                        <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#1E293B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </StackPanel>
 
-                <!-- Modes de Paiement -->
-                <StackPanel Grid.Column="1" Margin="10,0,10,0">
-                    <TextBlock Text="💳 Modes de paiement" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                    <lvc:CartesianChart Series="{Binding PaymentMethodsDistribution}" XAxes="{Binding XAxesMethods}" Height="220" />
-                </StackPanel>
-
-                <!-- Évolution par date -->
-                <StackPanel Grid.Column="2" Margin="10,0,0,0">
-                    <TextBlock Text="📈 Évolution des paiements" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                <!-- Évolution des paiements (Line Chart) -->
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="📈 Évolution des paiements" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Left"/>
                     <lvc:CartesianChart Series="{Binding PaymentsByDate}" XAxes="{Binding XAxesPayments}" Height="220" />
                 </StackPanel>
             </Grid>

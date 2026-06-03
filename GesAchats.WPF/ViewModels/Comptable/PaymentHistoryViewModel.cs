@@ -18,6 +18,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IUserSession _userSession;
 
     private ObservableCollection<Payment> _allPayments = new();
     private ObservableCollection<Payment> _payments = new();
@@ -180,11 +181,18 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     }
 
     // Chart Properties
-    private ISeries[] _supplierDistribution = Array.Empty<ISeries>();
-    public ISeries[] SupplierDistribution
+    private IEnumerable<ISeries> _paymentMethodSeries = [];
+    public IEnumerable<ISeries> PaymentMethodSeries
     {
-        get => _supplierDistribution;
-        set => SetProperty(ref _supplierDistribution, value);
+        get => _paymentMethodSeries;
+        set => SetProperty(ref _paymentMethodSeries, value);
+    }
+
+    private double _totalPaymentMethodAmount;
+    public double TotalPaymentMethodAmount
+    {
+        get => _totalPaymentMethodAmount;
+        set => SetProperty(ref _totalPaymentMethodAmount, value);
     }
 
     private ISeries[] _paymentsByDate = Array.Empty<ISeries>();
@@ -194,25 +202,11 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _paymentsByDate, value);
     }
 
-    private ISeries[] _paymentMethodsDistribution = Array.Empty<ISeries>();
-    public ISeries[] PaymentMethodsDistribution
-    {
-        get => _paymentMethodsDistribution;
-        set => SetProperty(ref _paymentMethodsDistribution, value);
-    }
-
     private Axis[] _xAxesPayments = Array.Empty<Axis>();
     public Axis[] XAxesPayments
     {
         get => _xAxesPayments;
         set => SetProperty(ref _xAxesPayments, value);
-    }
-
-    private Axis[] _xAxesMethods = Array.Empty<Axis>();
-    public Axis[] XAxesMethods
-    {
-        get => _xAxesMethods;
-        set => SetProperty(ref _xAxesMethods, value);
     }
 
     public ICommand LoadPaymentsCommand { get; }
@@ -229,11 +223,14 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _showCharts, value);
     }
 
-    public PaymentHistoryViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService)
+    public bool CanAddReglement => _userSession.HasRole("COMPTABLE");
+
+    public PaymentHistoryViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService, IUserSession userSession)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _fileStorageService = fileStorageService;
+        _userSession = userSession;
         Title = "Suivi des Règlements";
 
         LoadPaymentsCommand = new RelayCommand(async _ => await LoadPaymentsAsync());
@@ -402,55 +399,36 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     {
         if (Payments == null || !Payments.Any())
         {
-            SupplierDistribution = Array.Empty<ISeries>();
+            PaymentMethodSeries = [];
             PaymentsByDate = Array.Empty<ISeries>();
-            PaymentMethodsDistribution = Array.Empty<ISeries>();
+            TotalPaymentMethodAmount = 0;
             return;
         }
 
-        // 1. Distribution par fournisseur (Pie Chart)
-        var supplierData = Payments
-            .GroupBy(p => p.Supplier?.CompanyName ?? "Inconnu")
-            .Select(g => new { Name = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
-            .OrderByDescending(x => x.Total)
-            .Take(5) // Top 5
-            .ToList();
-
-        SupplierDistribution = supplierData.Select(s => new PieSeries<double>
-        {
-            Values = new double[] { s.Total },
-            Name = s.Name,
-            DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
-            DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:N2} MAD"
-        }).ToArray();
-
-        // 2. Modes de paiement (Bar Chart)
+        // 1. Répartition par mode de paiement (Doughnut Chart)
         var methodData = Payments
-            .GroupBy(p => p.PaymentMethod ?? "Non spécifié")
+            .GroupBy(p => p.PaymentMethod ?? "Autre")
             .Select(g => new { Method = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
             .ToList();
 
-        PaymentMethodsDistribution = new ISeries[]
-        {
-            new ColumnSeries<double>
-            {
-                Values = methodData.Select(x => x.Total).ToArray(),
-                Name = "Montant par Mode",
-                Fill = new SolidColorPaint(SKColors.MidnightBlue),
-                Padding = 20
-            }
-        };
+        TotalPaymentMethodAmount = methodData.Sum(x => x.Total);
 
-        XAxesMethods = new Axis[]
+        PaymentMethodSeries = methodData.Select(d => new PieSeries<double>
         {
-            new Axis
+            Values = new[] { d.Total },
+            Name = d.Method,
+            InnerRadius = 55,
+            Fill = d.Method switch
             {
-                Labels = methodData.Select(x => x.Method).ToArray(),
-                LabelsRotation = -45
+                "Virement" => new SolidColorPaint(new SKColor(34, 197, 94)),
+                "Chèque" => new SolidColorPaint(new SKColor(245, 158, 11)),
+                "Espèce" => new SolidColorPaint(new SKColor(168, 85, 246)),
+                "Lettre de change" => new SolidColorPaint(new SKColor(59, 130, 246)),
+                _ => new SolidColorPaint(SKColors.Gray)
             }
-        };
+        }).ToList();
 
-        // 3. Évolution des paiements par date (Line Chart)
+        // 2. Évolution des paiements par date (Line Chart)
         var dateData = Payments
             .GroupBy(p => p.PaymentDate.Date)
             .Select(g => new { Date = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
