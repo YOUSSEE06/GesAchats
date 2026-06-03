@@ -44,7 +44,8 @@ public class EmployeeService : IEmployeeService
                             RoleLabel = u.Role.Label,
                             IsEmailVerified = true, // No column yet in User entity, default true
                             IsActive = u.IsActive,
-                            CreatedAt = u.CreatedAt
+                            CreatedAt = u.CreatedAt,
+                            LastLoginAt = u.LastLoginAt
                         }).ToList();
         }
         catch (Exception ex)
@@ -278,5 +279,47 @@ public class EmployeeService : IEmployeeService
 
         // Shuffle the password!
         return new string(password.OrderBy(c => random.Next()).ToArray());
+    }
+
+    public async Task<(bool success, string message)> DeleteEmployeeAsync(int userId)
+    {
+        try
+        {
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return (false, "Utilisateur introuvable.");
+            }
+
+            // Check if user is admin
+            var userWithRole = (await _unitOfWork.UserRepository.GetAllIncludingAsync(u => u.Role))
+                               .FirstOrDefault(u => u.Id == userId);
+            if (userWithRole?.Role.Code == "ADMIN")
+            {
+                return (false, "Impossible de supprimer un administrateur.");
+            }
+
+            // Check if user is active
+            if (user.IsActive)
+            {
+                return (false, "Impossible de supprimer un utilisateur actif. Désactivez le compte avant de le supprimer.");
+            }
+
+            // Delete user!
+            _unitOfWork.UserRepository.Remove(user);
+            await _unitOfWork.CompleteAsync();
+
+            return (true, "Utilisateur supprimé avec succès.");
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            _logger.Error(ex, "Error deleting employee {UserId} because of foreign key constraints", userId);
+            return (false, "Impossible de supprimer cet utilisateur car il est lié à d'autres données.");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error deleting employee {UserId}", userId);
+            return (false, "Une erreur est survenue.");
+        }
     }
 }

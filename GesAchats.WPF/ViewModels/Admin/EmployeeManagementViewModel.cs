@@ -872,4 +872,66 @@ public partial class EmployeeManagementViewModel : ObservableObject
         // For now, just show a message!
         MessageBox.Show("Fonctionnalité d'édition à implémenter.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
     }
+
+    [RelayCommand]
+    private async Task DeleteEmployeeAsync(int userId)
+    {
+        try
+        {
+            // Get employee to check status
+            var employee = Employees.FirstOrDefault(e => e.Id == userId);
+            if (employee == null)
+            {
+                StatusMessage = "Utilisateur introuvable.";
+                MessageBox.Show("Utilisateur introuvable.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // If employee is active, show error and return!
+            if (employee.IsActive)
+            {
+                var errorMsg = "Impossible de supprimer un utilisateur actif. Désactivez le compte avant de le supprimer.";
+                StatusMessage = errorMsg;
+                MessageBox.Show(errorMsg, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // If deactivated, show confirmation dialog
+            var dialogResult = MessageBox.Show(
+                "Voulez-vous vraiment supprimer cet utilisateur désactivé?",
+                "Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (dialogResult != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            // Call service to delete!
+            IsBusy = true;
+            StatusMessage = "Suppression en cours...";
+            var result = await _employeeService.DeleteEmployeeAsync(userId);
+            if (result.success)
+            {
+                StatusMessage = result.message;
+                MessageBox.Show(result.message, "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadEmployeesAsync();
+            }
+            else
+            {
+                StatusMessage = result.message;
+                MessageBox.Show(result.message, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error deleting employee {UserId}", userId);
+            StatusMessage = "Une erreur est survenue.";
+            MessageBox.Show("Une erreur est survenue.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 }

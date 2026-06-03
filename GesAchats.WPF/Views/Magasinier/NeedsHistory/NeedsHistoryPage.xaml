@@ -148,7 +148,6 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="N° Demande" Binding="{Binding Need.NumeroBesoin}" Width="150" FontWeight="Bold"/>
                 <DataGridTextColumn Header="Date" Binding="{Binding Need.RequestedAt, StringFormat=d}" Width="120"/>
-                <DataGridTextColumn Header="Demandeur" Binding="{Binding Need.RequestedBy.FullName}" Width="*"/>
                 <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
                 <DataGridTemplateColumn Header="Statut" Width="130">
                     <DataGridTemplateColumn.CellTemplate>

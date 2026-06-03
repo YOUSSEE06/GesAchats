@@ -187,9 +187,7 @@ public class NeedsHistoryViewModel : BaseViewModel
         try
         {
             var needs = await _unitOfWork.Needs.GetAllWithDetailsAsync();
-            // On filtre par l'utilisateur connecté (ID 1 par défaut si session vide pour tests)
-            var currentUserId = _userSession.CurrentUser?.Id ?? 1;
-            _allNeeds = needs.Where(n => n.RequestedById == currentUserId).ToList();
+            _allNeeds = needs.ToList();
             FilterNeeds();
         }
         finally

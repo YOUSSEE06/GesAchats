@@ -43,7 +43,8 @@ public class UserRepository : Repository<User>, IUserRepository
                                RoleLabel = u.Role.Label,
                                IsEmailVerified = true, // No column yet, assume true for now
                                IsActive = u.IsActive,
-                               CreatedAt = u.CreatedAt
+                               CreatedAt = u.CreatedAt,
+                               LastLoginAt = u.LastLoginAt
                            })
                            .ToListAsync();
     }

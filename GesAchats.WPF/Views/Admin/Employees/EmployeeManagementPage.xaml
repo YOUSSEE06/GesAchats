@@ -843,189 +843,198 @@
                         </DockPanel>
 
                         <!-- DataGrid -->
-                        <DataGrid Style="{StaticResource ModernDataGrid}"
-                                  ItemsSource="{Binding Employees}"
-                                  IsReadOnly="True" 
-                                  RowHeight="56" 
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  ClipToBounds="True"
-                                  AutoGenerateColumns="False">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nom complet" 
-                                                    Binding="{Binding FullName}" 
-                                                    Width="1.5*"
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Left"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="FontSize" Value="13"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <DataGrid Style="{StaticResource ModernDataGrid}"
+                                      ItemsSource="{Binding Employees}"
+                                      IsReadOnly="True" 
+                                      RowHeight="56" 
+                                      HorizontalAlignment="Left"
+                                      MinWidth="1200"
+                                      ClipToBounds="True"
+                                      AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Nom complet" 
+                                                        Binding="{Binding FullName}" 
+                                                        Width="Auto"
+                                                        MinWidth="180"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTextColumn Header="Email" 
-                                                    Binding="{Binding Email}" 
-                                                    Width="*"
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Left"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="FontSize" Value="13"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Email" 
+                                                        Binding="{Binding Email}" 
+                                                        Width="Auto"
+                                                        MinWidth="280"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTextColumn Header="Rôle" 
-                                                    Width="*"
-                                                    Binding="{Binding RoleLabel}" 
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Left"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="FontSize" Value="13"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Rôle" 
+                                                        Width="Auto"
+                                                        MinWidth="140"
+                                                        Binding="{Binding RoleLabel}" 
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Header="Email validé" 
-                                                    Width="*"
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <fa:IconImage x:Name="Icon" 
-                                                              Width="14" Height="14"
-                                                              Margin="0,0,6,0"
-                                                              VerticalAlignment="Center"/>
-                                                <TextBlock x:Name="StatusText" 
-                                                          VerticalAlignment="Center"
-                                                          FontSize="13"
-                                                          FontWeight="Medium"/>
-                                            </StackPanel>
-                                            <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding IsEmailVerified}" Value="True">
-                                                    <Setter TargetName="Icon" Property="Icon" Value="CheckCircle"/>
-                                                    <Setter TargetName="Icon" Property="Foreground" Value="#22C55E"/>
-                                                    <Setter TargetName="StatusText" Property="Text" Value="Oui"/>
-                                                    <Setter TargetName="StatusText" Property="Foreground" Value="#22C55E"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsEmailVerified}" Value="False">
-                                                    <Setter TargetName="Icon" Property="Icon" Value="XmarkCircle"/>
-                                                    <Setter TargetName="Icon" Property="Foreground" Value="#EF4444"/>
-                                                    <Setter TargetName="StatusText" Property="Text" Value="Non"/>
-                                                    <Setter TargetName="StatusText" Property="Foreground" Value="#EF4444"/>
-                                                </DataTrigger>
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <DataGridTemplateColumn Header="Statut compte" 
-                                                    Width="*"
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border CornerRadius="20" 
-                                                    Padding="12,6" 
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Left"
-                                                    SnapsToDevicePixels="True">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#FEE2E2"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                <Setter Property="Background" Value="#D1FAE5"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <TextBlock Text="" 
-                                                          FontSize="12" 
-                                                          FontWeight="SemiBold">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="Désactivé"/>
-                                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                    <DataGridTemplateColumn Header="Statut compte" 
+                                                        Width="Auto"
+                                                        MinWidth="140"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="20" 
+                                                        Padding="12,6" 
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        SnapsToDevicePixels="True">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                    <Setter Property="Text" Value="Actif"/>
-                                                                    <Setter Property="Foreground" Value="#047857"/>
+                                                                    <Setter Property="Background" Value="#D1FAE5"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+                                                    </Border.Style>
+                                                    <TextBlock Text="" 
+                                                              FontSize="12" 
+                                                              FontWeight="SemiBold"
+                                                              TextWrapping="NoWrap">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="Désactivé"/>
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                        <Setter Property="Text" Value="Actif"/>
+                                                                        <Setter Property="Foreground" Value="#047857"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Header="Date de création" 
-                                                    Width="*"
-                                                    Binding="{Binding CreatedAt, StringFormat='dd/MM/yyyy HH:mm'}" 
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Left"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="FontSize" Value="13"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Date de création" 
+                                                        Width="Auto"
+                                                        MinWidth="170"
+                                                        Binding="{Binding CreatedAt, StringFormat='dd/MM/yyyy HH:mm'}" 
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Header="Actions" 
-                                                    Width="*"
-                                                    HeaderStyle="{StaticResource ModernDataGridHeader}"
-                                                    CellStyle="{StaticResource ModernDataGridCell}">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource ActionButton}" Margin="0,0,8,0" Padding="10,6" Command="{Binding DataContext.EditEmployeeCommand, RelativeSource={RelativeSource AncestorType=Page}}" CommandParameter="{Binding Id}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <fa:IconImage Icon="PenToSquare" Width="12" Height="12" Margin="0,0,4,0"/>
-                                                        <TextBlock Text="Modifier"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button x:Name="ToggleStatusBtn"
-                                                        Style="{StaticResource ActionButton}"
-                                                        Margin="0,0,8,0" 
-                                                        Padding="10,6" 
-                                                        Command="{Binding DataContext.ToggleEmployeeStatusCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                        CommandParameter="{Binding Id}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <fa:IconImage x:Name="ToggleIcon" Width="12" Height="12" Margin="0,0,4,0"/>
-                                                        <TextBlock x:Name="ToggleText"/>
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                            <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                    <Setter TargetName="ToggleStatusBtn" Property="Foreground" Value="#DC2626"/>
-                                                    <Setter TargetName="ToggleStatusBtn" Property="BorderBrush" Value="#DC2626"/>
-                                                    <Setter TargetName="ToggleIcon" Property="Icon" Value="Ban"/>
-                                                    <Setter TargetName="ToggleText" Property="Text" Value="Désactiver"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                    <Setter TargetName="ToggleIcon" Property="Icon" Value="Check"/>
-                                                    <Setter TargetName="ToggleText" Property="Text" Value="Activer"/>
-                                                </DataTrigger>
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                    <DataGridTextColumn Header="Dernière connexion" 
+                                                        Width="Auto"
+                                                        MinWidth="180"
+                                                        Binding="{Binding DerniereConnexionDisplay}" 
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <DataGridTemplateColumn Header="Actions" 
+                                                        Width="Auto"
+                                                        MinWidth="260"
+                                                        HeaderStyle="{StaticResource ModernDataGridHeader}"
+                                                        CellStyle="{StaticResource ModernDataGridCell}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="ToggleStatusBtn"
+                                                            Style="{StaticResource ActionButton}"
+                                                            Margin="0,0,8,0" 
+                                                            Padding="10,6" 
+                                                            Command="{Binding DataContext.ToggleEmployeeStatusCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding Id}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <fa:IconImage x:Name="ToggleIcon" Width="12" Height="12" Margin="0,0,4,0"/>
+                                                            <TextBlock x:Name="ToggleText" TextWrapping="NoWrap"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button x:Name="DeleteBtn"
+                                                            Style="{StaticResource ActionButton}"
+                                                            Margin="0,0,0,0" 
+                                                            Padding="10,6" 
+                                                            Command="{Binding DataContext.DeleteEmployeeCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                            CommandParameter="{Binding Id}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <fa:IconImage x:Name="DeleteIcon" Width="12" Height="12" Margin="0,0,4,0"/>
+                                                            <TextBlock x:Name="DeleteText" Text="Supprimer" TextWrapping="NoWrap"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter TargetName="ToggleStatusBtn" Property="Foreground" Value="#DC2626"/>
+                                                        <Setter TargetName="ToggleStatusBtn" Property="BorderBrush" Value="#DC2626"/>
+                                                        <Setter TargetName="ToggleIcon" Property="Icon" Value="Ban"/>
+                                                        <Setter TargetName="ToggleText" Property="Text" Value="Désactiver"/>
+                                                        <Setter TargetName="DeleteBtn" Property="IsEnabled" Value="False"/>
+                                                        <Setter TargetName="DeleteBtn" Property="Opacity" Value="0.5"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                        <Setter TargetName="ToggleIcon" Property="Icon" Value="Check"/>
+                                                        <Setter TargetName="ToggleText" Property="Text" Value="Activer"/>
+                                                        <Setter TargetName="DeleteBtn" Property="IsEnabled" Value="True"/>
+                                                        <Setter TargetName="DeleteBtn" Property="Opacity" Value="1"/>
+                                                        <Setter TargetName="DeleteBtn" Property="Foreground" Value="#DC2626"/>
+                                                        <Setter TargetName="DeleteBtn" Property="BorderBrush" Value="#DC2626"/>
+                                                        <Setter TargetName="DeleteIcon" Property="Icon" Value="Trash"/>
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
             </StackPanel>

@@ -10,4 +10,10 @@ public class EmployeeDto
     public bool IsEmailVerified { get; set; } // Note: No column yet, let's assume false for now
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
+
+    public string DerniereConnexionDisplay => 
+        LastLoginAt.HasValue 
+            ? LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") 
+            : "Jamais connecté";
 }
