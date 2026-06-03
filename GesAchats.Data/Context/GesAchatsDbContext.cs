@@ -216,5 +216,14 @@ public class GesAchatsDbContext : DbContext
         // AuditLog
         modelBuilder.Entity<AuditLog>()
             .HasIndex(a => a.ActionDate);
+
+        // EmailVerificationCode - Add explicit mapping for new columns
+        modelBuilder.Entity<EmailVerificationCode>()
+            .Property(e => e.Email)
+            .HasMaxLength(255);
+
+        modelBuilder.Entity<EmailVerificationCode>()
+            .Property(e => e.Purpose)
+            .HasMaxLength(50);
     }
 }

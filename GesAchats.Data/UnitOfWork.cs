@@ -2,6 +2,7 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Data.Repositories;
 using GesAchats.Data.Context;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace GesAchats.Data;
 
@@ -16,6 +17,7 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context;
         Users = new UserRepository(_context);
+        UserRepository = Users; // Backward compatibility
         Roles = new Repository<Role>(_context);
         Suppliers = new Repository<Supplier>(_context);
         Products = new Repository<Product>(_context);
@@ -37,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
         EmailVerificationCodes = new Repository<EmailVerificationCode>(_context);
     }
 
+    public IUserRepository UserRepository { get; private set; }
     public IUserRepository Users { get; private set; }
     public IRepository<Role> Roles { get; private set; }
     public IRepository<Supplier> Suppliers { get; private set; }
@@ -61,6 +64,16 @@ public class UnitOfWork : IUnitOfWork
     public async Task<int> CompleteAsync()
     {
         return await _context.SaveChangesAsync();
+    }
+
+    public async Task<int> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync();
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _context.Database.BeginTransactionAsync();
     }
 
     public void Dispose()

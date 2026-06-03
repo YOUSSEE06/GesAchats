@@ -318,6 +318,9 @@ public partial class App : Application
         services.AddTransient<ISupplierService, SupplierService>();
         services.AddTransient<IInvoiceService, InvoiceService>();
         
+        // Employee management services
+        services.AddTransient<IEmployeeService, EmployeeService>();
+        
         // Serilog - simple logger for now
         services.AddSingleton<Serilog.ILogger>(sp => 
             new LoggerConfiguration()
@@ -365,6 +368,7 @@ public partial class App : Application
         services.AddTransient<GesAchats.WPF.ViewModels.Acheteur.ProductStatsViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminOrdersViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminHistoriqueSortiesViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.EmployeeManagementViewModel>();
 
         // ViewModels - Focus Comptable
         services.AddTransient<ComptableShellViewModel>();

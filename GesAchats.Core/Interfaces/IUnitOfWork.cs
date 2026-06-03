@@ -1,5 +1,6 @@
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace GesAchats.Core.Interfaces;
 
@@ -8,7 +9,8 @@ namespace GesAchats.Core.Interfaces;
 /// </summary>
 public interface IUnitOfWork : IDisposable
 {
-    IUserRepository Users { get; }
+    IUserRepository UserRepository { get; }
+    IUserRepository Users { get; } // Backward compatibility
     IRepository<Role> Roles { get; }
     IRepository<Supplier> Suppliers { get; }
     IRepository<Product> Products { get; }
@@ -30,4 +32,6 @@ public interface IUnitOfWork : IDisposable
     IRepository<EmailVerificationCode> EmailVerificationCodes { get; }
 
     Task<int> CompleteAsync();
+    Task<int> SaveChangesAsync();
+    Task<IDbContextTransaction> BeginTransactionAsync();
 }

@@ -8,14 +8,21 @@ public class EmailVerificationCode
     [Key]
     public int Id { get; set; }
 
-    public int UserId { get; set; }
+    public int? UserId { get; set; }
 
     [ForeignKey(nameof(UserId))]
-    public virtual User User { get; set; } = null!;
+    public virtual User? User { get; set; }
+
+    [MaxLength(255)]
+    public string? Email { get; set; }
 
     [Required]
     [MaxLength(255)]
     public string CodeHash { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(50)]
+    public string Purpose { get; set; } = string.Empty;
 
     public bool IsUsed { get; set; } = false;
 

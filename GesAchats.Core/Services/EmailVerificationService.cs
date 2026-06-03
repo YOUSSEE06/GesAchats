@@ -191,4 +191,106 @@ public class EmailVerificationService : IEmailVerificationService
         if (!password.Any(ch => !char.IsLetterOrDigit(ch))) return false;
         return true;
     }
+
+    public async Task<(bool success, string message)> SendEmployeeCreationCodeAsync(string fullName, string email)
+    {
+        try
+        {
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+            
+            // Generate code (reuse existing method!)
+            var code = GenerateRandomCode();
+            var codeHash = BCryptNet.HashPassword(code);
+            var expiresAt = DateTime.UtcNow.AddMinutes(10);
+
+            // Store verification code (using Email and Purpose)
+            var verificationCode = new EmailVerificationCode
+            {
+                UserId = null,
+                Email = normalizedEmail,
+                Purpose = "CreateUser",
+                CodeHash = codeHash,
+                ExpiresAt = expiresAt,
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.EmailVerificationCodes.AddAsync(verificationCode);
+            await _unitOfWork.CompleteAsync();
+
+            // Send email (reuse IEmailService!)
+            var emailBody = $@"
+                <html>
+                    <body>
+                        <h2>Création de votre compte GesAchats</h2>
+                        <p>Bonjour {fullName},</p>
+                        <p>Un administrateur a commencé la création de votre compte GesAchats.</p>
+                        <p>Votre code de validation est: <strong>{code}</strong></p>
+                        <p>Ce code expirera dans 10 minutes.</p>
+                        <p>Si vous n'attendiez pas ce message, contactez l'administrateur.</p>
+                        <p>Cordialement,<br>L'équipe GesAchats</p>
+                    </body>
+                </html>";
+
+            Log.Information("Sending employee creation verification code to {Email}", normalizedEmail);
+            var emailSent = await _emailService.SendEmailAsync(normalizedEmail, "Création de votre compte GesAchats", emailBody);
+            
+            if (!emailSent)
+            {
+                Log.Error("Failed to send employee creation verification code email to {Email}", normalizedEmail);
+                return (false, "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
+            }
+            
+            Log.Information("Employee creation verification code email sent successfully to {Email}", normalizedEmail);
+            return (true, "Code de validation envoyé avec succès.");
+        }
+        catch (MailKit.Net.Smtp.SmtpCommandException ex)
+        {
+            Log.Error(ex, "SMTP command error sending employee creation code to {Email}", email);
+            return (false, $"Erreur SMTP : {ex.Message}");
+        }
+        catch (MailKit.Security.AuthenticationException ex)
+        {
+            Log.Error(ex, "SMTP authentication error sending employee creation code to {Email}", email);
+            return (false, $"Erreur d'authentification SMTP : {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error sending employee creation code to {Email}", email);
+            return (false, $"Une erreur est survenue lors de l'envoi du code de validation.");
+        }
+    }
+
+    public async Task<(bool success, string message)> VerifyEmployeeCreationCodeAsync(string email, string code)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return (false, "Veuillez saisir le code de validation.");
+            
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+
+            // Get valid code (email-based, purpose = CreateUser)
+            var codes = await _unitOfWork.EmailVerificationCodes.FindAsync(
+                evc => evc.Email == normalizedEmail
+                    && evc.Purpose == "CreateUser"
+                    && !evc.IsUsed
+                    && evc.ExpiresAt > DateTime.UtcNow);
+            
+            var verificationCode = codes.OrderByDescending(evc => evc.CreatedAt).FirstOrDefault();
+            
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+                return (false, "Code invalide ou expiré.");
+            
+            verificationCode.IsUsed = true;
+            await _unitOfWork.CompleteAsync();
+            
+            return (true, "Code validé avec succès.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error verifying employee creation code for email {Email}", email);
+            return (false, "Une erreur est survenue lors de la vérification du code.");
+        }
+    }
 }

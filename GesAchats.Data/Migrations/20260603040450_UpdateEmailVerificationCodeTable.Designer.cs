@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GesAchats.Data.Migrations
 {
     [DbContext(typeof(GesAchatsDbContext))]
-    [Migration("20260602151738_AddEmailVerificationCodeTable")]
-    partial class AddEmailVerificationCodeTable
+    [Migration("20260603040450_UpdateEmailVerificationCodeTable")]
+    partial class UpdateEmailVerificationCodeTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -252,13 +252,22 @@ namespace GesAchats.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("UserId")
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1191,9 +1200,7 @@ namespace GesAchats.Data.Migrations
                 {
                     b.HasOne("GesAchats.Core.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
