@@ -4,12 +4,14 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
+      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
       mc:Ignorable="d" 
       d:DesignHeight="1200" d:DesignWidth="1200"
       Title="Gestion des Employés">
 
     <Page.Resources>
         <ResourceDictionary>
+            <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
             <Style x:Key="MetricCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="CornerRadius" Value="12"/>
@@ -314,6 +316,13 @@
                                     </StackPanel>
                                 </StackPanel>
 
+                                <!-- Session Error Message -->
+                                <TextBlock Text="{Binding AdminSessionError}" 
+                                           DockPanel.Dock="Top" 
+                                           FontSize="13" 
+                                           Foreground="#DC2626" 
+                                           Margin="0,0,0,12"/>
+
                                 <!-- Admin Info -->
                                 <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20">
                                     <Grid Margin="0,0,0,12">
@@ -322,7 +331,7 @@
                                             <ColumnDefinition Width="0.6*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="Nom complet" FontSize="13" Foreground="#64748B"/>
-                                        <TextBlock Grid.Column="1" Text="Administrateur Système" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding AdminFullName}" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
                                     </Grid>
                                     <Grid Margin="0,0,0,12">
                                         <Grid.ColumnDefinitions>
@@ -330,7 +339,7 @@
                                             <ColumnDefinition Width="0.6*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="Email professionnel" FontSize="13" Foreground="#64748B"/>
-                                        <TextBlock Grid.Column="1" Text="admin@gesachats.ma" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding AdminEmail}" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
                                     </Grid>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -338,7 +347,7 @@
                                             <ColumnDefinition Width="0.6*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="Rôle" FontSize="13" Foreground="#64748B"/>
-                                        <TextBlock Grid.Column="1" Text="Administrateur" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding AdminRoleDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="#1E293B"/>
                                     </Grid>
                                 </StackPanel>
 
@@ -358,6 +367,14 @@
                                     </Button>
                                 </StackPanel>
 
+                                <!-- Session Error Message -->
+                                <TextBlock Text="{Binding AdminEmailEditMessage}" 
+                                           DockPanel.Dock="Top" 
+                                           FontSize="13" 
+                                           Foreground="#DC2626" 
+                                           Margin="0,0,0,12"
+                                           Visibility="{Binding AdminEmailEditMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
                                 <!-- Sub-section: Secure Email Modification (Hidden by default) -->
                                 <Border DockPanel.Dock="Top" 
                                         Background="#F0FDFA" 
@@ -366,50 +383,75 @@
                                         Visibility="{Binding IsAdminEmailEditVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <StackPanel>
                                         <TextBlock Text="Modifier mon email professionnel (sécurisé)" FontSize="14" FontWeight="SemiBold" Foreground="#0D9488" Margin="0,0,0,12"/>
-                                        <Grid Margin="0,0,0,12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        
+                                        <!-- Step 1: Verify Password -->
+                                        <StackPanel Visibility="{Binding IsPasswordStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
                                                 <TextBlock Text="Mot de passe actuel" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
-                                                <PasswordBox Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1" FontSize="13" VerticalContentAlignment="Center"/>
+                                                <PasswordBox x:Name="AdminPasswordBox" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1" FontSize="13" VerticalContentAlignment="Center"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Margin="4,0,8,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding VerifyAdminPasswordCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Shield" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Vérifier le mot de passe"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminEmailEditCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Step 2: Enter New Email -->
+                                        <StackPanel Visibility="{Binding IsNewEmailStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
                                                 <TextBlock Text="Nouveau email professionnel" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource TextBoxStyle}"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding NewAdminEmail, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding SendAdminEmailChangeCodeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="PaperPlane" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Envoyer code"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminEmailEditCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Step 3: Verify Code -->
+                                        <StackPanel Visibility="{Binding IsCodeStep, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                                            <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Nouveau email professionnel" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding NewAdminEmail}" IsEnabled="False"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,12">
                                                 <TextBlock Text="Code de validation" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
-                                                <TextBox Style="{StaticResource TextBoxStyle}"/>
+                                                <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding AdminEmailVerificationCode, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                        </Grid>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <fa:IconImage Icon="Shield" Width="12" Height="12" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="Vérifier le mot de passe"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="14,8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <fa:IconImage Icon="PaperPlane" Width="12" Height="12" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="Envoyer code"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <fa:IconImage Icon="Check" Width="12" Height="12" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="Valider et modifier email"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding HideAdminEmailEditCommand}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="Annuler"/>
-                                                </StackPanel>
-                                            </Button>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding ConfirmAdminEmailChangeCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Check" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Valider et modifier email"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminEmailEditCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Annuler"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

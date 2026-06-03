@@ -10,5 +10,14 @@ public partial class EmployeeManagementPage : Page
         InitializeComponent();
         DataContext = viewModel;
         viewModel.LoadEmployeesCommand.Execute(null);
+        
+        // Bind PasswordBox to ViewModel
+        AdminPasswordBox.PasswordChanged += (sender, args) => 
+        {
+            if (DataContext is EmployeeManagementViewModel vm)
+            {
+                vm.CurrentAdminPassword = AdminPasswordBox.Password;
+            }
+        };
     }
 }

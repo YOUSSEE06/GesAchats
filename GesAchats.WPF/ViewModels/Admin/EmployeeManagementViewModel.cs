@@ -2,10 +2,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Text.RegularExpressions;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using Serilog;
+using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
@@ -15,11 +17,20 @@ public enum AddEmployeeStep
     Code
 }
 
+public enum AdminEmailEditStep
+{
+    Password,
+    NewEmail,
+    Code
+}
+
 public partial class EmployeeManagementViewModel : ObservableObject
 {
     private readonly IEmployeeService _employeeService;
     private readonly ILogger _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserSession _userSession;
+    private readonly IEmailVerificationService _emailVerificationService;
 
     [ObservableProperty]
     private bool _isAddEmployeeFormVisible;
@@ -37,6 +48,20 @@ public partial class EmployeeManagementViewModel : ObservableObject
             SetProperty(ref _currentAddEmployeeStep, value);
             OnPropertyChanged(nameof(IsAddEmployeeInfoStep));
             OnPropertyChanged(nameof(IsAddEmployeeCodeStep));
+        }
+    }
+
+    private AdminEmailEditStep _currentAdminEmailEditStep = AdminEmailEditStep.Password;
+
+    public AdminEmailEditStep CurrentAdminEmailEditStep
+    {
+        get => _currentAdminEmailEditStep;
+        set
+        {
+            SetProperty(ref _currentAdminEmailEditStep, value);
+            OnPropertyChanged(nameof(IsPasswordStep));
+            OnPropertyChanged(nameof(IsNewEmailStep));
+            OnPropertyChanged(nameof(IsCodeStep));
         }
     }
 
@@ -70,16 +95,283 @@ public partial class EmployeeManagementViewModel : ObservableObject
     [ObservableProperty]
     private string _newEmployeeVerificationCode = string.Empty;
 
+    [ObservableProperty]
+    private string _adminFullName = string.Empty;
+
+    [ObservableProperty]
+    private string _adminEmail = string.Empty;
+
+    [ObservableProperty]
+    private string _adminRoleDisplay = "Administrateur";
+
+    [ObservableProperty]
+    private string _adminSessionError = string.Empty;
+
+    [ObservableProperty]
+    private string _currentAdminPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _newAdminEmail = string.Empty;
+
+    [ObservableProperty]
+    private string _adminEmailVerificationCode = string.Empty;
+
+    [ObservableProperty]
+    private bool _adminPasswordVerified;
+
+    [ObservableProperty]
+    private string _adminEmailEditMessage = string.Empty;
+
     public bool IsAddEmployeeInfoStep => CurrentAddEmployeeStep == AddEmployeeStep.Info;
     public bool IsAddEmployeeCodeStep => CurrentAddEmployeeStep == AddEmployeeStep.Code;
+    public bool IsPasswordStep => CurrentAdminEmailEditStep == AdminEmailEditStep.Password;
+    public bool IsNewEmailStep => CurrentAdminEmailEditStep == AdminEmailEditStep.NewEmail;
+    public bool IsCodeStep => CurrentAdminEmailEditStep == AdminEmailEditStep.Code;
 
-    public EmployeeManagementViewModel(IEmployeeService employeeService, ILogger logger, IUnitOfWork unitOfWork)
+    public EmployeeManagementViewModel(IEmployeeService employeeService, ILogger logger, IUnitOfWork unitOfWork, IUserSession userSession, IEmailVerificationService emailVerificationService)
     {
         _employeeService = employeeService;
         _logger = logger;
         _unitOfWork = unitOfWork;
-        // Load roles on initialization
+        _userSession = userSession;
+        _emailVerificationService = emailVerificationService;
+        // Load roles and admin data on initialization
         LoadRolesAsync().ConfigureAwait(false);
+        LoadAdminData();
+    }
+
+    private void LoadAdminData()
+    {
+        try
+        {
+            if (_userSession.CurrentUser == null)
+            {
+                AdminSessionError = "Session administrateur introuvable.";
+                _logger.Warning("Admin session not found when loading employee management page");
+                return;
+            }
+
+            AdminFullName = _userSession.CurrentUser.FullName ?? _userSession.CurrentUser.Login;
+            AdminEmail = _userSession.CurrentUser.Email;
+            AdminRoleDisplay = "Administrateur";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading admin data");
+            AdminSessionError = "Erreur lors du chargement des données de session.";
+        }
+    }
+
+    [RelayCommand]
+    private void ShowAdminEmailEdit()
+    {
+        IsAdminEmailEditVisible = true;
+        CurrentAdminEmailEditStep = AdminEmailEditStep.Password;
+        AdminPasswordVerified = false;
+        CurrentAdminPassword = string.Empty;
+        NewAdminEmail = string.Empty;
+        AdminEmailVerificationCode = string.Empty;
+        AdminEmailEditMessage = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelAdminEmailEdit()
+    {
+        IsAdminEmailEditVisible = false;
+        CurrentAdminEmailEditStep = AdminEmailEditStep.Password;
+        AdminPasswordVerified = false;
+        CurrentAdminPassword = string.Empty;
+        NewAdminEmail = string.Empty;
+        AdminEmailVerificationCode = string.Empty;
+        AdminEmailEditMessage = "Action annulée.";
+    }
+
+    [RelayCommand]
+    private async Task VerifyAdminPassword()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(CurrentAdminPassword))
+            {
+                AdminEmailEditMessage = "Veuillez saisir le mot de passe actuel.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminEmailEditMessage = string.Empty;
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminEmailEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            // Get fresh user from DB to make sure we have the latest PasswordHash
+            var currentAdmin = await _unitOfWork.Users.GetByIdAsync(_userSession.CurrentUser.Id);
+            if (currentAdmin == null)
+            {
+                AdminEmailEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            if (!BCryptNet.Verify(CurrentAdminPassword, currentAdmin.PasswordHash))
+            {
+                AdminEmailEditMessage = "Mot de passe incorrect.";
+                return;
+            }
+
+            AdminPasswordVerified = true;
+            CurrentAdminEmailEditStep = AdminEmailEditStep.NewEmail;
+            AdminEmailEditMessage = "Mot de passe vérifié avec succès.";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error verifying admin password");
+            AdminEmailEditMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SendAdminEmailChangeCode()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(NewAdminEmail))
+            {
+                AdminEmailEditMessage = "Veuillez saisir un email.";
+                return;
+            }
+
+            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            if (!emailRegex.IsMatch(NewAdminEmail))
+            {
+                AdminEmailEditMessage = "Format email invalide.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminEmailEditMessage = string.Empty;
+            var normalizedNewEmail = NewAdminEmail.Trim().ToLowerInvariant();
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminEmailEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            if (normalizedNewEmail == _userSession.CurrentUser.Email.Trim().ToLowerInvariant())
+            {
+                AdminEmailEditMessage = "Le nouvel email doit être différent de l'email actuel.";
+                return;
+            }
+
+            // Check for duplicate email (excluding current admin)
+            var existingUser = await _unitOfWork.Users.GetByEmailAsync(normalizedNewEmail);
+            if (existingUser != null && existingUser.Id != _userSession.CurrentUser.Id)
+            {
+                AdminEmailEditMessage = "Cet email existe déjà.";
+                return;
+            }
+
+            // Send verification code using existing service
+            var result = await _emailVerificationService.SendChangeEmailCodeAsync(normalizedNewEmail, AdminFullName);
+            if (result.success)
+            {
+                AdminEmailEditMessage = result.message;
+                CurrentAdminEmailEditStep = AdminEmailEditStep.Code;
+            }
+            else
+            {
+                AdminEmailEditMessage = result.message;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error sending admin email change code");
+            AdminEmailEditMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmAdminEmailChange()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(AdminEmailVerificationCode))
+            {
+                AdminEmailEditMessage = "Veuillez saisir le code de validation.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminEmailEditMessage = string.Empty;
+            var normalizedNewEmail = NewAdminEmail.Trim().ToLowerInvariant();
+
+            // Verify the code
+            var verifyResult = await _emailVerificationService.VerifyChangeEmailCodeAsync(normalizedNewEmail, AdminEmailVerificationCode);
+            if (!verifyResult.success)
+            {
+                AdminEmailEditMessage = verifyResult.message;
+                return;
+            }
+
+            // Update the admin's email
+            if (_userSession.CurrentUser == null)
+            {
+                AdminEmailEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            var currentAdmin = await _unitOfWork.Users.GetByIdAsync(_userSession.CurrentUser.Id);
+            if (currentAdmin == null)
+            {
+                AdminEmailEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            currentAdmin.Email = normalizedNewEmail;
+            // If login is the same as email, update login too
+            if (currentAdmin.Login == _userSession.CurrentUser.Email)
+            {
+                currentAdmin.Login = normalizedNewEmail;
+            }
+            currentAdmin.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.Users.Update(currentAdmin);
+            await _unitOfWork.CompleteAsync();
+
+            // Update the session user
+            _userSession.StartSession(currentAdmin);
+
+            // Update the ViewModel properties
+            AdminEmail = normalizedNewEmail;
+
+            // Hide the edit panel
+            IsAdminEmailEditVisible = false;
+            CurrentAdminEmailEditStep = AdminEmailEditStep.Password;
+            AdminPasswordVerified = false;
+            CurrentAdminPassword = string.Empty;
+            NewAdminEmail = string.Empty;
+            AdminEmailVerificationCode = string.Empty;
+            AdminEmailEditMessage = "Email administrateur modifié avec succès.";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error confirming admin email change");
+            AdminEmailEditMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -151,17 +443,7 @@ public partial class EmployeeManagementViewModel : ObservableObject
         AddEmployeeMessage = string.Empty;
     }
 
-    [RelayCommand]
-    private void ShowAdminEmailEdit()
-    {
-        IsAdminEmailEditVisible = true;
-    }
 
-    [RelayCommand]
-    private void HideAdminEmailEdit()
-    {
-        IsAdminEmailEditVisible = false;
-    }
 
     [RelayCommand]
     private async Task SendEmployeeCodeAsync()

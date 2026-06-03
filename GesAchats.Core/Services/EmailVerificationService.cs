@@ -293,4 +293,100 @@ public class EmailVerificationService : IEmailVerificationService
             return (false, "Une erreur est survenue lors de la vérification du code.");
         }
     }
+
+    public async Task<(bool success, string message)> SendChangeEmailCodeAsync(string newEmail, string adminFullName)
+    {
+        try
+        {
+            var normalizedEmail = newEmail.Trim().ToLowerInvariant();
+            
+            var code = GenerateRandomCode();
+            var codeHash = BCryptNet.HashPassword(code);
+            var expiresAt = DateTime.UtcNow.AddMinutes(10);
+
+            var verificationCode = new EmailVerificationCode
+            {
+                Email = normalizedEmail,
+                Purpose = "ChangeEmail",
+                CodeHash = codeHash,
+                ExpiresAt = expiresAt,
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.EmailVerificationCodes.AddAsync(verificationCode);
+            await _unitOfWork.CompleteAsync();
+
+            var emailBody = $@"
+                <html>
+                    <body>
+                        <h2>Modification de votre email GesAchats</h2>
+                        <p>Bonjour {adminFullName},</p>
+                        <p>Vous avez demandé la modification de votre email sur GesAchats.</p>
+                        <p>Votre code de validation est: <strong>{code}</strong></p>
+                        <p>Ce code expirera dans 10 minutes.</p>
+                        <p>Si vous n'avez pas demandé cette modification, contactez l'administrateur.</p>
+                        <p>Cordialement,<br>L'équipe GesAchats</p>
+                    </body>
+                </html>";
+
+            Log.Information("Sending change email verification code to {Email}", normalizedEmail);
+            var emailSent = await _emailService.SendEmailAsync(normalizedEmail, "Modification de votre email GesAchats", emailBody);
+            
+            if (!emailSent)
+            {
+                Log.Error("Failed to send change email verification code to {Email}", normalizedEmail);
+                return (false, "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
+            }
+            
+            return (true, "Code de validation envoyé au nouvel email.");
+        }
+        catch (MailKit.Net.Smtp.SmtpCommandException ex)
+        {
+            Log.Error(ex, "SMTP command error sending change email code to {Email}", newEmail);
+            return (false, "Erreur SMTP : " + ex.Message);
+        }
+        catch (MailKit.Security.AuthenticationException ex)
+        {
+            Log.Error(ex, "SMTP authentication error sending change email code to {Email}", newEmail);
+            return (false, "Erreur d'authentification SMTP : " + ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error sending change email code to {Email}", newEmail);
+            return (false, "Une erreur est survenue lors de l'envoi du code de validation.");
+        }
+    }
+
+    public async Task<(bool success, string message)> VerifyChangeEmailCodeAsync(string newEmail, string code)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return (false, "Veuillez saisir le code de validation.");
+            
+            var normalizedEmail = newEmail.Trim().ToLowerInvariant();
+
+            var codes = await _unitOfWork.EmailVerificationCodes.FindAsync(
+                evc => evc.Email == normalizedEmail
+                    && evc.Purpose == "ChangeEmail"
+                    && !evc.IsUsed
+                    && evc.ExpiresAt > DateTime.UtcNow);
+            
+            var verificationCode = codes.OrderByDescending(evc => evc.CreatedAt).FirstOrDefault();
+            
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+                return (false, "Code invalide ou expiré.");
+            
+            verificationCode.IsUsed = true;
+            await _unitOfWork.CompleteAsync();
+            
+            return (true, "Code validé avec succès.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error verifying change email code for {Email}", newEmail);
+            return (false, "Une erreur est survenue lors de la vérification du code.");
+        }
+    }
 }
