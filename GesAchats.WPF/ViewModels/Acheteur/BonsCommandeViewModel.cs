@@ -333,11 +333,25 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalOrders, value);
     }
 
+    private string _totalOrdersTrendText = string.Empty;
+    public string TotalOrdersTrendText
+    {
+        get => _totalOrdersTrendText;
+        set => SetProperty(ref _totalOrdersTrendText, value);
+    }
+
     private int _pendingOrders;
     public int PendingOrders
     {
         get => _pendingOrders;
         set => SetProperty(ref _pendingOrders, value);
+    }
+
+    private string _pendingOrdersTrendText = string.Empty;
+    public string PendingOrdersTrendText
+    {
+        get => _pendingOrdersTrendText;
+        set => SetProperty(ref _pendingOrdersTrendText, value);
     }
 
     private int _validatedOrders;
@@ -347,11 +361,25 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _validatedOrders, value);
     }
 
+    private string _validatedOrdersTrendText = string.Empty;
+    public string ValidatedOrdersTrendText
+    {
+        get => _validatedOrdersTrendText;
+        set => SetProperty(ref _validatedOrdersTrendText, value);
+    }
+
     private int _cancelledOrders;
     public int CancelledOrders
     {
         get => _cancelledOrders;
         set => SetProperty(ref _cancelledOrders, value);
+    }
+
+    private string _cancelledOrdersTrendText = string.Empty;
+    public string CancelledOrdersTrendText
+    {
+        get => _cancelledOrdersTrendText;
+        set => SetProperty(ref _cancelledOrdersTrendText, value);
     }
 
     // Commands
@@ -568,6 +596,20 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         PendingOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
         ValidatedOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Validated);
         CancelledOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled);
+
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+
+        var yesterdayOrders = currentOrders.Where(o => o.OrderDate.Date >= yesterday && o.OrderDate.Date < today).ToList();
+        int yesterdayTotal = yesterdayOrders.Count;
+        int yesterdayPending = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
+        int yesterdayValidated = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Validated);
+        int yesterdayCancelled = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled);
+
+        TotalOrdersTrendText = CalculateTrendText(TotalOrders, yesterdayTotal);
+        PendingOrdersTrendText = CalculateTrendText(PendingOrders, yesterdayPending);
+        ValidatedOrdersTrendText = CalculateTrendText(ValidatedOrders, yesterdayValidated);
+        CancelledOrdersTrendText = CalculateTrendText(CancelledOrders, yesterdayCancelled);
     }
 
     private void ExecuteResetFilters()

@@ -801,7 +801,7 @@
                                 <TextBlock Text="Liste des employés" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B" VerticalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <TextBox Style="{StaticResource TextBoxStyle}" Width="220" Padding="10,8" Margin="0,0,8,0">
+                                <TextBox Style="{StaticResource TextBoxStyle}" Width="220" Padding="10,8" Margin="0,0,8,0" Text="{Binding SearchEmployeeText, UpdateSourceTrigger=PropertyChanged}">
                                     <TextBox.Template>
                                         <ControlTemplate TargetType="TextBox">
                                             <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8">
@@ -836,7 +836,7 @@
                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Disabled">
                             <DataGrid Style="{StaticResource ModernDataGrid}"
-                                      ItemsSource="{Binding Employees}"
+                                      ItemsSource="{Binding EmployeesView}"
                                       IsReadOnly="True" 
                                       RowHeight="56" 
                                       HorizontalAlignment="Left"

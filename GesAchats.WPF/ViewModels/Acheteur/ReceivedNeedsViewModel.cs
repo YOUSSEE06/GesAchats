@@ -59,7 +59,7 @@ public class ReceivedNeedsViewModel : BaseViewModel
     private List<ReceivedNeedItemViewModel> _allNeeds = new List<ReceivedNeedItemViewModel>();
 
     public ObservableCollection<ReceivedNeedItemViewModel> Needs { get; } = new ObservableCollection<ReceivedNeedItemViewModel>();
-    public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "encours", "transmit" };
+    public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "encours", "transmit", "Annulé" };
 
     private string _searchNumeroDemande = string.Empty;
     public string SearchNumeroDemande
@@ -126,6 +126,41 @@ public class ReceivedNeedsViewModel : BaseViewModel
         set => SetProperty(ref _inProgressNeeds, value);
     }
 
+    private int _cancelledNeeds;
+    public int CancelledNeeds
+    {
+        get => _cancelledNeeds;
+        set => SetProperty(ref _cancelledNeeds, value);
+    }
+
+    private string _totalNeedsTrendText = string.Empty;
+    public string TotalNeedsTrendText
+    {
+        get => _totalNeedsTrendText;
+        set => SetProperty(ref _totalNeedsTrendText, value);
+    }
+
+    private string _transmittedNeedsTrendText = string.Empty;
+    public string TransmittedNeedsTrendText
+    {
+        get => _transmittedNeedsTrendText;
+        set => SetProperty(ref _transmittedNeedsTrendText, value);
+    }
+
+    private string _inProgressNeedsTrendText = string.Empty;
+    public string InProgressNeedsTrendText
+    {
+        get => _inProgressNeedsTrendText;
+        set => SetProperty(ref _inProgressNeedsTrendText, value);
+    }
+
+    private string _cancelledNeedsTrendText = string.Empty;
+    public string CancelledNeedsTrendText
+    {
+        get => _cancelledNeedsTrendText;
+        set => SetProperty(ref _cancelledNeedsTrendText, value);
+    }
+
     public ReceivedNeedsViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
@@ -185,7 +220,8 @@ public class ReceivedNeedsViewModel : BaseViewModel
         {
             filtered = filtered.Where(n => 
                 (SelectedStatus == "encours" && n.Need.Status == NeedStatus.InPurchase) || 
-                (SelectedStatus == "transmit" && n.Need.Status == NeedStatus.TransmittedToPurchasing));
+                (SelectedStatus == "transmit" && n.Need.Status == NeedStatus.TransmittedToPurchasing) ||
+                (SelectedStatus == "Annulé" && (n.Need.Status == NeedStatus.Cancelled || n.Need.Status == NeedStatus.Rejected)));
         }
         
         Needs.Clear();
@@ -202,7 +238,26 @@ public class ReceivedNeedsViewModel : BaseViewModel
         TotalNeeds = currentNeeds.Count;
         TransmittedNeeds = currentNeeds.Count(n => n.Need.Status == NeedStatus.TransmittedToPurchasing);
         InProgressNeeds = currentNeeds.Count(n => n.Need.Status == NeedStatus.InPurchase);
+        CancelledNeeds = currentNeeds.Count(n => n.Need.Status == NeedStatus.Cancelled || n.Need.Status == NeedStatus.Rejected);
+
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        
+        var yesterdayNeeds = currentNeeds.Where(n => 
+            n.Need.DateTransmission.HasValue && n.Need.DateTransmission.Value.Date >= yesterday && n.Need.DateTransmission.Value.Date < today).ToList();
+
+        int yesterdayTotal = yesterdayNeeds.Count;
+        int yesterdayTransmitted = yesterdayNeeds.Count(n => n.Need.Status == NeedStatus.TransmittedToPurchasing);
+        int yesterdayInProgress = yesterdayNeeds.Count(n => n.Need.Status == NeedStatus.InPurchase);
+        int yesterdayCancelled = yesterdayNeeds.Count(n => n.Need.Status == NeedStatus.Cancelled || n.Need.Status == NeedStatus.Rejected);
+
+        TotalNeedsTrendText = CalculateTrendText(TotalNeeds, yesterdayTotal);
+        TransmittedNeedsTrendText = CalculateTrendText(TransmittedNeeds, yesterdayTransmitted);
+        InProgressNeedsTrendText = CalculateTrendText(InProgressNeeds, yesterdayInProgress);
+        CancelledNeedsTrendText = CalculateTrendText(CancelledNeeds, yesterdayCancelled);
     }
+
+
     
     private void ExecuteResetFilters()
     {

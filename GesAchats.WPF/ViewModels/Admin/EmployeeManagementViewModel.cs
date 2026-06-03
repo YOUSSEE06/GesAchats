@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using System.Text.RegularExpressions;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
@@ -74,6 +76,32 @@ public partial class EmployeeManagementViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<EmployeeDto> _employees = [];
+
+    private string _searchEmployeeText = string.Empty;
+    public string SearchEmployeeText
+    {
+        get => _searchEmployeeText;
+        set
+        {
+            if (_searchEmployeeText != value)
+            {
+                _searchEmployeeText = value;
+                OnPropertyChanged(nameof(SearchEmployeeText));
+                EmployeesView?.Refresh();
+            }
+        }
+    }
+
+    private ICollectionView? _employeesView;
+    public ICollectionView? EmployeesView
+    {
+        get => _employeesView;
+        private set
+        {
+            _employeesView = value;
+            OnPropertyChanged(nameof(EmployeesView));
+        }
+    }
 
     [ObservableProperty]
     private ObservableCollection<Role> _availableEmployeeRoles = [];
@@ -667,6 +695,33 @@ public partial class EmployeeManagementViewModel : ObservableObject
         }
     }
 
+    private bool FilterEmployee(object obj)
+    {
+        if (obj is not EmployeeDto employee)
+            return false;
+
+        var search = SearchEmployeeText?.Trim();
+
+        if (string.IsNullOrWhiteSpace(search))
+            return true;
+
+        search = search.ToLowerInvariant();
+
+        var fullName = employee.FullName?.ToLowerInvariant() ?? "";
+        var email = employee.Email?.ToLowerInvariant() ?? "";
+        var role = employee.RoleLabel?.ToLowerInvariant() ?? "";
+
+        return fullName.Contains(search)
+            || email.Contains(search)
+            || role.Contains(search);
+    }
+
+    private void InitializeEmployeesView()
+    {
+        EmployeesView = CollectionViewSource.GetDefaultView(Employees);
+        EmployeesView.Filter = FilterEmployee;
+    }
+
     [RelayCommand]
     private async Task LoadEmployeesAsync()
     {
@@ -681,6 +736,7 @@ public partial class EmployeeManagementViewModel : ObservableObject
             }
             var employees = await _employeeService.GetEmployeesAsync();
             Employees = new ObservableCollection<EmployeeDto>(employees);
+            InitializeEmployeesView();
             StatusMessage = $"Chargement terminé. {Employees.Count} employés.";
         }
         catch (Exception ex)

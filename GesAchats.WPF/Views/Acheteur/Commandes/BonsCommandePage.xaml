@@ -50,31 +50,46 @@
                 </Grid.RowDefinitions>
 
                 <!-- KPI Section -->
-                <UniformGrid Grid.Row="0" Rows="1" Columns="4" Margin="0,0,0,20">
-                    <ctrls:KpiCard Title="Total des Bons" 
-                                   Value="{Binding TotalOrders}" 
-                                   Icon="FileInvoice" 
-                                   IconColor="#071B3A" 
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ctrls:KpiCard Grid.Column="0"
+                                   Title="Total des Bons"
+                                   Value="{Binding TotalOrders}"
+                                   TrendText="{Binding TotalOrdersTrendText}"
+                                   Icon="FileInvoice"
+                                   IconColor="#071B3A"
                                    Margin="0,0,10,0"/>
 
-                    <ctrls:KpiCard Title="En Attente" 
-                                   Value="{Binding PendingOrders}" 
-                                   Icon="Clock" 
-                                   IconColor="#FFC107" 
+                    <ctrls:KpiCard Grid.Column="1"
+                                   Title="En Attente"
+                                   Value="{Binding PendingOrders}"
+                                   TrendText="{Binding PendingOrdersTrendText}"
+                                   Icon="Clock"
+                                   IconColor="#FFC107"
                                    Margin="5,0,5,0"/>
 
-                    <ctrls:KpiCard Title="Validés" 
-                                   Value="{Binding ValidatedOrders}" 
-                                   Icon="CheckCircle" 
-                                   IconColor="#4CAF50" 
+                    <ctrls:KpiCard Grid.Column="2"
+                                   Title="Validés"
+                                   Value="{Binding ValidatedOrders}"
+                                   TrendText="{Binding ValidatedOrdersTrendText}"
+                                   Icon="CheckCircle"
+                                   IconColor="#4CAF50"
                                    Margin="5,0,5,0"/>
 
-                    <ctrls:KpiCard Title="Annulés" 
-                                   Value="{Binding CancelledOrders}" 
-                                   Icon="TimesCircle" 
-                                   IconColor="#F44336" 
+                    <ctrls:KpiCard Grid.Column="3"
+                                   Title="Annulés"
+                                   Value="{Binding CancelledOrders}"
+                                   TrendText="{Binding CancelledOrdersTrendText}"
+                                   Icon="TimesCircle"
+                                   IconColor="#F44336"
                                    Margin="10,0,0,0"/>
-                </UniformGrid>
+                </Grid>
 
                 <!-- Filters -->
                 <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
