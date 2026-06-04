@@ -5,127 +5,219 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
         xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
+        xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
         mc:Ignorable="d"
         Title="GesAchats - Responsable Achat"
         WindowState="Maximized"
         ResizeMode="CanResize"
         SizeToContent="Manual"
         WindowStartupLocation="CenterScreen"
-        MinWidth="900"
-        MinHeight="600"
+        MinWidth="1100"
+        MinHeight="700"
         FontFamily="Segoe UI">
+    <Window.Resources>
+        <converters:BoolToGridLengthConverter x:Key="BoolToGridLengthConverter" />
+        <converters:BooleanInverterConverter x:Key="BooleanInverterConverter" />
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="285"/>
+            <ColumnDefinition Width="{Binding IsCollapsed, Converter={StaticResource BoolToGridLengthConverter}}"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}">
-            <DockPanel>
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}" 
+                Effect="{StaticResource CardShadow}">
+            <DockPanel LastChildFill="True">
                 <!-- Logo -->
-                <StackPanel DockPanel.Dock="Top" Margin="28,42,28,20">
-                    <TextBlock Text="GesAchats" Foreground="White" FontSize="24" FontWeight="Bold"/>
-                    <TextBlock Text="ACHATS" Foreground="#94A3B8" FontSize="11" FontWeight="Medium" Margin="0,4,0,0"/>
-                    <Border Height="1" Background="#334155" Margin="0,24,0,0"/>
+                <StackPanel DockPanel.Dock="Top" Margin="16,16,16,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="10" Background="#40FFFFFF" Margin="0,0,12,0">
+                                <fa:IconImage Icon="Cube" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="GesAchats" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Padding="8,6" 
+                                HorizontalAlignment="Right" 
+                                Background="Transparent" 
+                                BorderThickness="0" 
+                                Cursor="Hand" 
+                                Command="{Binding ToggleSidebarCommand}">
+                            <fa:IconImage Icon="ChevronRight" Width="18" Height="18" Foreground="White"/>
+                        </Button>
+                    </Grid>
                 </StackPanel>
 
-                <!-- Navigation -->
-                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="16,0">
-                        <!-- Tableau de bord -->
-                        <ctrls:SidebarItem Icon="Gauge" 
+                <!-- Profile & Logout -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="16,12,16,20">
+                    <Border Background="{StaticResource SidebarGlassBackground}" 
+                            CornerRadius="16" 
+                            Padding="12,12"
+                            BorderBrush="{StaticResource SidebarGlassBorder}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Grid HorizontalAlignment="Center" Margin="0,0,0,8">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#80FFFFFF">
+                                    <TextBlock Text="AA" 
+                                               Foreground="#333333" 
+                                               FontSize="22" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <StackPanel Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="{Binding UserName}" 
+                                           Foreground="White" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold" 
+                                           TextAlignment="Center"/>
+                                <TextBlock Text="Manager" 
+                                           Foreground="#B8A9D4" 
+                                           FontSize="12" 
+                                           TextAlignment="Center"
+                                           Opacity="0.9"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Button Margin="0,12,0,0" Padding="12,8" 
+                            HorizontalAlignment="Stretch" 
+                            Cursor="Hand"
+                            Command="{Binding LogoutCommand}"
+                            FontSize="14"
+                            FontWeight="SemiBold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="LogoutBorder"
+                                        Background="{StaticResource SidebarGlassBackground}" 
+                                        BorderBrush="{StaticResource SidebarGlassBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="14"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="LogoutBorder" Property="Background" Value="#40FFFFFF"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <fa:IconImage Grid.Column="0" Icon="SignOutAlt" Width="22" Height="22" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="DÉCONNEXION" Foreground="White" Margin="12,0,0,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+
+                <!-- Navigation (last child, fills remaining space) -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12,0,12,16">
+                        <!-- Menu Section -->
+                        <TextBlock Text="MENU" 
+                                   Foreground="#B8A9D4" 
+                                   FontSize="10" 
+                                   FontWeight="Bold" 
+                                   Margin="12,0,0,8"
+                                   Opacity="0.6"
+                                   Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        
+                        <ctrls:SidebarItem Icon="Home" 
                                            Text="Tableau de bord" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Dashboard"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
                         
-                        <!-- DEMANDES Section -->
-                        <TextBlock Text="DEMANDES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
                         <ctrls:SidebarItem Icon="ClipboardList" 
                                            Text="Besoins Magasin" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Besoins}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Besoins"
-                                           Margin="0,0,0,4"/>
-                        <ctrls:SidebarItem Icon="FileInvoiceDollar" 
-                                           Text="Gestion des Devis" 
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="Gears" 
+                                           Text="Gestion Devis" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Devis}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Devis"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
                         
-                        <!-- ANALYSES Section -->
-                        <TextBlock Text="ANALYSES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <!-- Analyses Section -->
+                        <TextBlock Text="ANALYSES" 
+                                   Foreground="#B8A9D4" 
+                                   FontSize="10" 
+                                   FontWeight="Bold" 
+                                   Margin="12,16,0,8"
+                                   Opacity="0.6"
+                                   Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        
                         <ctrls:SidebarItem Icon="MoneyBill" 
-                                           Text="Saisie Prix Fournisseurs" 
+                                           Text="Prix Fournisseurs" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=SaisiePrix}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="SaisiePrix"
-                                           Margin="0,0,0,4"/>
-                        <ctrls:SidebarItem Icon="ChartLine" 
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="ChartBar" 
                                            Text="Analyse Comparative" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Analyses}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Analyses"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
                         <ctrls:SidebarItem Icon="History" 
                                            Text="Historique Prix" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Historique}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Historique"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
 
-                        <!-- RÉFÉRENTIEL Section -->
-                        <TextBlock Text="RÉFÉRENTIEL" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                        <!-- Référentiel Section -->
+                        <TextBlock Text="RÉFÉRENTIEL" 
+                                   Foreground="#B8A9D4" 
+                                   FontSize="10" 
+                                   FontWeight="Bold" 
+                                   Margin="12,16,0,8"
+                                   Opacity="0.6"
+                                   Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        
                         <ctrls:SidebarItem Icon="Users" 
                                            Text="Fournisseurs" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Fournisseurs}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Fournisseurs"
-                                           Margin="0,0,0,4"/>
-
-                        <!-- COMMANDES Section -->
-                        <TextBlock Text="COMMANDES" Foreground="#64748B" FontSize="11" FontWeight="Bold" Margin="12,20,0,8"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
                         <ctrls:SidebarItem Icon="CartShopping" 
-                                           Text="Bons de Commande" 
+                                           Text="Bons Commande" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Commandes}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Commandes"
-                                           Margin="0,0,0,4"/>
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
                     </StackPanel>
                 </ScrollViewer>
-
-                <!-- User & Logout -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="16,16">
-                    <Border Height="1" Background="#334155" Margin="0,0,0,16"/>
-                    <Grid Margin="4,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <fa:IconImage Grid.Column="0" Icon="User" Width="20" Height="20" Foreground="White" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="14" FontWeight="Medium"/>
-                        </StackPanel>
-                    </Grid>
-                    <Button Margin="0,12,0,0" Padding="12,10" HorizontalAlignment="Stretch" 
-                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                            Command="{Binding LogoutCommand}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <fa:IconImage Grid.Column="0" Icon="ArrowRightFromBracket" Width="18" Height="18" Foreground="#94A3B8"/>
-                            <TextBlock Grid.Column="1" Text="Déconnexion" Foreground="#94A3B8" Margin="12,0,0,0" FontSize="14" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Button>
-                </StackPanel>
-
-                <Grid/>
             </DockPanel>
         </Border>
 

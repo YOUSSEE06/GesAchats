@@ -13,6 +13,7 @@ public class AcheteurShellViewModel : BaseViewModel
     private readonly INavigationService _navigationService;
     private string _userName = string.Empty;
     private string _activePage = "Dashboard";
+    private bool _isCollapsed;
 
     public string UserName
     {
@@ -26,8 +27,15 @@ public class AcheteurShellViewModel : BaseViewModel
         set => SetProperty(ref _activePage, value);
     }
 
+    public bool IsCollapsed
+    {
+        get => _isCollapsed;
+        set => SetProperty(ref _isCollapsed, value);
+    }
+
     public ICommand NavigateCommand { get; }
     public ICommand LogoutCommand { get; }
+    public ICommand ToggleSidebarCommand { get; }
 
     public AcheteurShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService)
     {
@@ -44,6 +52,7 @@ public class AcheteurShellViewModel : BaseViewModel
             _navigationService.NavigateTo(page);
         });
         LogoutCommand = new RelayCommand(_ => ExecuteLogout());
+        ToggleSidebarCommand = new RelayCommand(_ => IsCollapsed = !IsCollapsed);
     }
 
     private void ExecuteLogout()

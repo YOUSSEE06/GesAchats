@@ -20,6 +20,10 @@ public partial class SidebarItem : UserControl
         DependencyProperty.Register(nameof(IsActive), typeof(bool), typeof(SidebarItem),
             new PropertyMetadata(false, OnIsActiveChanged));
 
+    public static readonly DependencyProperty IsCollapsedProperty =
+        DependencyProperty.Register(nameof(IsCollapsed), typeof(bool), typeof(SidebarItem),
+            new PropertyMetadata(false, OnIsCollapsedChanged));
+
     public static readonly DependencyProperty CommandProperty =
         DependencyProperty.Register(nameof(Command), typeof(ICommand), typeof(SidebarItem),
             new PropertyMetadata(null));
@@ -46,6 +50,12 @@ public partial class SidebarItem : UserControl
         set => SetValue(IsActiveProperty, value);
     }
 
+    public bool IsCollapsed
+    {
+        get => (bool)GetValue(IsCollapsedProperty);
+        set => SetValue(IsCollapsedProperty, value);
+    }
+
     public ICommand Command
     {
         get => (ICommand)GetValue(CommandProperty);
@@ -63,6 +73,8 @@ public partial class SidebarItem : UserControl
         InitializeComponent();
         Loaded += (s, e) => UpdateVisualState();
         MainBorder.MouseLeftButtonUp += (s, e) => Command?.Execute(CommandParameter);
+        MainBorder.MouseEnter += (s, e) => UpdateVisualState();
+        MainBorder.MouseLeave += (s, e) => UpdateVisualState();
     }
 
     private static void OnIconChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -89,22 +101,46 @@ public partial class SidebarItem : UserControl
         }
     }
 
+    private static void OnIsCollapsedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SidebarItem control)
+        {
+            control.TextControl.Visibility = (bool)e.NewValue ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
+
     private void UpdateVisualState()
     {
         if (IsActive)
         {
-            MainBorder.Background = (Brush)FindResource("SidebarActiveBrush");
+            MainBorder.Background = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF));
             MainBorder.BorderThickness = new Thickness(0, 0, 4, 0);
-            MainBorder.BorderBrush = (Brush)FindResource("PrimaryBrush");
-            TextControl.Foreground = (Brush)FindResource("SidebarTextBrush");
-            IconControl.Foreground = (Brush)FindResource("PrimaryBrush");
+            MainBorder.BorderBrush = Brushes.White;
+            TextControl.Foreground = Brushes.White;
+            IconControl.Foreground = Brushes.White;
+        }
+        else if (IsMouseOver)
+        {
+            MainBorder.Background = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
+            MainBorder.BorderThickness = new Thickness(0);
+            TextControl.Foreground = Brushes.White;
+            IconControl.Foreground = Brushes.White;
         }
         else
         {
             MainBorder.Background = Brushes.Transparent;
             MainBorder.BorderThickness = new Thickness(0);
-            TextControl.Foreground = (Brush)FindResource("SidebarTextBrush");
-            IconControl.Foreground = (Brush)FindResource("SidebarTextBrush");
+            TextControl.Foreground = new SolidColorBrush(Color.FromArgb(0xB3, 0xFF, 0xFF, 0xFF));
+            IconControl.Foreground = new SolidColorBrush(Color.FromArgb(0xB3, 0xFF, 0xFF, 0xFF));
+        }
+    }
+
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.Property == IsMouseOverProperty)
+        {
+            UpdateVisualState();
         }
     }
 }

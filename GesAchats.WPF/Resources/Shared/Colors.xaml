@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
     <!-- Design System Colors -->
-    <Color x:Key="PrimaryColor">#2563EB</Color>
+    <Color x:Key="PrimaryColor">#667EEA</Color>
+    <Color x:Key="PrimaryColor2">#764BA2</Color>
     <Color x:Key="SuccessColor">#22C55E</Color>
     <Color x:Key="WarningColor">#F59E0B</Color>
     <Color x:Key="DangerColor">#EF4444</Color>
@@ -28,10 +29,21 @@
     <SolidColorBrush x:Key="PageBackgroundBrush" Color="{StaticResource PageBackgroundColor}"/>
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}"/>
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
-    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}"/>
-    <SolidColorBrush x:Key="SidebarHoverBrush" Color="{StaticResource SidebarHoverColor}"/>
-    <SolidColorBrush x:Key="SidebarActiveBrush" Color="{StaticResource SidebarActiveColor}"/>
+    
+    <!-- Sidebar Gradient Brush -->
+    <LinearGradientBrush x:Key="SidebarBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#667EEA" Offset="0"/>
+        <GradientStop Color="#764BA2" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#3B3058"/>
+    <SolidColorBrush x:Key="SidebarActiveBrush" Color="#4B3C68"/>
     <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource SidebarTextColor}"/>
+    <SolidColorBrush x:Key="SidebarMutedTextBrush" Color="#B8A9D4"/>
+    
+    <!-- Sidebar Glassmorphism Brushes -->
+    <SolidColorBrush x:Key="SidebarGlassBackground" Color="#30FFFFFF"/>
+    <SolidColorBrush x:Key="SidebarGlassBorder" Color="#38FFFFFF"/>
 
     <!-- Backward compatibility -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource PageBackgroundColor}"/>
