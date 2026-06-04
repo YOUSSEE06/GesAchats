@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using GesAchats.WPF.Views.Comptable.Factures;
 using GesAchats.WPF.Views.Comptable.Reglements;
 using GesAchats.WPF.Views.Comptable.Dashboard;
-using GesAchats.WPF.Views.Auth;
 using GesAchats.WPF.Views.Magasinier.Livraisons;
+using GesAchats.WPF.ViewModels.Comptable;
 
 namespace GesAchats.WPF.Views.Comptable;
 
@@ -15,16 +15,17 @@ public partial class ComptableShell : Window
     private readonly IServiceProvider _serviceProvider;
     private readonly INavigationService _navigationService;
 
-    public ComptableShell(IServiceProvider serviceProvider, INavigationService navigationService)
+    public ComptableShell(IServiceProvider serviceProvider, INavigationService navigationService, ComptableShellViewModel viewModel)
     {
         InitializeComponent();
         _serviceProvider = serviceProvider;
         _navigationService = navigationService;
-
+        DataContext = viewModel;
+        
         _navigationService.OnNavigate += OnNavigate;
         
         // Navigation par défaut
-        NavigateToDashboard(null, null);
+        _navigationService.NavigateTo("Dashboard");
     }
 
     private void OnNavigate(string pageName, object? parameter)
@@ -54,18 +55,5 @@ public partial class ComptableShell : Window
             }
             MainFrame.Navigate(page);
         }
-    }
-
-    private void NavigateToDashboard(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Dashboard");
-    private void NavigateToFactures(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Factures");
-    private void NavigateToLivraisons(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Livraisons");
-    private void NavigateToReglements(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("Reglements");
-    private void NavigateToInvoicePaymentTracking(object? sender, RoutedEventArgs? e) => _navigationService.NavigateTo("InvoicePaymentTracking");
-
-    private void Logout(object sender, RoutedEventArgs e)
-    {
-        var loginWindow = _serviceProvider.GetRequiredService<LoginWindow>();
-        loginWindow.Show();
-        this.Close();
     }
 }

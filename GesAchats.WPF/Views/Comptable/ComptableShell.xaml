@@ -3,95 +3,183 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+        xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
+        xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
         mc:Ignorable="d"
         Title="GesAchats - Espace Comptable"
         WindowState="Maximized"
         ResizeMode="CanResize"
         SizeToContent="Manual"
         WindowStartupLocation="CenterScreen"
-        MinWidth="900"
-        MinHeight="600">
-
+        MinWidth="1100"
+        MinHeight="700"
+        FontFamily="Segoe UI">
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../../Resources/Comptable/ComptableStyles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-
-            <Style x:Key="SidebarButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="20,12"/>
-                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#2C4E68"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="LogoutButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="#F44336"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="#F44336"/>
-                <Setter Property="Padding" Value="20,10"/>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#F44336"/>
-                        <Setter Property="Foreground" Value="White"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-        </ResourceDictionary>
+        <converters:BoolToGridLengthConverter x:Key="BoolToGridLengthConverter" />
+        <converters:BooleanInverterConverter x:Key="BooleanInverterConverter" />
     </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="{Binding IsCollapsed, Converter={StaticResource BoolToGridLengthConverter}}"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="#1A3A52">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="20,40">
-                    <TextBlock Text="ESPACE" Foreground="#2196F3" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="COMPTABLE" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <Separator Margin="0,30,0,0" Background="#2C4E68"/>
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}" 
+                Effect="{StaticResource CardShadow}">
+            <DockPanel LastChildFill="True">
+                <!-- Logo -->
+                <StackPanel DockPanel.Dock="Top" Margin="16,16,16,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="10" Background="#40FFFFFF" Margin="0,0,12,0">
+                                <fa:IconImage Icon="Cube" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="GesAchats" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Padding="8,6" 
+                                HorizontalAlignment="Right" 
+                                Background="Transparent" 
+                                BorderThickness="0" 
+                                Cursor="Hand" 
+                                Command="{Binding ToggleSidebarCommand}">
+                            <fa:IconImage Icon="ChevronRight" Width="18" Height="18" Foreground="White"/>
+                        </Button>
+                    </Grid>
                 </StackPanel>
 
-                <StackPanel DockPanel.Dock="Top" Margin="10,0">
-                    <Button Content="🧾 Factures" Click="NavigateToFactures" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="📊 Dashboard" Click="NavigateToDashboard" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="🚚 Réception (BL)" Click="NavigateToLivraisons" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="💳 Suivi Règlements" Click="NavigateToReglements" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="📈 Suivi Comptable" Click="NavigateToInvoicePaymentTracking" Style="{StaticResource SidebarButtonStyle}"/>
+                <!-- Profile & Logout -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="16,12,16,20">
+                    <Border Background="{StaticResource SidebarGlassBackground}" 
+                            CornerRadius="16" 
+                            Padding="12,12"
+                            BorderBrush="{StaticResource SidebarGlassBorder}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Grid HorizontalAlignment="Center" Margin="0,0,0,8">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#80FFFFFF">
+                                    <TextBlock Text="CP" 
+                                               Foreground="#333333" 
+                                               FontSize="22" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <StackPanel Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="{Binding UserName}" 
+                                           Foreground="White" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold" 
+                                           TextAlignment="Center"/>
+                                <TextBlock Text="Comptable" 
+                                           Foreground="#B8A9D4" 
+                                           FontSize="12" 
+                                           TextAlignment="Center"
+                                           Opacity="0.9"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Button Margin="0,12,0,0" Padding="12,8" 
+                            HorizontalAlignment="Stretch" 
+                            Cursor="Hand"
+                            Command="{Binding LogoutCommand}"
+                            FontSize="14"
+                            FontWeight="SemiBold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="LogoutBorder"
+                                        Background="{StaticResource SidebarGlassBackground}" 
+                                        BorderBrush="{StaticResource SidebarGlassBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="14"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="LogoutBorder" Property="Background" Value="#40FFFFFF"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <fa:IconImage Grid.Column="0" Icon="SignOutAlt" Width="22" Height="22" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="DÉCONNEXION" Foreground="White" Margin="12,0,0,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="10,20">
-                    <Separator Margin="0,0,0,15" Background="#2C4E68"/>
-                    <Button Content="Déconnexion" Click="Logout" Style="{StaticResource LogoutButtonStyle}"/>
-                </StackPanel>
-
-                <Grid/>
+                <!-- Navigation (last child, fills remaining space) -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12,0,12,16">
+                        <!-- Menu Section -->
+                        <TextBlock Text="MENU" 
+                                   Foreground="#B8A9D4" 
+                                   FontSize="10" 
+                                   FontWeight="Bold" 
+                                   Margin="12,0,0,8"
+                                   Opacity="0.6"
+                                   Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        
+                        <ctrls:SidebarItem Icon="FileInvoice" 
+                                           Text="Factures" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Factures}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Factures"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="Home" 
+                                           Text="Dashboard" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Dashboard"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="FileContract" 
+                                           Text="Réception (BL)" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Livraisons}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Livraisons"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="CreditCard" 
+                                           Text="Suivi Règlements" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Reglements}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Reglements"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="ChartLine" 
+                                           Text="Suivi Comptable" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=InvoicePaymentTracking}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="InvoicePaymentTracking"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
-        <!-- Main Content -->
-        <Grid Grid.Column="1" Background="#F5F6F7">
-            <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
-        </Grid>
+        <!-- Content Area -->
+        <Frame x:Name="MainFrame" Grid.Column="1" Background="{StaticResource PageBackgroundBrush}" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>
