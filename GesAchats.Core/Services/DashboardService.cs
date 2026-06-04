@@ -46,7 +46,7 @@ public class DashboardService : IDashboardService
     private string NormalizePaymentMode(string paymentMethod)
     {
         if (string.IsNullOrWhiteSpace(paymentMethod))
-            return "Autre";
+            return "Non défini";
             
         var normalized = paymentMethod.Trim().ToLowerInvariant();
         
@@ -56,10 +56,10 @@ public class DashboardService : IDashboardService
             return "Virement";
         if (normalized.Contains("espece") || normalized.Contains("espèce"))
             return "Espèce";
-        if (normalized.Contains("lettre") && (normalized.Contains("echange") || normalized.Contains("échange")))
-            return "Lettre d'échange";
+        if (normalized.Contains("lettre") && (normalized.Contains("echange") || normalized.Contains("échange")) || normalized == "le")
+            return "Lettres d'échange";
             
-        return "Autre";
+        return paymentMethod.Trim();
     }
 
     public async Task<List<DashboardAlertDto>> GetDashboardAlertsAsync()

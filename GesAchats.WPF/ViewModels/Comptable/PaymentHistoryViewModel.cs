@@ -407,7 +407,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
         // 1. Répartition par mode de paiement (Doughnut Chart)
         var methodData = Payments
-            .GroupBy(p => p.PaymentMethod ?? "Autre")
+            .GroupBy(p => NormalizePaymentMode(p.PaymentMethod))
             .Select(g => new { Method = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
             .ToList();
 
@@ -423,7 +423,8 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
                 "Virement" => new SolidColorPaint(new SKColor(34, 197, 94)),
                 "Chèque" => new SolidColorPaint(new SKColor(245, 158, 11)),
                 "Espèce" => new SolidColorPaint(new SKColor(168, 85, 246)),
-                "Lettre de change" => new SolidColorPaint(new SKColor(59, 130, 246)),
+                "Lettres d'échange" => new SolidColorPaint(new SKColor(59, 130, 246)),
+                "Lettre d'échange" => new SolidColorPaint(new SKColor(59, 130, 246)),
                 _ => new SolidColorPaint(SKColors.Gray)
             }
         }).ToList();
@@ -455,6 +456,25 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
                 Labels = dateData.Select(x => x.Date.ToString("dd/MM")).ToArray()
             }
         };
+    }
+    
+    private string NormalizePaymentMode(string paymentMethod)
+    {
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+            return "Non défini";
+            
+        var normalized = paymentMethod.Trim().ToLowerInvariant();
+        
+        if (normalized.Contains("cheque") || normalized.Contains("chèque"))
+            return "Chèque";
+        if (normalized.Contains("virement"))
+            return "Virement";
+        if (normalized.Contains("espece") || normalized.Contains("espèce"))
+            return "Espèce";
+        if (normalized.Contains("lettre") && (normalized.Contains("echange") || normalized.Contains("échange")) || normalized == "le")
+            return "Lettres d'échange";
+            
+        return paymentMethod.Trim();
     }
 
     private void ExportToExcel()
