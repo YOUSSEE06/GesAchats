@@ -3,135 +3,191 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
         xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
-        xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+        xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
         mc:Ignorable="d"
         Title="GesAchats - Espace Magasinier"
         WindowState="Maximized"
         ResizeMode="CanResize"
         SizeToContent="Manual"
         WindowStartupLocation="CenterScreen"
-        MinWidth="900"
-        MinHeight="600">
-    
+        MinWidth="1100"
+        MinHeight="700"
+        FontFamily="Segoe UI">
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../../Resources/Magasinier/MagasinierStyles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-            <conv:EqualityConverter x:Key="EqualityConverter"/>
-        </ResourceDictionary>
+        <converters:BoolToGridLengthConverter x:Key="BoolToGridLengthConverter" />
+        <converters:BooleanInverterConverter x:Key="BooleanInverterConverter" />
     </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="{Binding IsCollapsed, Converter={StaticResource BoolToGridLengthConverter}}"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="#071B3A">
-            <DockPanel>
-                <!-- Logo/Header -->
-                <StackPanel DockPanel.Dock="Top" Margin="28,42,28,30">
-                    <TextBlock Text="MAGASIN" Foreground="{StaticResource WarningBrush}" 
-                               FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-                    <TextBlock Text="GesAchats" Foreground="White" FontSize="26" 
-                               FontWeight="ExtraBold" HorizontalAlignment="Center"/>
-                </StackPanel>
-
-                <!-- Navigation Buttons -->
-                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="16,0">
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="Dashboard"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="Gauge" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Tableau de bord" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="Stock"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Stock}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="BoxesStacked" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Gestion du Stock" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="Livraisons"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Livraisons}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="FileContract" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Réception (BL)" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="NeedsHistory"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=NeedsHistory}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="History" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Historique Besoins" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="StockExits"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=StockExits}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="ArrowRightFromBracket" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Sortie des besoins" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button Style="{StaticResource SidebarButtonStyle}"
-                                Command="{Binding NavigateCommand}" CommandParameter="Orders"
-                                Tag="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Orders}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="CartShopping" Width="18" Height="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,12,0"/>
-                                <TextBlock Text="Gestion des Bons de Commande" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- Footer (User info & Logout) -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="16,16">
-                    <Border Height="1" Background="#162447" Margin="0,0,0,16"/>
-                    <Grid Margin="4,0">
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackgroundBrush}" 
+                Effect="{StaticResource CardShadow}">
+            <DockPanel LastChildFill="True">
+                <!-- Logo -->
+                <StackPanel DockPanel.Dock="Top" Margin="16,16,16,12">
+                    <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#162447">
-                            <fa:IconImage Icon="User" Width="16" Height="16" Foreground="White"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Border Width="44" Height="44" CornerRadius="10" Background="#40FFFFFF" Margin="0,0,12,0">
+                                <fa:IconImage Icon="Cube" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="GesAchats" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                            </StackPanel>
                         </StackPanel>
-                        <fa:IconImage Grid.Column="2" Icon="ChevronDown" Width="12" Height="12" Foreground="#94A3B8"/>
+                        <Button Grid.Column="1" Padding="8,6" 
+                                HorizontalAlignment="Right" 
+                                Background="Transparent" 
+                                BorderThickness="0" 
+                                Cursor="Hand" 
+                                Command="{Binding ToggleSidebarCommand}">
+                            <fa:IconImage Icon="ChevronRight" Width="18" Height="18" Foreground="White"/>
+                        </Button>
                     </Grid>
-                    
-                    <Button Margin="0,12,0,0" Padding="12,10" HorizontalAlignment="Stretch" 
-                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                            Command="{Binding LogoutCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="PowerOff" Width="16" Height="16" Foreground="#EF4444"/>
-                            <TextBlock Text="Déconnexion" Foreground="#EF4444" Margin="12,0,0,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Profile & Logout -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="16,12,16,20">
+                    <Border Background="{StaticResource SidebarGlassBackground}" 
+                            CornerRadius="16" 
+                            Padding="12,12"
+                            BorderBrush="{StaticResource SidebarGlassBorder}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Grid HorizontalAlignment="Center" Margin="0,0,0,8">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#80FFFFFF">
+                                    <TextBlock Text="MG" 
+                                               Foreground="#333333" 
+                                               FontSize="22" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            <StackPanel Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}">
+                                <TextBlock Text="{Binding UserName}" 
+                                           Foreground="White" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold" 
+                                           TextAlignment="Center"/>
+                                <TextBlock Text="Magasinier" 
+                                           Foreground="#B8A9D4" 
+                                           FontSize="12" 
+                                           TextAlignment="Center"
+                                           Opacity="0.9"/>
+                            </StackPanel>
                         </StackPanel>
+                    </Border>
+                    
+                    <Button Margin="0,12,0,0" Padding="12,8" 
+                            HorizontalAlignment="Stretch" 
+                            Cursor="Hand"
+                            Command="{Binding LogoutCommand}"
+                            FontSize="14"
+                            FontWeight="SemiBold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="LogoutBorder"
+                                        Background="{StaticResource SidebarGlassBackground}" 
+                                        BorderBrush="{StaticResource SidebarGlassBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="14"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="LogoutBorder" Property="Background" Value="#40FFFFFF"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <fa:IconImage Grid.Column="0" Icon="SignOutAlt" Width="22" Height="22" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="DÉCONNEXION" Foreground="White" Margin="12,0,0,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        </Grid>
                     </Button>
                 </StackPanel>
 
-                <Grid/> <!-- Spacer -->
+                <!-- Navigation (last child, fills remaining space) -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12,0,12,16">
+                        <!-- Menu Section -->
+                        <TextBlock Text="MENU" 
+                                   Foreground="#B8A9D4" 
+                                   FontSize="10" 
+                                   FontWeight="Bold" 
+                                   Margin="12,0,0,8"
+                                   Opacity="0.6"
+                                   Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        
+                        <ctrls:SidebarItem Icon="Home" 
+                                           Text="Tableau de bord" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Dashboard"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="BoxesStacked" 
+                                           Text="Gestion du Stock" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Stock}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Stock"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="FileContract" 
+                                           Text="Réception (BL)" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Livraisons}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Livraisons"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+
+                        <ctrls:SidebarItem Icon="History" 
+                                           Text="Historique Besoins" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=NeedsHistory}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="NeedsHistory"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+
+                        <ctrls:SidebarItem Icon="ArrowRightFromBracket" 
+                                           Text="Sortie des besoins" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=StockExits}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="StockExits"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+
+                        <ctrls:SidebarItem Icon="CartShopping" 
+                                           Text="Gestion des Bons de Commande" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Orders}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Orders"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
-        <!-- Main Content -->
-        <Frame x:Name="MainFrame" Grid.Column="1" Background="#F5F7FA" NavigationUIVisibility="Hidden"/>
+        <!-- Content Area -->
+        <Frame x:Name="MainFrame" Grid.Column="1" Background="{StaticResource PageBackgroundBrush}" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>
