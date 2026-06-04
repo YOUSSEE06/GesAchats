@@ -114,10 +114,11 @@ public partial class ComptableDashboardViewModel : ObservableObject
             Values = new[] { d.Value },
             Name = d.Label,
             InnerRadius = 55,
-            Fill = d.Label.Contains("Payee") || d.Label.Contains("Payée") || d.Label.Contains("Verifiee") || d.Label.Contains("Vérifiée") ? new SolidColorPaint(new SKColor(16, 185, 129)) : 
-                   d.Label.Contains("EnAttente") || d.Label.Contains("En attente") ? new SolidColorPaint(new SKColor(245, 158, 11)) :
-                   d.Label.Contains("Retard") || d.Label.Contains("Rejetée") || d.Label.Contains("Rejetee") ? new SolidColorPaint(new SKColor(239, 68, 68)) : 
-                   d.Label.Contains("Partiellement") ? new SolidColorPaint(new SKColor(139, 92, 246)) : null
+            ToolTipLabelFormatter = point => $"{point.Coordinate.PrimaryValue:N0}",
+            Fill = d.Label == "Payée" ? new SolidColorPaint(new SKColor(16, 185, 129)) :
+                   d.Label == "EnAttente" ? new SolidColorPaint(new SKColor(245, 158, 11)) :
+                   d.Label == "Partiellement payée" ? new SolidColorPaint(new SKColor(139, 92, 246)) :
+                   new SolidColorPaint(new SKColor(100, 116, 139))
         }).ToList();
 
         // 3. BL Status (Doughnut)

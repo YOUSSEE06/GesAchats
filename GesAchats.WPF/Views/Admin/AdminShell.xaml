@@ -124,7 +124,8 @@
                 </StackPanel>
 
                 <!-- Navigation (last child, fills remaining space) -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" 
+                           HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="12,0,12,16">
                         <!-- Menu Section -->
                         <TextBlock Text="MENU" 

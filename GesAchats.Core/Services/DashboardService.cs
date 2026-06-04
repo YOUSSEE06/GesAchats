@@ -43,6 +43,25 @@ public class DashboardService : IDashboardService
         return status;
     }
     
+    private string NormalizeInvoiceStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return "En attente";
+        
+        var s = status.Trim().ToLowerInvariant();
+        
+        if (s.Contains("payée") || s.Contains("payee") || s.Contains("payé") || s.Contains("paye"))
+            return "Payée";
+        
+        if (s.Contains("partiellement"))
+            return "Partiellement payée";
+        
+        if (s.Contains("en attente") || s.Contains("enattente") || s.Contains("attente"))
+            return "En attente";
+        
+        return status.Trim();
+    }
+
     private string NormalizePaymentMode(string paymentMethod)
     {
         if (string.IsNullOrWhiteSpace(paymentMethod))
@@ -479,11 +498,24 @@ public class DashboardService : IDashboardService
             .Take(5)
             .ToList();
 
-        // B. Statut des factures
-        dto.InvoiceStatusDistribution = currentInvoices
-            .GroupBy(i => i.Status)
-            .Select(g => new DistributionDto { Label = g.Key, Value = g.Count() })
-            .ToList();
+        // B. Statut des factures - exactly 3 statuses, use ALL invoices, not filtered by date
+        int enAttenteCount = allInvoices.Count(i => i.Status == "EnAttente");
+        int payeeCount = allInvoices.Count(i => i.Status == "Payée");
+        int partiellementPayeeCount = allInvoices.Count(i => i.Status == "Partiellement payée");
+        
+        dto.InvoiceStatusDistribution = new List<DistributionDto>
+        {
+            new DistributionDto { Label = "EnAttente", Value = enAttenteCount },
+            new DistributionDto { Label = "Payée", Value = payeeCount },
+            new DistributionDto { Label = "Partiellement payée", Value = partiellementPayeeCount }
+        };
+        
+        // Debug logs
+        Serilog.Log.Information("Comptable Dashboard Invoice Status Stats:");
+        Serilog.Log.Information("  Payée: {Count}", payeeCount);
+        Serilog.Log.Information("  Partiellement payée: {Count}", partiellementPayeeCount);
+        Serilog.Log.Information("  EnAttente: {Count}", enAttenteCount);
+        Serilog.Log.Information("  Total: {Total}", payeeCount + partiellementPayeeCount + enAttenteCount);
 
         // C. Statut des BL
         dto.BlStatusDistribution = currentBls
@@ -662,11 +694,11 @@ public class DashboardService : IDashboardService
         dto.FacturesTotal.Value = currentInvoices.Count();
         dto.FacturesTotal.VariationPercentage = CalculateEvolution(currentInvoices.Count(), previousInvoicesCount > 0 ? previousInvoicesCount : null);
 
-        dto.FacturesPayees.Value = currentInvoices.Count(i => i.Status?.Contains("Payée") == true);
-        dto.FacturesPayees.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status?.Contains("Payée") == true), previousPaidInvoicesCount > 0 ? previousPaidInvoicesCount : null);
+        dto.FacturesPayees.Value = currentInvoices.Count(i => NormalizeInvoiceStatus(i.Status) == "Payée");
+        dto.FacturesPayees.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => NormalizeInvoiceStatus(i.Status) == "Payée"), previousPaidInvoicesCount > 0 ? previousPaidInvoicesCount : null);
 
-        dto.FacturesEnAttente.Value = currentInvoices.Count(i => i.Status?.Contains("En attente") == true);
-        dto.FacturesEnAttente.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => i.Status?.Contains("En attente") == true), previousPendingInvoicesCount > 0 ? previousPendingInvoicesCount : null);
+        dto.FacturesEnAttente.Value = currentInvoices.Count(i => NormalizeInvoiceStatus(i.Status) == "En attente");
+        dto.FacturesEnAttente.VariationPercentage = CalculateEvolution(currentInvoices.Count(i => NormalizeInvoiceStatus(i.Status) == "En attente"), previousPendingInvoicesCount > 0 ? previousPendingInvoicesCount : null);
 
         var totalPaid = currentPayments.Sum(p => p.AmountPaid);
         dto.TotalRegle.Value = (double)totalPaid;
@@ -682,17 +714,27 @@ public class DashboardService : IDashboardService
         dto.FournisseursActifs.VariationPercentage = CalculateEvolution(suppliers.Count(s => s.IsActive), previousActiveSuppliersCount > 0 ? previousActiveSuppliersCount : null);
 
         // 3. Charts Data
-        // Operation Distribution (Bar Chart) - Current Period - matching reference photo
+        // Operation Distribution (Bar Chart) - use TOTAL counts, not current period
         dto.OperationDistribution = new List<DistributionDto>
         {
-            new DistributionDto { Label = "Stock", Value = (double)products.Sum(p => p.CurrentStock) }, // Stock Total
-            new DistributionDto { Label = "Besoins", Value = currentNeeds.Count() },
-            new DistributionDto { Label = "Sorties", Value = currentStockExits.Count() },
-            new DistributionDto { Label = "BL", Value = currentDeliveryNotes.Count() },
-            new DistributionDto { Label = "BC", Value = currentPurchaseOrders.Count() },
-            new DistributionDto { Label = "Factures", Value = currentInvoices.Count() },
-            new DistributionDto { Label = "Paiements", Value = currentPayments.Count() }
+            new DistributionDto { Label = "Stock", Value = (double)products.Count() }, // Stock Total
+            new DistributionDto { Label = "Besoins", Value = (double)needs.Count() },
+            new DistributionDto { Label = "Sorties", Value = (double)stockExits.Count() },
+            new DistributionDto { Label = "BL", Value = (double)deliveryNotes.Count() },
+            new DistributionDto { Label = "BC", Value = (double)purchaseOrders.Count() },
+            new DistributionDto { Label = "Factures", Value = (double)invoices.Count() },
+            new DistributionDto { Label = "Paiements", Value = (double)payments.Count() }
         };
+        
+        // Debug logs for Operation Distribution
+        Serilog.Log.Information("Admin Dashboard Operation Distribution Stats:");
+        Serilog.Log.Information("  Stock (Produits): {Count}", products.Count());
+        Serilog.Log.Information("  Besoins: {Count}", needs.Count());
+        Serilog.Log.Information("  Sorties: {Count}", stockExits.Count());
+        Serilog.Log.Information("  BL: {Count}", deliveryNotes.Count());
+        Serilog.Log.Information("  BC: {Count}", purchaseOrders.Count());
+        Serilog.Log.Information("  Factures: {Count}", invoices.Count());
+        Serilog.Log.Information("  Paiements: {Count}", payments.Count());
 
         // Stock Status (Donut Chart) - Always all products (since stock is current)
         int okCount = 0;
@@ -711,13 +753,24 @@ public class DashboardService : IDashboardService
             new DistributionDto { Label = "Rupture", Value = ruptureCount }
         };
 
-        // Invoice Status (Donut Chart) - Current Period
+        // Invoice Status (Donut Chart) - use ALL invoices, exact database statuses
+        int adminEnAttenteCount = invoices.Count(i => i.Status == "EnAttente");
+        int adminPayeeCount = invoices.Count(i => i.Status == "Payée");
+        int adminPartiellementPayeeCount = invoices.Count(i => i.Status == "Partiellement payée");
+        
         dto.InvoiceStatus = new List<DistributionDto>
         {
-            new DistributionDto { Label = "Payée", Value = currentInvoices.Count(i => i.Status?.Contains("Payée") == true) },
-            new DistributionDto { Label = "Partiellement payée", Value = currentInvoices.Count(i => i.Status?.Contains("Partiellement") == true) },
-            new DistributionDto { Label = "En attente", Value = currentInvoices.Count(i => i.Status?.Contains("En attente") == true) }
+            new DistributionDto { Label = "EnAttente", Value = adminEnAttenteCount },
+            new DistributionDto { Label = "Payée", Value = adminPayeeCount },
+            new DistributionDto { Label = "Partiellement payée", Value = adminPartiellementPayeeCount }
         };
+        
+        // Debug logs for Admin Dashboard Invoice Status
+        Serilog.Log.Information("Admin Dashboard Invoice Status Stats:");
+        Serilog.Log.Information("  Payée: {Count}", adminPayeeCount);
+        Serilog.Log.Information("  Partiellement payée: {Count}", adminPartiellementPayeeCount);
+        Serilog.Log.Information("  EnAttente: {Count}", adminEnAttenteCount);
+        Serilog.Log.Information("  Total: {Total}", adminPayeeCount + adminPartiellementPayeeCount + adminEnAttenteCount);
 
         // Monthly Stock Movements (Line Chart) - Let's use current period, or last 6 months? Let's keep last 6 months
         for (int i = 5; i >= 0; i--)

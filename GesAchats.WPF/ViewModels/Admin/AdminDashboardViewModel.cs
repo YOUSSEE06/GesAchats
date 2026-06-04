@@ -282,11 +282,12 @@ public partial class AdminDashboardViewModel : ObservableObject
             Values = new[] { d.Value },
             Name = d.Label,
             InnerRadius = 55,
+            ToolTipLabelFormatter = point => $"{point.Coordinate.PrimaryValue:N0}",
             Fill = d.Label switch
             {
                 "Payée" => new SolidColorPaint(new SKColor(34, 197, 94)),
                 "Partiellement payée" => new SolidColorPaint(new SKColor(168, 85, 246)),
-                "En attente" => new SolidColorPaint(new SKColor(59, 130, 246)),
+                "EnAttente" => new SolidColorPaint(new SKColor(59, 130, 246)),
                 _ => new SolidColorPaint(SKColors.Gray)
             }
         }).ToList();
