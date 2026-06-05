@@ -13,6 +13,9 @@ public class LoginViewModel : BaseViewModel
     private readonly IAuthService _authService;
     private string _loginOrEmail = string.Empty;
     private string _errorMessage = string.Empty;
+    private bool _passwordVisible;
+    private string _passwordToggleIcon = "👁";
+    private string _password = string.Empty;
 
     public string LoginOrEmail
     {
@@ -26,25 +29,58 @@ public class LoginViewModel : BaseViewModel
         set => SetProperty(ref _errorMessage, value);
     }
 
+    public bool PasswordVisible
+    {
+        get => _passwordVisible;
+        set => SetProperty(ref _passwordVisible, value);
+    }
+
+    public string PasswordToggleIcon
+    {
+        get => _passwordToggleIcon;
+        set => SetProperty(ref _passwordToggleIcon, value);
+    }
+
+    public string Password
+    {
+        get => _password;
+        set => SetProperty(ref _password, value);
+    }
+
     public CommunityToolkit.Mvvm.Input.IRelayCommand<object?> LoginCommand { get; }
     public CommunityToolkit.Mvvm.Input.IRelayCommand ForgotPasswordCommand { get; }
+    public CommunityToolkit.Mvvm.Input.IRelayCommand TogglePasswordCommand { get; }
 
     public LoginViewModel(IAuthService authService)
     {
         _authService = authService;
         LoginCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand<object?>(ExecuteLoginAsync, CanExecuteLogin);
         ForgotPasswordCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(ExecuteForgotPassword);
+        TogglePasswordCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(ExecuteTogglePassword);
         Title = "Connexion - GesAchats";
+    }
+
+    private void ExecuteTogglePassword()
+    {
+        PasswordVisible = !PasswordVisible;
+        PasswordToggleIcon = PasswordVisible ? "👁‍🗨" : "👁";
     }
 
     private bool CanExecuteLogin(object? parameter) => !IsBusy;
 
     private async Task ExecuteLoginAsync(object? parameter)
     {
-        var passwordBox = parameter as System.Windows.Controls.PasswordBox;
-        if (passwordBox == null) return;
-
-        string password = passwordBox.Password;
+        string password;
+        if (PasswordVisible)
+        {
+            password = Password;
+        }
+        else
+        {
+            var passwordBox = parameter as System.Windows.Controls.PasswordBox;
+            if (passwordBox == null) return;
+            password = passwordBox.Password;
+        }
 
         if (string.IsNullOrWhiteSpace(LoginOrEmail))
         {

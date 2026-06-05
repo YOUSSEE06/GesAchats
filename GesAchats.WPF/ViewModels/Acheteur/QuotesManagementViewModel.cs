@@ -88,6 +88,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private bool _isCreateDialogOpen;
     private bool _isDetailsModalOpen;
     private Quotation? _selectedQuotationDetails;
+    private QuotationDisplayViewModel? _selectedQuotation;
     private string _detailsNormalizedStatus = string.Empty;
     private string _filterSearch = string.Empty;
     private DateTime? _filterDate;
@@ -134,6 +135,12 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     }
     public ObservableCollection<Quotation> AllQuotationsRaw { get; } = new ObservableCollection<Quotation>();
     public ObservableCollection<QuotationDisplayViewModel> FilteredQuotations { get; } = new ObservableCollection<QuotationDisplayViewModel>();
+
+    public QuotationDisplayViewModel? SelectedQuotation
+    {
+        get => _selectedQuotation;
+        set => SetProperty(ref _selectedQuotation, value);
+    }
 
     public Need? SelectedNeed
     {
