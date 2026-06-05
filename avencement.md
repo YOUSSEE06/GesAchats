@@ -6,7 +6,7 @@
  
  ## ✅ Étapes Terminées 
  - [x] STEP 0 — Cleanup : Suppression de toutes les vues (.xaml/.xaml.cs), de la fenêtre principale (MainWindow), et de tous les ViewModels existants dans le projet WPF pour repartir sur une base saine. Les dossiers ont été conservés. 
- 
+ --
  ## ⏳ Étape En Cours 
  - [ ] STEP 0 — Cleanup : En attente de confirmation utilisateur. 
  
