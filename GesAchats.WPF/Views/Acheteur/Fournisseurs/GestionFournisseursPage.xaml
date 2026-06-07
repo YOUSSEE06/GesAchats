@@ -66,54 +66,97 @@
             </Border>
             
             <!-- Suppliers List -->
-            <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource CardShadow}">
-                <DataGrid x:Name="SuppliersDataGrid"
-                          ItemsSource="{Binding Suppliers}" 
-                          SelectedItem="{Binding SelectedSupplier}"
-                          AutoGenerateColumns="False" 
-                          IsReadOnly="True" 
-                          Background="Transparent" 
-                          BorderThickness="0"
-                          RowHeight="55"
-                          GridLinesVisibility="None"
-                          HeadersVisibility="Column"
-                          MouseDoubleClick="SuppliersDataGrid_MouseDoubleClick">
-                    <DataGrid.Resources>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="#FAFAFA"/>
-                            <Setter Property="Foreground" Value="#424242"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="Padding" Value="10"/>
-                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                        </Style>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Cursor" Value="Hand"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#F5F5F5"/>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#E3F2FD"/>
-                                    <Setter Property="Foreground" Value="#1976D2"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="Padding" Value="10"/>
-                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                        </Style>
-                    </DataGrid.Resources>
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Société" Binding="{Binding CompanyName}" Width="*"/>
-                        <DataGridTextColumn Header="Contact" Binding="{Binding ContactName}" Width="*"/>
-                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
-                        <DataGridTextColumn Header="Téléphone" Binding="{Binding Phone}" Width="Auto"/>
-                        <DataGridTextColumn Header="Ville" Binding="{Binding City}" Width="Auto"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+            <Border Grid.Row="1" Style="{StaticResource ModernCard}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Liste des fournisseurs" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    </Border>
+
+                    <DataGrid x:Name="SuppliersDataGrid"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Suppliers}" 
+                              SelectedItem="{Binding SelectedSupplier}"
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True" 
+                              Background="Transparent" 
+                              BorderThickness="0"
+                              GridLinesVisibility="Horizontal"
+                              MinWidth="1100"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              HeadersVisibility="Column"
+                              MouseDoubleClick="SuppliersDataGrid_MouseDoubleClick">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#F8FAFC"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="12,8"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="#4F46E5"/>
+                            </Style>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SOCIÉTÉ" Binding="{Binding CompanyName}" Width="*" MinWidth="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="12,8"/>
+                                        <Setter Property="Foreground" Value="#4F46E5"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="CONTACT" Binding="{Binding ContactName}" Width="*" MinWidth="150">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="EMAIL" Binding="{Binding Email}" Width="*" MinWidth="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="TÉLÉPHONE" Binding="{Binding Phone}" Width="Auto" MinWidth="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="VILLE" Binding="{Binding City}" Width="Auto" MinWidth="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="12,8"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </Border>
         </Grid>
     </Grid>
