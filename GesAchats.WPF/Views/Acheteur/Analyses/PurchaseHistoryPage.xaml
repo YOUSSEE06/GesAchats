@@ -94,19 +94,67 @@
                             </Button>
                         </Grid>
 
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding DetailedHistory}" 
+                        <DataGrid Grid.Row="1" 
+                                  ItemsSource="{Binding DetailedHistory}" 
                                   AutoGenerateColumns="False" 
                                   IsReadOnly="True" 
-                                  Background="Transparent" 
-                                  BorderThickness="0">
+                                  Background="White" 
+                                  BorderThickness="0"
+                                  GridLinesVisibility="Horizontal"
+                                  MinWidth="700"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="#4F46E5"/>
+                                </Style>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F1F5F9"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Date" Binding="{Binding PurchaseOrder.OrderDate, StringFormat=d}" Width="Auto"/>
-                                <DataGridTextColumn Header="Fournisseur" Binding="{Binding PurchaseOrder.Supplier.CompanyName}" Width="*"/>
-                                <DataGridTextColumn Header="Quantité" Binding="{Binding Quantity}" Width="Auto"/>
-                                <DataGridTextColumn Header="Prix Unit. HT" Binding="{Binding UnitPriceHT, StringFormat={}{0:N2} MAD}" Width="Auto">
+                                <DataGridTextColumn Header="DATE" Binding="{Binding PurchaseOrder.OrderDate, StringFormat='dd/MM/yyyy'}" Width="130" MinWidth="110">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding PurchaseOrder.Supplier.CompanyName}" Width="*" MinWidth="200">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="QUANTITÉ" Binding="{Binding Quantity}" Width="130" MinWidth="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="PRIX UNIT. HT" Binding="{Binding UnitPriceHT, StringFormat={}{0:N2} MAD}" Width="160" MinWidth="140">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Padding" Value="12,8"/>
                                             <Setter Property="Foreground" Value="#2E7D32"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
