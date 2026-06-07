@@ -5,7 +5,7 @@
 Tu as reçu **7 fichiers de code** + **1 guide complet** pour créer un dashboard professionnel.
 
 ---
-
+--ff
 ## 📋 Fichiers Reçus
 
 ### 1. **AcheteurDashboardViewModel.cs**
