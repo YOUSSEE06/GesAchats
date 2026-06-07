@@ -15,6 +15,105 @@
                 <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:EqualityConverter x:Key="EqualityConverter"/>
+            
+            <Style x:Key="BtnPrimaryStyle" TargetType="Button">
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#6C5CE7"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="Foreground" Value="#6C5CE7"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="8" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                    <Setter TargetName="Bd" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="BtnPrimaryGreenStyle" TargetType="Button" BasedOn="{StaticResource BtnPrimaryStyle}">
+                <Setter Property="BorderBrush" Value="#10B981"/>
+                <Setter Property="Foreground" Value="#10B981"/>
+            </Style>
+
+            <Style x:Key="BtnPrimaryBlueStyle" TargetType="Button" BasedOn="{StaticResource BtnPrimaryStyle}">
+                <Setter Property="BorderBrush" Value="#3B82F6"/>
+                <Setter Property="Foreground" Value="#3B82F6"/>
+            </Style>
+
+            <Style x:Key="BtnResetStyle" TargetType="Button">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Background" Value="#6C5CE7"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="13.5"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderThickness="0" 
+                                    CornerRadius="19" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#5A4BD1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#4A3BBF"/>
+                                    <Setter TargetName="Bd" 
+                                            Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -146,7 +245,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Text="{Binding SelectedFilePath}" IsReadOnly="True" />
-                            <Button Grid.Column="1" Content="Parcourir" Command="{Binding BrowseCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="10,0,0,0"/>
+                            <Button Grid.Column="1" Content="Parcourir" Command="{Binding BrowseCommand}" Style="{StaticResource BtnPrimaryStyle}" Margin="10,0,0,0"/>
                         </Grid>
                         
                         <TextBlock Text="Formats acceptés : PDF, JPG, PNG (max 10 Mo)" FontSize="11" Foreground="#757575" Margin="0,5,0,0"/>
@@ -158,8 +257,8 @@
         <!-- Footer -->
         <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="20,15">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Annuler" Command="{Binding CancelCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0"/>
-                <Button Content="💾 Enregistrer le règlement" Command="{Binding SaveCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2196F3" Foreground="White" Width="200"/>
+                <Button Content="Annuler" Command="{Binding CancelCommand}" Style="{StaticResource BtnPrimaryStyle}" Margin="0,0,10,0"/>
+                <Button Content="💾 Enregistrer le règlement" Command="{Binding SaveCommand}" Style="{StaticResource BtnPrimaryBlueStyle}"/>
             </StackPanel>
         </Border>
     </Grid>
