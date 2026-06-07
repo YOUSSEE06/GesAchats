@@ -195,11 +195,23 @@
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#FEE2E2"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding StatusText}" Value="Transmis">
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="transmit">
                                                             <Setter Property="Background" Value="#DBEAFE"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding StatusText}" Value="En cours">
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="encours">
                                                             <Setter Property="Background" Value="#FFF3E0"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="À valider">
+                                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Validé">
+                                                            <Setter Property="Background" Value="#D1FAE5"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Brouillon">
+                                                            <Setter Property="Background" Value="#F1F5F9"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Relancé">
+                                                            <Setter Property="Background" Value="#FCE7F3"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -209,11 +221,23 @@
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Foreground" Value="#DC2626"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding StatusText}" Value="Transmis">
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="transmit">
                                                                 <Setter Property="Foreground" Value="#1D4ED8"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding StatusText}" Value="En cours">
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="encours">
                                                                 <Setter Property="Foreground" Value="#EA580C"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="À valider">
+                                                                <Setter Property="Foreground" Value="#EA580C"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="Validé">
+                                                                <Setter Property="Foreground" Value="#059669"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="Brouillon">
+                                                                <Setter Property="Foreground" Value="#64748B"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="Relancé">
+                                                                <Setter Property="Foreground" Value="#BE185D"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
