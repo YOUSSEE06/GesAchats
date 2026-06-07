@@ -135,19 +135,19 @@
                                    Opacity="0.6"
                                    Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
                         
-                        <ctrls:SidebarItem Icon="FileInvoice" 
-                                           Text="Factures" 
-                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Factures}"
-                                           Command="{Binding NavigateCommand}" 
-                                           CommandParameter="Factures"
-                                           Margin="0,0,0,4"
-                                           IsCollapsed="{Binding IsCollapsed}"/>
-                        
                         <ctrls:SidebarItem Icon="Home" 
                                            Text="Dashboard" 
                                            IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Dashboard}"
                                            Command="{Binding NavigateCommand}" 
                                            CommandParameter="Dashboard"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
+                        
+                        <ctrls:SidebarItem Icon="FileInvoice" 
+                                           Text="Factures" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=Factures}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="Factures"
                                            Margin="0,0,0,4"
                                            IsCollapsed="{Binding IsCollapsed}"/>
                         
