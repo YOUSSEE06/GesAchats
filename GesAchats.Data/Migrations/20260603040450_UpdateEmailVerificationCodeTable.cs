@@ -11,52 +11,36 @@ namespace GesAchats.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Make UserId nullable
-            migrationBuilder.AlterColumn<int>(
-                name: "UserId",
-                table: "EmailVerificationCodes",
-                type: "integer",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            // Add Email column
-            migrationBuilder.AddColumn<string>(
-                name: "Email",
-                table: "EmailVerificationCodes",
-                type: "character varying(255)",
-                maxLength: 255,
-                nullable: true);
-
-            // Add Purpose column
-            migrationBuilder.AddColumn<string>(
-                name: "Purpose",
-                table: "EmailVerificationCodes",
-                type: "character varying(50)",
-                maxLength: 50,
-                nullable: false,
-                defaultValue: "");
+            // Create the table first if it doesn't exist
+            migrationBuilder.CreateTable(
+                name: "EmailVerificationCodes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: true),
+                    Code = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    Purpose = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailVerificationCodes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmailVerificationCodes_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Email",
-                table: "EmailVerificationCodes");
-
-            migrationBuilder.DropColumn(
-                name: "Purpose",
-                table: "EmailVerificationCodes");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "UserId",
-                table: "EmailVerificationCodes",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldNullable: true);
+            migrationBuilder.DropTable(name: "EmailVerificationCodes");
         }
     }
 }

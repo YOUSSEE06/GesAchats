@@ -118,7 +118,7 @@ public class LoginViewModel : BaseViewModel
         catch (Exception ex)
         {
             Log.Error(ex, "Erreur inattendue lors de la connexion");
-            ErrorMessage = "Une erreur est survenue. Veuillez réessayer.";
+            ErrorMessage = $"Erreur: {ex.Message}\n{ex.InnerException?.Message}";
         }
         finally
         {

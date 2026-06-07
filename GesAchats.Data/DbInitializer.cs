@@ -214,6 +214,23 @@ public static class DbInitializer
                     );
                 END IF;
 
+                -- StockExits table creation
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'StockExits') THEN
+                    CREATE TABLE ""StockExits"" (
+                        ""Id"" SERIAL PRIMARY KEY,
+                        ""ProductId"" INTEGER NOT NULL REFERENCES ""Products""(""Id"") ON DELETE CASCADE,
+                        ""Quantity"" NUMERIC(18,2) NOT NULL,
+                        ""ExitDate"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                        ""ProjectOrChantier"" VARCHAR(200),
+                        ""Reason"" VARCHAR(500),
+                        ""StockAfterExit"" NUMERIC(18,2) NOT NULL,
+                        ""CreatedById"" INTEGER NOT NULL REFERENCES ""Users""(""Id"") ON DELETE CASCADE,
+                        ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL
+                    );
+                    CREATE INDEX IF NOT EXISTS ""IX_StockExits_ProductId"" ON ""StockExits""(""ProductId"");
+                    CREATE INDEX IF NOT EXISTS ""IX_StockExits_CreatedById"" ON ""StockExits""(""CreatedById"");
+                END IF;
+
                 -- Ensure NumeroBesoin column exists if Needs table was old
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Needs' AND column_name='NumeroBesoin') THEN
                     ALTER TABLE ""Needs"" ADD COLUMN ""NumeroBesoin"" VARCHAR(50);

@@ -263,9 +263,10 @@ public partial class App : Application
                     ");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // No warning dialog - just continue silently
+                MessageBox.Show($"Erreur lors de l'initialisation de la base de données :\n{ex.Message}\n\n{ex.StackTrace}\n\nInner Exception : {ex.InnerException?.Message}", 
+                    "Erreur de Base de Données", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
                 // Démarrage de l'interface utilisateur
