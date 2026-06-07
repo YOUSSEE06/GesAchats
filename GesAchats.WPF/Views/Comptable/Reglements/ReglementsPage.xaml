@@ -172,35 +172,135 @@
         </Border>
 
         <!-- History Table -->
-        <Border Grid.Row="4" Background="White" Margin="20,15,20,20" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="20,15,20,20" Padding="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Padding="15,10" Background="#FAFAFA" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
-                    <Grid>
-                        <TextBlock Text="HISTORIQUE DES RÈGLEMENTS" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </Grid>
+                <Border Padding="24,15" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                    <TextBlock Text="HISTORIQUE DES RÈGLEMENTS" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
                 </Border>
 
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Payments}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0">
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding Payments}" 
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False" 
+                          IsReadOnly="True"
+                          Background="Transparent" 
+                          BorderThickness="0" 
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="Horizontal"
+                          MinWidth="1300"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="12,8"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Foreground" Value="#4F46E5"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Date" Binding="{Binding PaymentDate, StringFormat=dd/MM/yyyy}" Width="100"/>
-                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Supplier.CompanyName}" Width="*"/>
-                        <DataGridTextColumn Header="Numéro de facture" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="150"/>
-                        <DataGridTextColumn Header="Montant" Binding="{Binding AmountPaid, StringFormat={}{0:N2} MAD}" Width="120"/>
-                        <DataGridTextColumn Header="Mode" Binding="{Binding PaymentMethod}" Width="120"/>
-                        <DataGridTextColumn Header="Référence" Binding="{Binding ReferenceNumber}" Width="150"/>
-                        <DataGridTemplateColumn Header="Justificatif" Width="100">
+                        <DataGridTextColumn Header="DATE" Binding="{Binding PaymentDate, StringFormat=dd/MM/yyyy}" Width="Auto" MinWidth="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier.CompanyName}" Width="Auto" MinWidth="200">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="NUMÉRO DE FACTURE" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="Auto" MinWidth="160">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="Foreground" Value="#4F46E5"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="MONTANT" Binding="{Binding AmountPaid, StringFormat={}{0:N2} MAD}" Width="Auto" MinWidth="140">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="MODE" Binding="{Binding PaymentMethod}" Width="Auto" MinWidth="130">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="RÉFÉRENCE" Binding="{Binding ReferenceNumber}" Width="Auto" MinWidth="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="JUSTIFICATIF" Width="Auto" MinWidth="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="📄" 
                                             Command="{Binding DataContext.ViewProofCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                             CommandParameter="{Binding}" 
                                             Visibility="{Binding ProofFilePath, Converter={StaticResource StringToVisibilityConverter}}"
-                                            Padding="8,4"/>
+                                            Margin="12,8"
+                                            Padding="10,4"
+                                            FontSize="14">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Background" Value="#EFF6FF"/>
+                                                <Setter Property="Foreground" Value="#3B82F6"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" 
+                                                                    CornerRadius="20"
+                                                                    Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
