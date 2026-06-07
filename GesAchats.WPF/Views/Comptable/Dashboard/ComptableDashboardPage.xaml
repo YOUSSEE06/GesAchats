@@ -17,6 +17,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
                 <ResourceDictionary Source="../../../Resources/Shared/Colors.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Shared/CommonStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <conv:IsPositiveConverter x:Key="IsPositiveConverter"/>
@@ -66,6 +67,108 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!-- Filter Date Style matching FacturesPage -->
+            <Style x:Key="FilterDateStyle" TargetType="DatePicker">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#D0CDE8"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePicker">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DatePickerTextBox 
+                                        x:Name="PART_TextBox" 
+                                        Grid.Column="0" 
+                                        Foreground="{TemplateBinding Foreground}" 
+                                        Background="Transparent" 
+                                        BorderThickness="0" 
+                                        VerticalContentAlignment="Center" 
+                                        Padding="12,0" 
+                                        FontSize="{TemplateBinding FontSize}"/>
+                                    <Button x:Name="PART_Button" 
+                                            Grid.Column="1" 
+                                            Width="32" 
+                                            Background="Transparent" 
+                                            BorderThickness="0" 
+                                            Cursor="Hand" 
+                                            Focusable="False">
+                                        <Path Data="M6 2v2M18 2v2M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" 
+                                              Stroke="#6C5CE7" StrokeThickness="1.5" 
+                                              StrokeLineJoin="Round" 
+                                              StrokeStartLineCap="Round" 
+                                              StrokeEndLineCap="Round" 
+                                              Width="16" Height="16" 
+                                              Stretch="Uniform"/>
+                                    </Button>
+                                    <Popup x:Name="PART_Popup" 
+                                           AllowsTransparency="True" 
+                                           Placement="Bottom" 
+                                           IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <Calendar x:Name="PART_Calendar"/>
+                                    </Popup>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Actualiser Button Style -->
+            <Style x:Key="ActualiserButtonStyle" TargetType="Button">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Background" Value="#6C5CE7"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="13.5"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderThickness="0" 
+                                    CornerRadius="8" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#5A4BD1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#4A3BBF"/>
+                                    <Setter TargetName="Bd" 
+                                            Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -92,18 +195,13 @@
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <DatePicker SelectedDate="{Binding StartDate}" 
-                                    Width="160" Margin="0,0,12,0"
-                                    VerticalContentAlignment="Center"
-                                    Height="35"/>
+                                    Style="{StaticResource FilterDateStyle}"
+                                    Width="160" Margin="0,0,12,0"/>
                         <DatePicker SelectedDate="{Binding EndDate}" 
-                                    Width="160" Margin="0,0,12,0"
-                                    VerticalContentAlignment="Center"
-                                    Height="35"/>
+                                    Style="{StaticResource FilterDateStyle}"
+                                    Width="160" Margin="0,0,12,0"/>
                         <Button Command="{Binding RefreshCommand}" 
-                                Style="{StaticResource MaterialDesignRaisedButton}" 
-                                Background="{StaticResource PrimaryBrush}" 
-                                BorderBrush="{StaticResource PrimaryBrush}"
-                                Height="35">
+                                Style="{StaticResource ActualiserButtonStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <fa:IconImage Icon="Sync" Width="14" Height="14" Foreground="White" Margin="0,0,8,0"/>
                                 <TextBlock Text="Actualiser"/>
