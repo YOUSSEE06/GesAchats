@@ -141,59 +141,312 @@
         </StackPanel>
 
         <!-- DataGrid -->
-        <DataGrid Grid.Row="3" ItemsSource="{Binding Needs}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                  RowHeight="70" GridLinesVisibility="None" HeadersVisibility="Column"
-                  IsReadOnly="True">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="N° Demande" Binding="{Binding Need.NumeroBesoin}" Width="150" FontWeight="Bold"/>
-                <DataGridTextColumn Header="Date" Binding="{Binding Need.RequestedAt, StringFormat=d}" Width="120"/>
-                <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
-                <DataGridTemplateColumn Header="Statut" Width="130">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Actions" Width="400">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <!-- Details Button (Always Visible) -->
-                                <Button Content="Détails" 
-                                        Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource DetailsButtonStyle}"/>
-                                
-                                <!-- Annuler Button (Visible for En Cours) -->
-                                <Button Content="Annuler" 
-                                        Command="{Binding DataContext.AnnulerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource AnnulerButtonStyle}"
-                                        Visibility="{Binding IsStatusEnCours, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                
-                                <!-- Reactiver Button (Visible for Annulé) -->
-                                <Button Content="Réactiver" 
-                                        Command="{Binding DataContext.ReactiverCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource ReactiverButtonStyle}"
-                                        Visibility="{Binding IsStatusAnnule, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                
-                                <!-- Supprimer Button (Visible for not Transmis) -->
-                                <Button Content="Supprimer" 
-                                        Command="{Binding DataContext.SupprimerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource SupprimerButtonStyle}"
-                                        Visibility="{Binding IsNotTransmis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Padding="24,15" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                    <TextBlock Text="Historique des Besoins" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                </Border>
+
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Needs}" 
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False"
+                          Background="Transparent" 
+                          BorderThickness="0" 
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="Horizontal"
+                          MinWidth="1100"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          IsReadOnly="True">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="12,8"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Foreground" Value="#4F46E5"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="N° DEMANDE" Binding="{Binding Need.NumeroBesoin}" Width="150" MinWidth="130">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="Foreground" Value="#4F46E5"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="DATE" Binding="{Binding Need.RequestedAt, StringFormat=d}" Width="120" MinWidth="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="NB ARTICLES" Binding="{Binding ArticleCount}" Width="120" MinWidth="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="STATUT" Width="130" MinWidth="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,4" CornerRadius="20" HorizontalAlignment="Left" Margin="12,8">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="transmit">
+                                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="transmis">
+                                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="encours">
+                                                        <Setter Property="Background" Value="#FFF3E0"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="en cours">
+                                                        <Setter Property="Background" Value="#FFF3E0"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="Annulé">
+                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="annulé">
+                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="Annule">
+                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusText}" Value="annule">
+                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="transmit">
+                                                            <Setter Property="Foreground" Value="#1E40AF"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="transmis">
+                                                            <Setter Property="Foreground" Value="#1E40AF"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="encours">
+                                                            <Setter Property="Foreground" Value="#F57C00"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="en cours">
+                                                            <Setter Property="Foreground" Value="#F57C00"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Annulé">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="annulé">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Annule">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="annule">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ACTIONS" Width="Auto" MinWidth="400">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="12,8">
+                                        <!-- Details Button (Always Visible) -->
+                                        <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Détails"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#EFF6FF"/>
+                                                    <Setter Property="Foreground" Value="#3B82F6"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" 
+                                                                        CornerRadius="20"
+                                                                        Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="📋" FontSize="12" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Détails" FontSize="11"/>
+                                            </StackPanel>
+                                        </Button>
+                                        
+                                        <!-- Annuler Button (Visible for En Cours) -->
+                                        <Button Command="{Binding DataContext.AnnulerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Annuler"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0"
+                                                Visibility="{Binding IsStatusEnCours, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#FFF3E0"/>
+                                                    <Setter Property="Foreground" Value="#F57C00"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" 
+                                                                        CornerRadius="20"
+                                                                        Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FFE0B2"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="✕" FontSize="12" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Annuler" FontSize="11"/>
+                                            </StackPanel>
+                                        </Button>
+                                        
+                                        <!-- Reactiver Button (Visible for Annulé) -->
+                                        <Button Command="{Binding DataContext.ReactiverCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Réactiver"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0"
+                                                Visibility="{Binding IsStatusAnnule, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#D1FAE5"/>
+                                                    <Setter Property="Foreground" Value="#059669"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" 
+                                                                        CornerRadius="20"
+                                                                        Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#A7F3D0"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="✓" FontSize="12" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Réactiver" FontSize="11"/>
+                                            </StackPanel>
+                                        </Button>
+                                        
+                                        <!-- Supprimer Button (Visible for not Transmis) -->
+                                        <Button Command="{Binding DataContext.SupprimerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Supprimer"
+                                                Padding="10,4"
+                                                Margin="0,0,0,0"
+                                                Visibility="{Binding IsNotTransmis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                                    <Setter Property="Foreground" Value="#EF4444"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}" 
+                                                                        CornerRadius="20"
+                                                                        Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FECACA"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🗑️" FontSize="12" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Supprimer" FontSize="11"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
 
         <!-- Loading Overlay -->
         <Border Grid.RowSpan="2" Background="#80FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" d:Visibility="Collapsed">
