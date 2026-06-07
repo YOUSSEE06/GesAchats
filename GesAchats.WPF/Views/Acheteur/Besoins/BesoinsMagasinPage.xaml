@@ -8,30 +8,26 @@
       Title="Besoins Magasin">
 
     <Page.Resources>
-        <Style x:Key="TextCenterStyle" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#2196F3"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,5"/>
+        <Style x:Key="RoundedActionButton" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Style.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="4"/>
-                </Style>
-            </Style.Resources>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1976D2"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="20"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Page.Resources>
 
-    <Grid Margin="20">
+    <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -39,12 +35,13 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="DEMANDES DE RÉAPPROVISIONNEMENT" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+        <!-- Title -->
+        <DockPanel Grid.Row="0" Margin="20,20,20,0">
+            <TextBlock Text="DEMANDES DE RÉAPPROVISIONNEMENT" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
         </DockPanel>
 
         <!-- KPI Section -->
-        <Grid Grid.Row="1" Margin="0,0,0,20">
+        <Grid Grid.Row="1" Margin="20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -86,76 +83,180 @@
         </Grid>
         
         <!-- Filters -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Padding="20" Margin="20,0,20,20">
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="N° Demande" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <TextBox Width="200" Text="{Binding SearchNumeroDemande, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                    <TextBlock Text="N° Demande" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                    <TextBox Width="200" Text="{Binding SearchNumeroDemande, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
                 </StackPanel>
                 
                 <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="Date" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <DatePicker SelectedDate="{Binding SearchDate}" Width="150"/>
+                    <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                    <DatePicker SelectedDate="{Binding SearchDate}" Width="150" Style="{StaticResource ModernDatePicker}"/>
                 </StackPanel>
                 
                 <StackPanel Margin="0,0,20,0">
-                    <TextBlock Text="Statut" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
+                    <TextBlock Text="Statut" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
                     <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}" Width="150" Style="{StaticResource ModernComboBox}"/>
                 </StackPanel>
                 
                 <StackPanel Margin="0,0,0,0">
-                    <TextBlock Text="" FontSize="11" Foreground="#666" Margin="0,0,0,3"/>
-                    <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="15,5" Background="#757575" Foreground="White" BorderThickness="0"/>
+                    <TextBlock Text="" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                    <Button Command="{Binding ResetFiltersCommand}" Content="Réinitialiser" Padding="20,10" Background="#64748B" Foreground="White" BorderThickness="0" Style="{StaticResource ModernPrimaryButton}"/>
                 </StackPanel>
             </StackPanel>
         </Border>
 
-        <DataGrid Grid.Row="3" ItemsSource="{Binding Needs}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                  RowHeight="60" GridLinesVisibility="None" HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="N° Demande" Binding="{Binding Need.NumeroBesoin}" Width="150" FontWeight="Bold"/>
-                <DataGridTextColumn Header="Date" Binding="{Binding Need.DateTransmission, StringFormat=d}" Width="120"/>
-                <DataGridTextColumn Header="Demandeur" Binding="{Binding Need.RequestedBy.FullName}" Width="*"/>
-                <DataGridTextColumn Header="Nb Articles" Binding="{Binding ArticleCount}" Width="120" ElementStyle="{StaticResource TextCenterStyle}"/>
-                
-                <DataGridTemplateColumn Header="Statut" Width="200">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding StatusColor}"
-                                    CornerRadius="8"
-                                    Padding="10,4"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding StatusText}"
-                                           Foreground="White"
-                                           FontWeight="SemiBold"
-                                           FontSize="12"/>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+        <!-- Table Section -->
+        <Border Grid.Row="3" Margin="20,0,20,20" Padding="0">
+            <Border Style="{StaticResource ModernCard}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                <DataGridTemplateColumn Header="Actions" Width="220">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="Détails" 
-                                        Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource ActionButtonStyle}"
-                                        Margin="5"/>
-                                <Button Content="Créer un devis" 
-                                        Command="{Binding DataContext.CreateQuoteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource ActionButtonStyle}"
-                                        Background="#4CAF50"
-                                        Margin="5"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <Border Padding="24,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Liste des demandes" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    </Border>
+
+                    <DataGrid Grid.Row="1" 
+                              ItemsSource="{Binding Needs}" 
+                              AutoGenerateColumns="False" 
+                              CanUserAddRows="False"
+                              Style="{StaticResource ModernDataGrid}"
+                              MinWidth="1100"
+                              EnableRowVirtualization="True"
+                              EnableColumnVirtualization="True"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#F8FAFC"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="16,14"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="#4F46E5"/>
+                            </Style>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#DBEAFE"/>
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="N° DEMANDE" Binding="{Binding Need.NumeroBesoin}" Width="180" MinWidth="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="16,12"/>
+                                        <Setter Property="Foreground" Value="#4F46E5"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="DATE" Binding="{Binding Need.DateTransmission, StringFormat='dd/MM/yyyy'}" Width="140" MinWidth="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="16,12"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="DEMANDEUR" Binding="{Binding Need.RequestedBy.FullName}" Width="*" MinWidth="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="16,12"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="NB ARTICLES" Binding="{Binding ArticleCount}" Width="140" MinWidth="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="16,12"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            
+                            <DataGridTemplateColumn Header="STATUT" Width="180" MinWidth="160">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="12,5" CornerRadius="20" HorizontalAlignment="Left" Margin="16,12">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="Transmis">
+                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="En cours">
+                                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#DC2626"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="Transmis">
+                                                                <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StatusText}" Value="En cours">
+                                                                <Setter Property="Foreground" Value="#EA580C"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="ACTIONS" Width="Auto" MinWidth="280">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="16,12">
+                                            <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource RoundedActionButton}"
+                                                    Background="#EFF6FF"
+                                                    Foreground="#3B82F6"
+                                                    Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="👁" FontSize="11" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="Détails" FontSize="11"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding DataContext.CreateQuoteCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource RoundedActionButton}"
+                                                    Background="#F0FDF4"
+                                                    Foreground="#10B981">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📄" FontSize="11" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="Créer devis" FontSize="11"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Border>
     </Grid>
 </Page>
