@@ -117,85 +117,257 @@
                 </Border>
 
                 <!-- BL History Table -->
-                <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <DataGrid ItemsSource="{Binding DeliveriesHistory}" AutoGenerateColumns="False" IsReadOnly="True" 
-                              Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Date de réception" Binding="{Binding DeliveryNote.ReceptionDate, StringFormat=d}" Width="Auto"/>
-                            <DataGridTextColumn Header="N° Bon de Livraison" Binding="{Binding DeliveryNote.DeliveryNumber}" Width="*"/>
-                            <DataGridTextColumn Header="Fournisseur (Société)" Binding="{Binding DeliveryNote.Supplier.CompanyName}" Width="1.5*"/>
-                            <DataGridTextColumn Header="BC correspondant" Binding="{Binding DeliveryNote.PurchaseOrder.OrderNumber}" Width="*"/>
-                            <DataGridTextColumn Header="N° Facture Fournisseur" Binding="{Binding InvoiceNumber}" Width="*" 
-                                                Visibility="{Binding Data.IsComptable, Source={StaticResource Proxy}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <DataGridTemplateColumn Header="Statut" Width="120">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Left">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="EnAttente">
-                                                            <Setter Property="Background" Value="#FFC107"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="Valide">
-                                                            <Setter Property="Background" Value="#4CAF50"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Foreground="White" FontWeight="SemiBold" FontSize="11">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
+                <Border Grid.Row="2" Style="{StaticResource ModernCard}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Padding="24,15" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                            <TextBlock Text="Réception des Bons de Livraison" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                        </Border>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding DeliveriesHistory}" 
+                                  AutoGenerateColumns="False" 
+                                  IsReadOnly="True"
+                                  Background="Transparent" 
+                                  BorderThickness="0" 
+                                  RowHeaderWidth="0"
+                                  GridLinesVisibility="Horizontal"
+                                  MinWidth="1300"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="#4F46E5"/>
+                                </Style>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F1F5F9"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="DATE DE RÉCEPTION" Binding="{Binding DeliveryNote.ReceptionDate, StringFormat=d}" Width="Auto" MinWidth="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="N° BON DE LIVRAISON" Binding="{Binding DeliveryNote.DeliveryNumber}" Width="*" MinWidth="160">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Padding" Value="12,8"/>
+                                            <Setter Property="Foreground" Value="#4F46E5"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding DeliveryNote.Supplier.CompanyName}" Width="1.5*" MinWidth="200">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="BC CORRESPONDANT" Binding="{Binding DeliveryNote.PurchaseOrder.OrderNumber}" Width="*" MinWidth="130">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="N° FACTURE FOURNISSEUR" Binding="{Binding InvoiceNumber}" Width="*" MinWidth="160"
+                                                    Visibility="{Binding Data.IsComptable, Source={StaticResource Proxy}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="12,8"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="STATUT" Width="130" MinWidth="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="10,4" CornerRadius="20" HorizontalAlignment="Left" Margin="12,8">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#FFE0B2"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="EnAttente">
-                                                                <Setter Property="Text" Value="En attente"/>
+                                                                <Setter Property="Background" Value="#FFF3E0"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="Valide">
-                                                                <Setter Property="Text" Value="Validé"/>
+                                                                <Setter Property="Background" Value="#D1FAE5"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Actions" Width="Auto">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="🔍 Détails" Command="{Binding Data.InspectCommand, Source={StaticResource Proxy}}"
-                                                    CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#FF9800" Foreground="White" BorderThickness="0" MinWidth="65"/>
-                                            <Button Content="📄 PDF" Command="{Binding Data.PrintPdfCommand, Source={StaticResource Proxy}}"
-                                                    CommandParameter="{Binding}" Margin="2,0" Padding="8,4" Background="#2196F3" Foreground="White" BorderThickness="0" MinWidth="55"/>
-                                            
-                                            <!-- Bouton Ajouter Facture (Comptable uniquement + pas de facture) -->
-                                            <Button Content="➕ Facture" 
-                                                    Command="{Binding Data.AddInvoiceCommand, Source={StaticResource Proxy}}"
-                                                    CommandParameter="{Binding}"
-                                                    Margin="2,0" Padding="8,4" Background="#4CAF50" Foreground="White" BorderThickness="0" MinWidth="75">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                        <Style.Triggers>
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding Data.IsComptable, Source={StaticResource Proxy}}" Value="True"/>
-                                                                    <Condition Binding="{Binding HasInvoice}" Value="False"/>
-                                                                </MultiDataTrigger.Conditions>
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                            </MultiDataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                                                </Border.Style>
+                                                <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="En attente"/>
+                                                            <Setter Property="Foreground" Value="#F57C00"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="EnAttente">
+                                                                    <Setter Property="Text" Value="En attente"/>
+                                                                    <Setter Property="Foreground" Value="#F57C00"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DeliveryNote.Status}" Value="Valide">
+                                                                    <Setter Property="Text" Value="Validé"/>
+                                                                    <Setter Property="Foreground" Value="#059669"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="ACTIONS" Width="Auto" MinWidth="320">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="12,8">
+                                                <Button Command="{Binding Data.InspectCommand, Source={StaticResource Proxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Détails"
+                                                        Padding="10,4"
+                                                        Margin="0,0,6,0">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                                            <Setter Property="Foreground" Value="#F57C00"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="BorderThickness" Value="0"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border Background="{TemplateBinding Background}" 
+                                                                                CornerRadius="20"
+                                                                                Padding="{TemplateBinding Padding}">
+                                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#FFE0B2"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🔍" FontSize="12" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="Détails" FontSize="11"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding Data.PrintPdfCommand, Source={StaticResource Proxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="PDF"
+                                                        Padding="10,4"
+                                                        Margin="0,0,6,0">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Background" Value="#EFF6FF"/>
+                                                            <Setter Property="Foreground" Value="#3B82F6"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="BorderThickness" Value="0"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border Background="{TemplateBinding Background}" 
+                                                                                CornerRadius="20"
+                                                                                Padding="{TemplateBinding Padding}">
+                                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="📄" FontSize="12" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="PDF" FontSize="11"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                
+                                                <!-- Bouton Ajouter Facture (Comptable uniquement + pas de facture) -->
+                                                <Button Command="{Binding Data.AddInvoiceCommand, Source={StaticResource Proxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Ajouter Facture"
+                                                        Padding="10,4"
+                                                        Margin="0,0,0,0">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Background" Value="#D1FAE5"/>
+                                                            <Setter Property="Foreground" Value="#059669"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="BorderThickness" Value="0"/>
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border Background="{TemplateBinding Background}" 
+                                                                                CornerRadius="20"
+                                                                                Padding="{TemplateBinding Padding}">
+                                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#A7F3D0"/>
+                                                                </Trigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding Data.IsComptable, Source={StaticResource Proxy}}" Value="True"/>
+                                                                        <Condition Binding="{Binding HasInvoice}" Value="False"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </MultiDataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="➕" FontSize="12" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="Facture" FontSize="11"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
                 </Border>
             </Grid>
 

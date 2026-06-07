@@ -78,29 +78,109 @@
         </Grid>
 
         <!-- Stock Table -->
-        <DataGrid Grid.Row="2" ItemsSource="{Binding Products}" 
-                  AutoGenerateColumns="False" CanUserAddRows="False"
-                  Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                  RowHeight="40" SelectionMode="Single" GridLinesVisibility="None"
-                  HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="N°" Binding="{Binding Product.Id}" Width="50" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Désignation" Binding="{Binding Product.Designation}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Stock Actuel" Binding="{Binding Product.CurrentStock}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Seuil Min" Binding="{Binding Product.MinimumStock}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Unité" Binding="{Binding Product.Unit}" Width="80" IsReadOnly="True"/>
-                <DataGridTemplateColumn Header="État" Width="80">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="{Binding StatusIcon}" Foreground="{Binding StatusColor}" 
-                                           FontSize="16" VerticalAlignment="Center" ToolTip="{Binding StatusColor}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2" Style="{StaticResource ModernCard}" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Padding="24,15" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
+                    <TextBlock Text="Gestion du Stock" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                </Border>
+
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding Products}" 
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False"
+                          Background="Transparent" 
+                          BorderThickness="0"
+                          RowHeaderWidth="0"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          MinWidth="1100"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="12,8"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Foreground" Value="#4F46E5"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="N°" Binding="{Binding Product.Id}" Width="50" MinWidth="60" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="DÉSIGNATION" Binding="{Binding Product.Designation}" Width="*" MinWidth="250" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="STOCK ACTUEL" Binding="{Binding Product.CurrentStock}" Width="100" MinWidth="110" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="SEUIL MIN" Binding="{Binding Product.MinimumStock}" Width="100" MinWidth="110" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="UNITÉ" Binding="{Binding Product.Unit}" Width="80" MinWidth="90" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="ÉTAT" Width="80" MinWidth="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding StatusIcon}" 
+                                                   Foreground="{Binding StatusColor}" 
+                                                   FontSize="20" 
+                                                   VerticalAlignment="Center" 
+                                                   ToolTip="{Binding StatusColor}"
+                                                   Padding="12,8"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
 
         <!-- Footer Info -->
         <StatusBar Grid.Row="3" Background="Transparent" Margin="0,10,0,0">
