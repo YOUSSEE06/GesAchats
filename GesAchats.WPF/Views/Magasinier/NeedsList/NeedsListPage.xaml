@@ -6,6 +6,95 @@
       mc:Ignorable="d"
       Title="Créer une Liste de Besoins">
 
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Shared/Colors.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Shared/CommonStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <Style x:Key="BtnResetStyle" TargetType="Button">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Background" Value="#6C5CE7"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="13.5"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderThickness="0" 
+                                    CornerRadius="19" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#5A4BD1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#4A3BBF"/>
+                                    <Setter TargetName="Bd" 
+                                            Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <Style x:Key="FilterInputStyle" TargetType="TextBox">
+                <Setter Property="BorderBrush" Value="#D0CDE8"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="border" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    Background="{TemplateBinding Background}" 
+                                    CornerRadius="8" 
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Focusable="False" 
+                                              HorizontalScrollBarVisibility="Hidden" 
+                                              VerticalScrollBarVisibility="Hidden"
+                                              VerticalAlignment="Center"
+                                              Margin="12,0"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" TargetName="border" Value="#A9A3D7"/>
+                                </Trigger>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter Property="BorderBrush" TargetName="border" Value="#6C5CE7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
+
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -18,11 +107,18 @@
                 <TextBlock Text="SÉLECTION DES ARTICLES" DockPanel.Dock="Top" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
                 
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                             Padding="8" Tag="🔍 Recherche article..."/>
+                             Style="{StaticResource FilterInputStyle}"
+                             VerticalContentAlignment="Center"/>
                     <Button Content="➕ Ajouter un produit" Command="{Binding AddProductCommand}" 
-                            HorizontalAlignment="Right" Padding="10,5" Margin="0,0,5,0"
-                            Background="{StaticResource NewProductBrush}" Foreground="White" BorderThickness="0"/>
+                            Grid.Column="1"
+                            Style="{StaticResource BtnResetStyle}"
+                            Background="#22C55E"
+                            Margin="10,0,0,0"/>
                 </Grid>
 
                 <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserAddRows="False"
@@ -56,9 +152,12 @@
                 
                 <StackPanel DockPanel.Dock="Bottom">
                     <Button Content="✓ Transmettre au Resp. Achats" Command="{Binding TransmitCommand}" 
-                            Padding="15" Background="{StaticResource PrimaryBrush}" Foreground="White" FontWeight="Bold" Margin="0,0,0,10"/>
+                            Style="{StaticResource BtnResetStyle}"
+                            Margin="0,0,0,10"/>
                     <Button Content="Annuler" Command="{Binding CancelCommand}" 
-                            Padding="10" Background="Transparent" BorderThickness="1" BorderBrush="#DDD"/>
+                            Style="{StaticResource BtnResetStyle}"
+                            Background="#F5F5F5"
+                            Foreground="#333"/>
                 </StackPanel>
 
                 <ScrollViewer>
