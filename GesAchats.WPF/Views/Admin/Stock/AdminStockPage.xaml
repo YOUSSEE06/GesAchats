@@ -12,6 +12,128 @@
     <Page.Resources>
         <converters:StockStateToColorConverter x:Key="StockStateToColorConverter"/>
         <converters:StockStateToStringConverter x:Key="StockStateToStringConverter"/>
+
+        <Style x:Key="FilterInputStyle" TargetType="TextBox">
+            <Setter Property="BorderBrush" Value="#D0CDE8"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Focusable="False" 
+                                          HorizontalScrollBarVisibility="Hidden" 
+                                          VerticalScrollBarVisibility="Hidden"
+                                          VerticalAlignment="Center"
+                                          Margin="12,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#A9A3D7"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#6C5CE7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FilterComboStyle" TargetType="ComboBox">
+            <Setter Property="BorderBrush" Value="#D0CDE8"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Border x:Name="border" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" 
+                                              Grid.Column="2" 
+                                              Focusable="False" 
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                              ClickMode="Press">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ContentSite" 
+                                                  IsHitTestVisible="False" 
+                                                  Margin="12,0,30,0" 
+                                                  VerticalAlignment="Center" 
+                                                  Content="{TemplateBinding SelectionBoxItem}" 
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" 
+                                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"/>
+                                <TextBox x:Name="PART_EditableTextBox" 
+                                          Style="{x:Null}" 
+                                          BorderThickness="0" 
+                                          Background="Transparent" 
+                                          Padding="12,0" 
+                                          VerticalAlignment="Center" 
+                                          Focusable="True" 
+                                          IsReadOnly="{TemplateBinding IsReadOnly}" 
+                                          Visibility="Hidden"/>
+                                <Path x:Name="Arrow" 
+                                      Grid.Column="2" 
+                                      Data="M0,0 L4,4 L8,0 Z" 
+                                      Fill="#6C5CE7" 
+                                      HorizontalAlignment="Right" 
+                                      Margin="10,0" 
+                                      VerticalAlignment="Center"/>
+                                <Popup x:Name="Popup" 
+                                       AllowsTransparency="True" 
+                                       Placement="Bottom" 
+                                       StaysOpen="False" 
+                                       Focusable="False" 
+                                       IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                       PopupAnimation="Slide">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="White" 
+                                            BorderBrush="#D0CDE8" 
+                                            BorderThickness="1" 
+                                            CornerRadius="8" 
+                                            Padding="0">
+                                        <ScrollViewer Margin="0" 
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                                            KeyboardNavigation.DirectionalNavigation="Continue"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#A9A3D7"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#6C5CE7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Margin="20">
@@ -76,14 +198,26 @@
         <!-- Header Actions -->
         <DockPanel Grid.Row="1" Margin="0,0,0,20">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                         Width="250" Padding="8" Margin="0,0,10,0"
-                         Tag="🔍 Recherche article..."
-                         VerticalContentAlignment="Center"/>
-                
-                <ComboBox ItemsSource="{Binding StatusOptions}" 
-                          SelectedItem="{Binding SelectedStatus}"
-                          Width="150" Padding="8"/>
+                <StackPanel Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="🔍" FontSize="14" Foreground="#6C5CE7" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Recherche article" FontSize="12" Foreground="#888780" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource FilterInputStyle}"
+                             Width="250"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="🎛️" FontSize="14" Foreground="#6C5CE7" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Statut" FontSize="12" Foreground="#888780" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ComboBox ItemsSource="{Binding StatusOptions}" 
+                              SelectedItem="{Binding SelectedStatus}"
+                              Style="{StaticResource FilterComboStyle}"
+                              Width="150"/>
+                </StackPanel>
             </StackPanel>
         </DockPanel>
 
