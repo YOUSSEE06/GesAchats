@@ -80,7 +80,7 @@
                                            FontSize="15" 
                                            FontWeight="SemiBold" 
                                            TextAlignment="Center"/>
-                                <TextBlock Text="Manager" 
+                                <TextBlock Text="Acheteur" 
                                            Foreground="#B8A9D4" 
                                            FontSize="12" 
                                            TextAlignment="Center"
