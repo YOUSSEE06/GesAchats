@@ -475,9 +475,23 @@
                     <DataGridTemplateColumn Header="Statut" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border Background="{Binding StatusColor}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding StatusText}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
+                                <Border x:Name="StatusBorder" CornerRadius="12" Padding="10,4" HorizontalAlignment="Left">
+                                    <TextBlock x:Name="StatusText" Text="{Binding StatusText}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
                                 </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding StatusText}" Value="En cours">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#3B82F6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding StatusText}" Value="Transmis">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#10B981"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding StatusText}" Value="Validé">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#22C55E"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding StatusText}" Value="Annulé">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#EF4444"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
