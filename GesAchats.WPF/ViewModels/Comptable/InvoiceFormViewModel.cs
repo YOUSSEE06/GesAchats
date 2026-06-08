@@ -281,6 +281,14 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
             
             await _unitOfWork.CompleteAsync();
             
+            // Show custom success modal
+            var modal = new Views.Components.AlertModalWindow
+            {
+                Message = "Facture enregistrée avec succès !",
+                AlertType = Views.Components.AlertType.Success
+            };
+            modal.ShowDialog();
+            
             _navigationService.NavigateTo("Factures");
         }
         catch (Exception ex)

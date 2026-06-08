@@ -64,9 +64,10 @@ public class NeedsDetailsViewModel : BaseViewModel
             await _unitOfWork.CompleteAsync();
             
             // Show custom success modal
-            var modal = new Views.Components.SuccessModalWindow
+            var modal = new Views.Components.AlertModalWindow
             {
-                Message = "Besoin supprimé définitivement."
+                Message = "Besoin supprimé définitivement.",
+                AlertType = Views.Components.AlertType.Success
             };
             modal.ShowDialog();
             
@@ -96,9 +97,10 @@ public class NeedsDetailsViewModel : BaseViewModel
             _unitOfWork.PurchaseOrders.Update(order);
             await _unitOfWork.CompleteAsync();
             // Show custom success modal
-            var modal = new Views.Components.SuccessModalWindow
+            var modal = new Views.Components.AlertModalWindow
             {
-                Message = $"Commande {order.OrderNumber} annulée."
+                Message = $"Commande {order.OrderNumber} annulée.",
+                AlertType = Views.Components.AlertType.Success
             };
             modal.ShowDialog();
             

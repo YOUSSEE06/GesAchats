@@ -442,7 +442,12 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         if (dn == null || string.IsNullOrWhiteSpace(dn.FilePath))
         {
-            System.Windows.MessageBox.Show("Aucun fichier n'est associé à ce Bon de Livraison.", "Fichier manquant", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            var modal = new Views.Components.AlertModalWindow
+            {
+                Message = "Aucun fichier n'est associé à ce Bon de Livraison.",
+                AlertType = Views.Components.AlertType.Warning
+            };
+            modal.ShowDialog();
             return;
         }
 
@@ -450,7 +455,12 @@ public class DeliveryNotesViewModel : BaseViewModel
         {
             if (!System.IO.File.Exists(dn.FilePath))
             {
-                System.Windows.MessageBox.Show($"Le fichier original est introuvable à l'emplacement suivant :\n{dn.FilePath}", "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                var modal = new Views.Components.AlertModalWindow
+                {
+                    Message = $"Le fichier original est introuvable à l'emplacement suivant :\n{dn.FilePath}",
+                    AlertType = Views.Components.AlertType.Error
+                };
+                modal.ShowDialog();
                 return;
             }
 
@@ -464,7 +474,12 @@ public class DeliveryNotesViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Impossible d'ouvrir le fichier : {ex.Message}", "Erreur système", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            var modal = new Views.Components.AlertModalWindow
+            {
+                Message = $"Impossible d'ouvrir le fichier : {ex.Message}",
+                AlertType = Views.Components.AlertType.Error
+            };
+            modal.ShowDialog();
         }
     }
 
@@ -528,9 +543,10 @@ public class DeliveryNotesViewModel : BaseViewModel
                     dnToUpdate.UpdatedAt = DateTime.UtcNow;
                     await _unitOfWork.CompleteAsync();
                     // Show custom success modal
-                    var modal = new Views.Components.SuccessModalWindow
+                    var modal = new Views.Components.AlertModalWindow
                     {
-                        Message = "Modifications enregistrées avec succès !"
+                        Message = "Modifications enregistrées avec succès !",
+                        AlertType = Views.Components.AlertType.Success
                     };
                     modal.ShowDialog();
                     await ExecuteBackToList();

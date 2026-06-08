@@ -239,9 +239,10 @@ public class StockExitViewModel : BaseViewModel, INavigatable
             if (success)
             {
                 // Show custom success modal
-                var modal = new Views.Components.SuccessModalWindow
+                var modal = new Views.Components.AlertModalWindow
                 {
-                    Message = "Sortie de stock enregistrée avec succès."
+                    Message = "Sortie de stock enregistrée avec succès.",
+                    AlertType = Views.Components.AlertType.Success
                 };
                 modal.ShowDialog();
                 
@@ -292,9 +293,10 @@ public class StockExitViewModel : BaseViewModel, INavigatable
 
             await LoadDataAsync();
             // Show custom success modal
-            var modal = new Views.Components.SuccessModalWindow
+            var modal = new Views.Components.AlertModalWindow
             {
-                Message = "Sortie annulée avec succès."
+                Message = "Sortie annulée avec succès.",
+                AlertType = Views.Components.AlertType.Success
             };
             modal.ShowDialog();
         }

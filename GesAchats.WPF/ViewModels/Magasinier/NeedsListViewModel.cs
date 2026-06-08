@@ -140,9 +140,10 @@ public class NeedsListViewModel : BaseViewModel
             await _unitOfWork.CompleteAsync();
             
             // Show custom success modal
-            var modal = new Views.Components.SuccessModalWindow
+            var modal = new Views.Components.AlertModalWindow
             {
-                Message = $"La liste de besoins {need.NumeroBesoin} contenant {selectedItems.Count} article(s) a été transmise avec succès."
+                Message = $"La liste de besoins {need.NumeroBesoin} contenant {selectedItems.Count} article(s) a été transmise avec succès.",
+                AlertType = Views.Components.AlertType.Success
             };
             modal.ShowDialog();
             

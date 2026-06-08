@@ -186,6 +186,14 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
             }
 
             await _unitOfWork.CompleteAsync();
+            
+            // Show custom success modal
+            var modal = new Views.Components.AlertModalWindow
+            {
+                Message = "Règlement enregistré avec succès !",
+                AlertType = Views.Components.AlertType.Success
+            };
+            modal.ShowDialog();
 
             // Générer le reçu PDF
             var receiptPath = await _pdfGeneratorService.GeneratePaymentReceiptPdfAsync(Payment);

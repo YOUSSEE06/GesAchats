@@ -782,9 +782,10 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             await _unitOfWork.CompleteAsync();
 
             // Show custom success modal
-            var modal = new Views.Components.SuccessModalWindow
+            var modal = new Views.Components.AlertModalWindow
             {
-                Message = $"Le Bon de Commande {order.OrderNumber} a été généré avec succès."
+                Message = $"Le Bon de Commande {order.OrderNumber} a été généré avec succès.",
+                AlertType = Views.Components.AlertType.Success
             };
             modal.ShowDialog();
 

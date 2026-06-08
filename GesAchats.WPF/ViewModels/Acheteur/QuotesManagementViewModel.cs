@@ -934,17 +934,19 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             // Show success modal
             if (!IsEditMode)
             {
-                var modal = new Views.Components.SuccessModalWindow
+                var modal = new Views.Components.AlertModalWindow
                 {
-                    Message = $"{selectedSuppliers.Count} demande{(selectedSuppliers.Count > 1 ? "s" : "")} de devis a{(selectedSuppliers.Count > 1 ? "ont" : "")} été générée{(selectedSuppliers.Count > 1 ? "s" : "")} avec succès."
+                    Message = $"{selectedSuppliers.Count} demande{(selectedSuppliers.Count > 1 ? "s" : "")} de devis a{(selectedSuppliers.Count > 1 ? "ont" : "")} été générée{(selectedSuppliers.Count > 1 ? "s" : "")} avec succès.",
+                    AlertType = Views.Components.AlertType.Success
                 };
                 modal.ShowDialog();
             }
             else
             {
-                var modal = new Views.Components.SuccessModalWindow
+                var modal = new Views.Components.AlertModalWindow
                 {
-                    Message = "Le devis a été mis à jour."
+                    Message = "Le devis a été mis à jour.",
+                    AlertType = Views.Components.AlertType.Success
                 };
                 modal.ShowDialog();
             }
