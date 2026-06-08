@@ -11,6 +11,58 @@
         WindowStyle="None"
         Background="Transparent">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Shared/CommonStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <Style x:Key="BtnResetStyle" TargetType="Button">
+                <Setter Property="Height" Value="45"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Background" Value="#6C5CE7"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="13.5"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderThickness="0" 
+                                    CornerRadius="19" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#5A4BD1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" 
+                                            Property="Background" 
+                                            Value="#4A3BBF"/>
+                                    <Setter TargetName="Bd" 
+                                            Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Border Background="White" CornerRadius="20" Margin="15" Effect="{StaticResource CardShadow}">
         <Grid>
             <Grid.RowDefinitions>
@@ -82,28 +134,27 @@
             </ScrollViewer>
 
             <!-- Footer -->
-            <Border Grid.Row="2" Background="#F8FAFC" Padding="25,20" CornerRadius="0,0,20,20" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <Button Content="Annuler" Click="Cancel_Click" 
-                            Foreground="#757575" Background="Transparent" BorderThickness="0" 
-                            FontWeight="SemiBold" Cursor="Hand" VerticalAlignment="Center"/>
-                    
-                    <Button Grid.Column="1" Content="Valider la Sortie" 
-                            Command="{Binding SaveExitCommand}"
-                            Style="{StaticResource ModernPrimaryButton}"
-                            Background="#22C55E"
-                            Height="45" Width="180">
-                        <Button.Effect>
-                            <DropShadowEffect Color="#22C55E" Opacity="0.3" BlurRadius="15" ShadowDepth="2"/>
-                        </Button.Effect>
-                    </Button>
-                </Grid>
-            </Border>
+        <Border Grid.Row="2" Background="#F8FAFC" Padding="25,20" CornerRadius="0,0,20,20" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <Button Content="Annuler" Click="Cancel_Click" 
+                        Style="{StaticResource BtnResetStyle}"
+                        Background="#F5F5F5"
+                        Foreground="#333"
+                        VerticalAlignment="Center"/>
+                
+                <Button Grid.Column="1" Content="Valider la Sortie" 
+                        Command="{Binding SaveExitCommand}"
+                        Style="{StaticResource BtnResetStyle}"
+                        Background="#22C55E"
+                        Margin="10,0,0,0">
+                </Button>
+            </Grid>
+        </Border>
         </Grid>
     </Border>
 </Window>
