@@ -145,6 +145,84 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#E8E0F8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#F0EBFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="MinHeight" Value="44"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FAF8FF"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#F0EBFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#444444"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" 
+                                Padding="10,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#444444"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BlueCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" 
+                                Padding="10,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Background="#F5F6F7" Margin="20">
@@ -226,24 +304,25 @@
         </Border>
 
         <!-- Historique Table -->
-        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1">
+        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#E8E0F8" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Background="#F8FAFC" Padding="15,10" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                <Border Background="#F8FAFC" Padding="15,10" BorderBrush="#E8E0F8" BorderThickness="0,0,0,1">
                     <TextBlock Text="HISTORIQUE DES SORTIES DE STOCK" FontWeight="SemiBold" Foreground="#1A3A52"/>
                 </Border>
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding StockExits}" 
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                          Background="Transparent" BorderThickness="0"
-                          RowHeight="40" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0"
+                          Background="White" BorderThickness="1"
+                          RowHeight="44" GridLinesVisibility="None"
+                          AlternatingRowBackground="#FDFCFF"
                           HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Date" Binding="{Binding ExitDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding ExitDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140" CellStyle="{StaticResource BlueCellStyle}"/>
                         <DataGridTextColumn Header="Article" Binding="{Binding Product.Designation}" Width="*"/>
                         <DataGridTemplateColumn Header="Quantité" Width="100">
                             <DataGridTemplateColumn.CellTemplate>

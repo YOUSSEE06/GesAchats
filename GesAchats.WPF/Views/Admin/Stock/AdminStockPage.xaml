@@ -134,6 +134,84 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#E8E0F8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#F0EBFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="MinHeight" Value="44"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FAF8FF"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#F0EBFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#444444"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" 
+                                Padding="10,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#444444"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BlueCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" 
+                                Padding="10,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Margin="20">
@@ -224,15 +302,16 @@
         <!-- Stock Table -->
         <DataGrid Grid.Row="2" ItemsSource="{Binding FilteredProducts}" 
                   AutoGenerateColumns="False" CanUserAddRows="False"
-                  Background="White" BorderThickness="1" BorderBrush="#E0E0E0"
-                  RowHeight="40" SelectionMode="Single" GridLinesVisibility="None"
-                  HeadersVisibility="Column">
+                  Background="White" BorderThickness="1" BorderBrush="#E8E0F8"
+                  RowHeight="44" SelectionMode="Single" GridLinesVisibility="None"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="N°" Binding="{Binding Id}" Width="50" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Stock Actuel" Binding="{Binding CurrentStock}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Seuil Min" Binding="{Binding MinimumStock}" Width="100" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Unité" Binding="{Binding Unit}" Width="80" IsReadOnly="True"/>
+                <DataGridTextColumn Header="N°" Binding="{Binding Id}" Width="50" CellStyle="{StaticResource BlueCellStyle}"/>
+                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*"/>
+                <DataGridTextColumn Header="Stock Actuel" Binding="{Binding CurrentStock}" Width="100"/>
+                <DataGridTextColumn Header="Seuil Min" Binding="{Binding MinimumStock}" Width="100"/>
+                <DataGridTextColumn Header="Unité" Binding="{Binding Unit}" Width="80"/>
                 <DataGridTemplateColumn Header="État" Width="120">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
