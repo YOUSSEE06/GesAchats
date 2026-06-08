@@ -385,7 +385,12 @@ public class NeedsHistoryViewModel : BaseViewModel
                 }
 
                 await File.WriteAllTextAsync(sfd.FileName, sb.ToString(), Encoding.UTF8);
-                MessageBox.Show("Exportation CSV réussie.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Show custom success modal
+                var modal = new Views.Components.SuccessModalWindow
+                {
+                    Message = "Exportation CSV réussie."
+                };
+                modal.ShowDialog();
             }
             catch (Exception ex)
             {

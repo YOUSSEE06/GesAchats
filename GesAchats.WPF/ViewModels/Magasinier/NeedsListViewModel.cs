@@ -139,7 +139,12 @@ public class NeedsListViewModel : BaseViewModel
             await _unitOfWork.Needs.AddAsync(need);
             await _unitOfWork.CompleteAsync();
             
-            System.Windows.MessageBox.Show($"La liste de besoins {need.NumeroBesoin} contenant {selectedItems.Count} article(s) a été transmise avec succès.", "Transmission réussie", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            // Show custom success modal
+            var modal = new Views.Components.SuccessModalWindow
+            {
+                Message = $"La liste de besoins {need.NumeroBesoin} contenant {selectedItems.Count} article(s) a été transmise avec succès."
+            };
+            modal.ShowDialog();
             
             // Réinitialisation de l'interface
             ExecuteCancel();

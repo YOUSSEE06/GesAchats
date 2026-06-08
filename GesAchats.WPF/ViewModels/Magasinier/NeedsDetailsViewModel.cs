@@ -63,7 +63,12 @@ public class NeedsDetailsViewModel : BaseViewModel
             _unitOfWork.Needs.Remove(Need);
             await _unitOfWork.CompleteAsync();
             
-            MessageBox.Show("Besoin supprimé définitivement.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Show custom success modal
+            var modal = new Views.Components.SuccessModalWindow
+            {
+                Message = "Besoin supprimé définitivement."
+            };
+            modal.ShowDialog();
             
             // Fermer la fenêtre pour revenir à l'historique
             RequestClose?.Invoke(this, EventArgs.Empty);
@@ -90,7 +95,12 @@ public class NeedsDetailsViewModel : BaseViewModel
             order.UpdatedAt = DateTime.UtcNow;
             _unitOfWork.PurchaseOrders.Update(order);
             await _unitOfWork.CompleteAsync();
-            MessageBox.Show($"Commande {order.OrderNumber} annulée.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Show custom success modal
+            var modal = new Views.Components.SuccessModalWindow
+            {
+                Message = $"Commande {order.OrderNumber} annulée."
+            };
+            modal.ShowDialog();
             
             // Recharger les données pour mettre à jour l'UI
             await LoadData();

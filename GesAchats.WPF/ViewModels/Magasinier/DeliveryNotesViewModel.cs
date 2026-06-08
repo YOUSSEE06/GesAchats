@@ -527,7 +527,12 @@ public class DeliveryNotesViewModel : BaseViewModel
                     dnToUpdate.Observations = Observations;
                     dnToUpdate.UpdatedAt = DateTime.UtcNow;
                     await _unitOfWork.CompleteAsync();
-                    System.Windows.MessageBox.Show("Modifications enregistrées avec succès !", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    // Show custom success modal
+                    var modal = new Views.Components.SuccessModalWindow
+                    {
+                        Message = "Modifications enregistrées avec succès !"
+                    };
+                    modal.ShowDialog();
                     await ExecuteBackToList();
                 }
                 return;

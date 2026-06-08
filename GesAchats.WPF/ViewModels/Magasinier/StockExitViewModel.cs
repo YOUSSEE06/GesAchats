@@ -238,7 +238,12 @@ public class StockExitViewModel : BaseViewModel, INavigatable
             bool success = await _stockService.RecordStockExitAsync(exit);
             if (success)
             {
-                MessageBox.Show("Sortie de stock enregistrée avec succès.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Show custom success modal
+                var modal = new Views.Components.SuccessModalWindow
+                {
+                    Message = "Sortie de stock enregistrée avec succès."
+                };
+                modal.ShowDialog();
                 
                 // Find and close the dialog
                 foreach (Window window in Application.Current.Windows)
@@ -286,7 +291,12 @@ public class StockExitViewModel : BaseViewModel, INavigatable
             await _unitOfWork.CompleteAsync();
 
             await LoadDataAsync();
-            MessageBox.Show("Sortie annulée avec succès.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Show custom success modal
+            var modal = new Views.Components.SuccessModalWindow
+            {
+                Message = "Sortie annulée avec succès."
+            };
+            modal.ShowDialog();
         }
         catch (Exception ex)
         {
