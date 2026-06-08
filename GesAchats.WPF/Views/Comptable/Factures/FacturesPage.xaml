@@ -339,7 +339,7 @@
                            Value="{Binding PartialInvoicesCount}" 
                            TrendText="{Binding PartialInvoicesCountTrendText}"
                            Icon="HourglassHalf" 
-                           IconColor="#FF9800" 
+                           IconColor="#8B5CF6" 
                            Margin="0,0,10,0"/>
 
             <!-- Factures En Attente -->
@@ -616,7 +616,7 @@
                                                         <Setter Property="Background" Value="#D1FAE5"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding StatusCalculated}" Value="Partiellement payée">
-                                                        <Setter Property="Background" Value="#FFF3E0"/>
+                                                        <Setter Property="Background" Value="#E9D5FF"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -632,7 +632,7 @@
                                                             <Setter Property="Foreground" Value="#059669"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding StatusCalculated}" Value="Partiellement payée">
-                                                            <Setter Property="Foreground" Value="#F57C00"/>
+                                                            <Setter Property="Foreground" Value="#7E22CE"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>

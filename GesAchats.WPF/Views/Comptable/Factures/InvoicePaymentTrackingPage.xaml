@@ -312,11 +312,11 @@
                     <DataTrigger Binding="{Binding StatusCalculated}"
                                  Value="Partiellement payée">
                         <Setter TargetName="BadgeBorder"
-                                Property="Background" Value="#D1FAE5"/>
+                                Property="Background" Value="#E9D5FF"/>
                         <Setter TargetName="BadgeText"
-                                Property="Foreground" Value="#065F46"/>
+                                Property="Foreground" Value="#7E22CE"/>
                         <Setter TargetName="Dot"
-                                Property="Fill" Value="#10B981"/>
+                                Property="Fill" Value="#A855F7"/>
                     </DataTrigger>
                     <DataTrigger Binding="{Binding StatusCalculated}" Value="Payée">
                         <Setter TargetName="BadgeBorder"
@@ -426,7 +426,7 @@
                            Value="{Binding PartialInvoicesCount}" 
                            TrendText="{Binding PartialInvoicesCountTrendText}"
                            Icon="HourglassHalf" 
-                           IconColor="#D97706" 
+                           IconColor="#8B5CF6" 
                            Margin="0,0,10,0"/>
 
             <!-- 6. Fournisseurs Facturés -->

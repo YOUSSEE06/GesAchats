@@ -19,9 +19,9 @@ namespace GesAchats.WPF.Converters
             if (statusStr == "effectuée" || statusStr == "effectué" || statusStr == "payée" || statusStr == "payé")
                 return new SolidColorBrush(Color.FromRgb(134, 239, 172)); // #86EFAC
 
-            // Orange - Partiellement payée
+            // Purple - Partiellement payée
             if (statusStr == "partiellement payée" || statusStr == "partiellement payé")
-                return new SolidColorBrush(Color.FromRgb(254, 215, 170)); // #FED7AA
+                return new SolidColorBrush(Color.FromRgb(216, 180, 254)); // #D8B4FE
 
             // Gray - Brouillon
             if (statusStr == "brouillon")
@@ -74,9 +74,9 @@ namespace GesAchats.WPF.Converters
             if (statusStr == "effectuée" || statusStr == "effectué" || statusStr == "payée" || statusStr == "payé")
                 return new SolidColorBrush(Color.FromRgb(6, 78, 59)); // #064F3B
 
-            // Orange - Partiellement payée
+            // Purple - Partiellement payée
             if (statusStr == "partiellement payée" || statusStr == "partiellement payé")
-                return new SolidColorBrush(Color.FromRgb(124, 45, 18)); // #7C2D12
+                return new SolidColorBrush(Color.FromRgb(88, 28, 135)); // #581C87
 
             // Gray - Brouillon
             if (statusStr == "brouillon")

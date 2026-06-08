@@ -513,10 +513,10 @@
                                                                         <Setter Property="Background" Value="#F59E0B"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="PartiellementPayee">
-                                                                        <Setter Property="Background" Value="#F97316"/>
+                                                                        <Setter Property="Background" Value="#8B5CF6"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Partiellement payée">
-                                                                        <Setter Property="Background" Value="#F97316"/>
+                                                                        <Setter Property="Background" Value="#8B5CF6"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Rejetée">
                                                                         <Setter Property="Background" Value="#EF4444"/>
