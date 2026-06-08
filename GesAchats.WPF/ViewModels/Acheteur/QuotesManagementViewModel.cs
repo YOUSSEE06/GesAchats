@@ -930,11 +930,49 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             }
 
             await _unitOfWork.CompleteAsync();
-            
-            System.Windows.MessageBox.Show(IsEditMode ? "Le devis a été mis à jour." : $"{selectedSuppliers.Count} demandes de devis ont été générées.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-            
-            CloseCreateDialog();
-            await LoadInitialData();
+
+            // Show success modal
+            if (!IsEditMode)
+            {
+                var modal = new Views.Components.SuccessModalWindow
+                {
+                    Count = selectedSuppliers.Count,
+                    Owner = System.Windows.Application.Current.MainWindow
+                };
+
+                bool shouldLoadInitialData = true;
+                bool shouldCloseCreateDialog = true;
+
+                modal.ViewListRequested += async (s, e) =>
+                {
+                    shouldCloseCreateDialog = true;
+                    shouldLoadInitialData = true;
+                };
+
+                modal.CreateNewRequested += (sender, args) =>
+                {
+                    shouldCloseCreateDialog = false;
+                    shouldLoadInitialData = true;
+                    ResetForm();
+                };
+
+                modal.ShowDialog();
+
+                if (shouldCloseCreateDialog)
+                {
+                    CloseCreateDialog();
+                }
+                if (shouldLoadInitialData)
+                {
+                    await LoadInitialData();
+                }
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Le devis a été mis à jour.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                CloseCreateDialog();
+                await LoadInitialData();
+            }
         }
         catch (Exception ex)
         {
