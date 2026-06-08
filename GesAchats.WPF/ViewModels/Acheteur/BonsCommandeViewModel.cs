@@ -807,13 +807,15 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         if (order == null || order.Status != PurchaseOrderStatus.Pending) return;
 
         // Show confirmation dialog
-        var result = System.Windows.MessageBox.Show(
-            $"Êtes-vous sûr de vouloir annuler le Bon de Commande {order.OrderNumber} ?", 
-            "Confirmation d'annulation", 
-            System.Windows.MessageBoxButton.YesNo, 
-            System.Windows.MessageBoxImage.Question);
+        var confirmModal = new Views.Components.AlertModalWindow
+        {
+            Message = $"Êtes-vous sûr de vouloir annuler le Bon de Commande {order.OrderNumber} ?",
+            AlertType = Views.Components.AlertType.Confirmation,
+            ButtonType = Views.Components.AlertButtonType.YesNo
+        };
+        confirmModal.ShowDialog();
             
-        if (result != System.Windows.MessageBoxResult.Yes) return;
+        if (confirmModal.Result != System.Windows.MessageBoxResult.Yes) return;
 
         IsBusy = true;
         try

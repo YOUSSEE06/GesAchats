@@ -24,8 +24,8 @@
 
     <Grid>
         <!-- Modal Card -->
-        <Border Width="380"
-                Height="200"
+        <Border Width="400"
+                Height="220"
                 Background="White"
                 CornerRadius="10"
                 Padding="28"
@@ -83,6 +83,21 @@
                                    VerticalAlignment="Center"
                                    FontWeight="SemiBold"/>
                     </Border>
+
+                    <!-- Confirmation Icon -->
+                    <Border x:Name="ConfirmIconBorder"
+                            Width="48"
+                            Height="48"
+                            Background="#E3F2FD"
+                            CornerRadius="14"
+                            Visibility="Collapsed">
+                        <TextBlock Text="?"
+                                   FontSize="26"
+                                   Foreground="#2196F3"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"/>
+                    </Border>
                 </StackPanel>
 
                 <!-- Message -->
@@ -94,64 +109,86 @@
                            TextWrapping="Wrap"
                            TextAlignment="Center"/>
 
-                <!-- OK Button -->
-                <Button Grid.Row="2"
-                        Content="OK"
-                        Padding="32,10"
-                        Margin="0,20,0,0"
-                        HorizontalAlignment="Center"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        FontSize="14"
-                        BorderThickness="0"
-                        Click="CloseButton_Click">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    CornerRadius="8"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding AlertType, RelativeSource={RelativeSource AncestorType=Window}}" Value="Success">
-                                    <Setter Property="Background">
-                                        <Setter.Value>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#6366F1" Offset="0"/>
-                                                <GradientStop Color="#4F46E5" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding AlertType, RelativeSource={RelativeSource AncestorType=Window}}" Value="Warning">
-                                    <Setter Property="Background">
-                                        <Setter.Value>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#FF9800" Offset="0"/>
-                                                <GradientStop Color="#F57C00" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding AlertType, RelativeSource={RelativeSource AncestorType=Window}}" Value="Error">
-                                    <Setter Property="Background">
-                                        <Setter.Value>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#F44336" Offset="0"/>
-                                                <GradientStop Color="#D32F2F" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                <!-- Buttons Panel -->
+                <StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,20,0,0">
+                    <!-- OK Button -->
+                    <Button x:Name="OkButton"
+                            Content="OK"
+                            Padding="32,10"
+                            HorizontalAlignment="Center"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            BorderThickness="0"
+                            Click="OkButton_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- Yes Button -->
+                    <Button x:Name="YesButton"
+                            Content="Oui"
+                            Padding="32,10"
+                            Margin="0,0,8,0"
+                            HorizontalAlignment="Center"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            BorderThickness="0"
+                            Visibility="Collapsed"
+                            Click="YesButton_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- No Button -->
+                    <Button x:Name="NoButton"
+                            Content="Non"
+                            Padding="32,10"
+                            HorizontalAlignment="Center"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            BorderThickness="0"
+                            Visibility="Collapsed"
+                            Click="NoButton_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        CornerRadius="8"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#9CA3AF" Offset="0"/>
+                                <GradientStop Color="#6B7280" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Button.Background>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

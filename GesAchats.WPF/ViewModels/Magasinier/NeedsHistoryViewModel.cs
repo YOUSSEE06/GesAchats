@@ -291,13 +291,15 @@ public class NeedsHistoryViewModel : BaseViewModel
     {
         if (item == null) return;
         
-        var result = MessageBox.Show(
-            $"Êtes-vous sûr de vouloir supprimer le besoin {item.Need.NumeroBesoin} ? Cette action est irréversible.",
-            "Confirmer la suppression",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
+        var confirmModal = new Views.Components.AlertModalWindow
+        {
+            Message = $"Êtes-vous sûr de vouloir supprimer le besoin {item.Need.NumeroBesoin} ? Cette action est irréversible.",
+            AlertType = Views.Components.AlertType.Warning,
+            ButtonType = Views.Components.AlertButtonType.YesNo
+        };
+        confirmModal.ShowDialog();
             
-        if (result == MessageBoxResult.Yes)
+        if (confirmModal.Result == MessageBoxResult.Yes)
         {
             try
             {

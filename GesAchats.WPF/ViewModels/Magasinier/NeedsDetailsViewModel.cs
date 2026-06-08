@@ -46,8 +46,14 @@ public class NeedsDetailsViewModel : BaseViewModel
     private async Task ExecuteDeleteNeed()
     {
         if (Need == null) return;
-        var result = MessageBox.Show("Voulez-vous vraiment SUPPRIMER définitivement ce besoin ? Cette action est irréversible et il ne paraîtra plus dans l'historique.", "Confirmation de Suppression", MessageBoxButton.YesNo, MessageBoxImage.Stop);
-        if (result != MessageBoxResult.Yes) return;
+        var confirmModal = new Views.Components.AlertModalWindow
+        {
+            Message = "Voulez-vous vraiment SUPPRIMER définitivement ce besoin ? Cette action est irréversible et il ne paraîtra plus dans l'historique.",
+            AlertType = Views.Components.AlertType.Warning,
+            ButtonType = Views.Components.AlertButtonType.YesNo
+        };
+        confirmModal.ShowDialog();
+        if (confirmModal.Result != MessageBoxResult.Yes) return;
 
         IsBusy = true;
         try
@@ -86,8 +92,14 @@ public class NeedsDetailsViewModel : BaseViewModel
         if (order == null) return;
         if (order.Status == "Cancelled") return;
 
-        var result = MessageBox.Show($"Voulez-vous vraiment annuler la commande {order.OrderNumber} ?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result != MessageBoxResult.Yes) return;
+        var confirmModal = new Views.Components.AlertModalWindow
+        {
+            Message = $"Voulez-vous vraiment annuler la commande {order.OrderNumber} ?",
+            AlertType = Views.Components.AlertType.Confirmation,
+            ButtonType = Views.Components.AlertButtonType.YesNo
+        };
+        confirmModal.ShowDialog();
+        if (confirmModal.Result != MessageBoxResult.Yes) return;
 
         IsBusy = true;
         try

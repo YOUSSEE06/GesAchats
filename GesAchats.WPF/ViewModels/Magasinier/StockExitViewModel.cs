@@ -278,8 +278,14 @@ public class StockExitViewModel : BaseViewModel, INavigatable
     {
         if (exit == null) return;
 
-        var result = MessageBox.Show("Voulez-vous vraiment annuler cette sortie de stock ? Le stock sera réincrémenté.", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (result != MessageBoxResult.Yes) return;
+        var confirmModal = new Views.Components.AlertModalWindow
+        {
+            Message = "Voulez-vous vraiment annuler cette sortie de stock ? Le stock sera réincrémenté.",
+            AlertType = Views.Components.AlertType.Confirmation,
+            ButtonType = Views.Components.AlertButtonType.YesNo
+        };
+        confirmModal.ShowDialog();
+        if (confirmModal.Result != MessageBoxResult.Yes) return;
 
         IsBusy = true;
         try
