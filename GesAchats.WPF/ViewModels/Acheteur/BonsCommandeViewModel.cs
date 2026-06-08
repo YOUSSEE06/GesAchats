@@ -781,7 +781,12 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
 
             await _unitOfWork.CompleteAsync();
 
-            System.Windows.MessageBox.Show($"Le Bon de Commande {order.OrderNumber} a été généré avec succès.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            // Show custom success modal
+            var modal = new Views.Components.SuccessModalWindow
+            {
+                Message = $"Le Bon de Commande {order.OrderNumber} a été généré avec succès."
+            };
+            modal.ShowDialog();
 
             ExecuteBackToHistory();
             await LoadInitialData();

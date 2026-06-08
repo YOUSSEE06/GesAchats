@@ -936,43 +936,21 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             {
                 var modal = new Views.Components.SuccessModalWindow
                 {
-                    Count = selectedSuppliers.Count,
-                    Owner = System.Windows.Application.Current.MainWindow
+                    Message = $"{selectedSuppliers.Count} demande{(selectedSuppliers.Count > 1 ? "s" : "")} de devis a{(selectedSuppliers.Count > 1 ? "ont" : "")} été générée{(selectedSuppliers.Count > 1 ? "s" : "")} avec succès."
                 };
-
-                bool shouldLoadInitialData = true;
-                bool shouldCloseCreateDialog = true;
-
-                modal.ViewListRequested += async (s, e) =>
-                {
-                    shouldCloseCreateDialog = true;
-                    shouldLoadInitialData = true;
-                };
-
-                modal.CreateNewRequested += (sender, args) =>
-                {
-                    shouldCloseCreateDialog = false;
-                    shouldLoadInitialData = true;
-                    ResetForm();
-                };
-
                 modal.ShowDialog();
-
-                if (shouldCloseCreateDialog)
-                {
-                    CloseCreateDialog();
-                }
-                if (shouldLoadInitialData)
-                {
-                    await LoadInitialData();
-                }
             }
             else
             {
-                System.Windows.MessageBox.Show("Le devis a été mis à jour.", "Succès", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                CloseCreateDialog();
-                await LoadInitialData();
+                var modal = new Views.Components.SuccessModalWindow
+                {
+                    Message = "Le devis a été mis à jour."
+                };
+                modal.ShowDialog();
             }
+            
+            CloseCreateDialog();
+            await LoadInitialData();
         }
         catch (Exception ex)
         {
