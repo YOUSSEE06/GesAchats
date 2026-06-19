@@ -318,15 +318,16 @@ public partial class App : Application
         services.AddTransient<INeedsService, NeedsService>();
         services.AddTransient<ISupplierService, SupplierService>();
         services.AddTransient<IInvoiceService, InvoiceService>();
+        services.AddTransient<ISuiviFournisseurService, SuiviFournisseurService>();
         
         // Employee management services
         services.AddTransient<IEmployeeService, EmployeeService>();
         
         // Serilog - simple logger for now
-        services.AddSingleton<Serilog.ILogger>(sp => 
-            new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .CreateLogger());
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .CreateLogger();
+        services.AddSingleton<Serilog.ILogger>(Log.Logger);
 
         // ViewModels - Focus Magasinier
         services.AddTransient<LoginViewModel>();
@@ -370,6 +371,8 @@ public partial class App : Application
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminOrdersViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.AdminHistoriqueSortiesViewModel>();
         services.AddTransient<GesAchats.WPF.ViewModels.Admin.EmployeeManagementViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.SuiviFournisseursViewModel>();
+        services.AddTransient<GesAchats.WPF.ViewModels.Admin.SituationFournisseurViewModel>();
 
         // ViewModels - Focus Comptable
         services.AddTransient<ComptableShellViewModel>();
@@ -423,6 +426,8 @@ public partial class App : Application
          services.AddTransient<GesAchats.WPF.Views.Admin.NeedsHistory.AdminNeedsHistoryPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.DeliveryNotes.AdminDeliveryNotesPage>();
          services.AddTransient<GesAchats.WPF.Views.Admin.StockExits.AdminHistoriqueSortiesPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.SuiviFournisseurs.SuiviFournisseursPage>();
+         services.AddTransient<GesAchats.WPF.Views.Admin.SuiviFournisseurs.SituationFournisseurPage>();
 
          // Views - Focus Comptable
          services.AddTransient<GesAchats.WPF.Views.Comptable.ComptableShell>();

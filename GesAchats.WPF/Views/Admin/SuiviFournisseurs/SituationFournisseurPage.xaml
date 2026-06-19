@@ -1,0 +1,372 @@
+<Page x:Class="GesAchats.WPF.Views.Admin.SuiviFournisseurs.SituationFournisseurPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
+      xmlns:fa="clr-namespace:FontAwesome.Sharp;assembly=FontAwesome.Sharp"
+      mc:Ignorable="d"
+      d:DesignHeight="1200" d:DesignWidth="1200"
+      Title="Situation Fournisseur">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Comptable/ComptableStyles.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Shared/Colors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="MetricCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="15"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+
+            <Style x:Key="TableHeaderLevel1" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="#6C5CE7"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="8,10"/>
+            </Style>
+
+            <Style x:Key="TableHeaderLevel2" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="#64748B"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="8,8"/>
+            </Style>
+
+            <Style x:Key="TableCell" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Foreground" Value="#0F172A"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            </Style>
+
+            <Style x:Key="MergedCell" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="#0F172A"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            </Style>
+
+            <Style x:Key="BtnPrimaryStyle" TargetType="Button">
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#6C5CE7"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="Foreground" Value="#6C5CE7"/>
+                <Setter Property="Height" Value="44"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Padding" Value="16,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8"
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Background="#F8FAFC">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="24">
+                <!-- Header -->
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding Title}" FontSize="28" FontWeight="Bold" Foreground="#0F172A"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Command="{Binding RetourCommand}"
+                                Style="{StaticResource BtnPrimaryStyle}"
+                                Margin="0,0,12,0">
+                            <StackPanel Orientation="Horizontal">
+                                <fa:IconImage Icon="ArrowLeft" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                <TextBlock Text="Retour"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ExporterPdfCommand}"
+                                Style="{StaticResource BtnPrimaryStyle}"
+                                Margin="0,0,12,0">
+                            <StackPanel Orientation="Horizontal">
+                                <fa:IconImage Icon="FilePdf" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                <TextBlock Text="Exporter PDF"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ExporterExcelCommand}"
+                                Style="{StaticResource BtnPrimaryStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <fa:IconImage Icon="FileExcel" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                <TextBlock Text="Exporter Excel"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 1. KPI Cards -->
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ctrls:KpiCard Grid.Column="0" Margin="0,0,8,0"
+                                   Title="Total des Commandes"
+                                   Value="{Binding TotalCommandes}"
+                                   Icon="CartShopping"
+                                   IconColor="#3B82F6"/>
+                    <ctrls:KpiCard Grid.Column="1" Margin="4,0,8,0"
+                                   Title="Total des Bons de Livraison"
+                                   Value="{Binding TotalBls}"
+                                   Icon="Truck"
+                                   IconColor="#22C55E"/>
+                    <ctrls:KpiCard Grid.Column="2" Margin="4,0,8,0"
+                                   Title="Total des Factures"
+                                   Value="{Binding TotalFactures}"
+                                   Icon="FileInvoice"
+                                   IconColor="#F59E0B"/>
+                    <ctrls:KpiCard Grid.Column="3" Margin="4,0,8,0"
+                                   Title="Total des Règlements"
+                                   Value="{Binding TotalReglements}"
+                                   Unit="MAD"
+                                   Icon="CheckCircle"
+                                   IconColor="#10B981"/>
+                    <ctrls:KpiCard Grid.Column="4" Margin="4,0,0,0"
+                                   Title="Solde à Payer"
+                                   Value="{Binding SoldeAPayer}"
+                                   Unit="MAD"
+                                   Icon="CreditCard"
+                                   IconColor="#EF4444"/>
+                </Grid>
+
+                <!-- 2. Single Table Container -->
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Tableau détaillé de situation"
+                                   Foreground="#0F172A"
+                                   FontWeight="Bold"
+                                   FontSize="16"
+                                   Margin="0,0,0,16"/>
+                        
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                                      VerticalScrollBarVisibility="Auto"
+                                      MaxHeight="600">
+                            <StackPanel>
+                                <!-- Table Headers -->
+                                <Grid Background="#F8FAFC">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Bon de Commande -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <!-- Bon de Livraison -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <!-- Facture -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <!-- Règlements -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Level 1 Headers -->
+                                    <Border Grid.Column="0" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="BON DE COMMANDE" Style="{StaticResource TableHeaderLevel1}"/>
+                                    </Border>
+                                    <Border Grid.Column="6" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="BON DE LIVRAISON" Style="{StaticResource TableHeaderLevel1}"/>
+                                    </Border>
+                                    <Border Grid.Column="12" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="FACTURE" Style="{StaticResource TableHeaderLevel1}"/>
+                                    </Border>
+                                    <Border Grid.Column="18" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="RÈGLEMENTS" Style="{StaticResource TableHeaderLevel1}"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Level 2 Headers -->
+                                <Grid Background="#F8FAFC">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Bon de Commande -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <!-- Bon de Livraison -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <!-- Facture -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <!-- Règlements -->
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- BC Columns -->
+                                    <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="N° BC" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="1" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="2" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Prix Unitaire" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="3" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Quantité" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="4" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="5" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total Commande" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+
+                                    <!-- BL Columns -->
+                                    <Border Grid.Column="6" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="N° BL" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="7" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="8" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Cmd" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="9" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Livrée" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="10" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Écart" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="11" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="État" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+
+                                    <!-- Facture Columns -->
+                                    <Border Grid.Column="12" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="N° Facture" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="13" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="14" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Montant HT" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="TVA" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="16" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Montant TTC" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="17" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total Facture" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+
+                                    <!-- Règlements Columns -->
+                                    <Border Grid.Column="18" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Date" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="19" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Mode" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Référence" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Montant" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total Réglé" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Reste à Payer" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="24" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Statut" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Operations List -->
+                                <ItemsControl ItemsSource="{Binding Operations}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ctrls:SituationOperationGroupControl OperationGroup="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

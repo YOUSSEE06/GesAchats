@@ -69,4 +69,14 @@ public class Repository<TEntity> : GesAchats.Core.Interfaces.IRepository<TEntity
     {
         _dbSet.Remove(entity);
     }
+
+    public IQueryable<TEntity> GetQueryable()
+    {
+        return _dbSet;
+    }
+
+    public IQueryable<TEntity> GetQueryable(bool noTracking)
+    {
+        return noTracking ? _dbSet.AsNoTracking() : _dbSet;
+    }
 }

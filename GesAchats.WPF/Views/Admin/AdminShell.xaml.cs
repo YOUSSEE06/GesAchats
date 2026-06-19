@@ -49,6 +49,8 @@ public partial class AdminShell : Window
             "ProductStats" => _serviceProvider.GetRequiredService<Acheteur.Analyses.ProductStatsPage>(),
             "Employees" => _serviceProvider.GetRequiredService<Employees.EmployeeManagementPage>(),
             "Orders" => _serviceProvider.GetRequiredService<Orders.OrderManagementPage>(),
+            "SuiviFournisseurs" => _serviceProvider.GetRequiredService<SuiviFournisseurs.SuiviFournisseursPage>(),
+            "SituationFournisseur" => _serviceProvider.GetRequiredService<SuiviFournisseurs.SituationFournisseurPage>(),
             _ => null
         };
 

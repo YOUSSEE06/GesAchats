@@ -223,6 +223,13 @@
                                            CommandParameter="InvoicesAdmin"
                                            Margin="0,0,0,4"
                                            IsCollapsed="{Binding IsCollapsed}"/>
+                        <ctrls:SidebarItem Icon="UserFriends" 
+                                           Text="Suivi Fournisseurs" 
+                                           IsActive="{Binding ActivePage, Converter={StaticResource EqualityConverter}, ConverterParameter=SuiviFournisseurs}"
+                                           Command="{Binding NavigateCommand}" 
+                                           CommandParameter="SuiviFournisseurs"
+                                           Margin="0,0,0,4"
+                                           IsCollapsed="{Binding IsCollapsed}"/>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>
