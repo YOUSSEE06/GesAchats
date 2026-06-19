@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
@@ -10,6 +11,7 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
+using Microsoft.EntityFrameworkCore;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -19,10 +21,13 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     private readonly INavigationService _navigationService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IUserSession _userSession;
-
-    private ObservableCollection<Payment> _allPayments = new();
-    private ObservableCollection<Payment> _payments = new();
-    public ObservableCollection<Payment> Payments
+    
+    // Debounce timer and CTS
+    private CancellationTokenSource? _loadCts;
+    private System.Windows.Threading.DispatcherTimer? _searchDebounceTimer;
+    
+    private ObservableCollection<PaymentListDto> _payments = new();
+    public ObservableCollection<PaymentListDto> Payments
     {
         get => _payments;
         set => SetProperty(ref _payments, value);
@@ -42,7 +47,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _selectedSupplier, value))
-                ApplyFilters();
+                OnFilterChanged();
         }
     }
 
@@ -53,7 +58,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _selectedDate, value))
-                ApplyFilters();
+                OnFilterChanged();
         }
     }
 
@@ -64,7 +69,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _selectedPaymentMethod, value))
-                ApplyFilters();
+                OnFilterChanged();
         }
     }
 
@@ -75,7 +80,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _searchText, value))
-                ApplyFilters();
+                OnFilterChanged();
         }
     }
 
@@ -86,7 +91,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set
         {
             if (SetProperty(ref _searchInvoiceNumber, value))
-                ApplyFilters();
+                DebounceFilter();
         }
     }
 
@@ -180,9 +185,9 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalOperationsReglementCountTrendText, value);
     }
 
-    // Chart Properties
-    private IEnumerable<ISeries> _paymentMethodSeries = [];
-    public IEnumerable<ISeries> PaymentMethodSeries
+    // Chart Properties - Use collections that can be updated instead of replaced
+    private ObservableCollection<ISeries> _paymentMethodSeries = new();
+    public ObservableCollection<ISeries> PaymentMethodSeries
     {
         get => _paymentMethodSeries;
         set => SetProperty(ref _paymentMethodSeries, value);
@@ -195,8 +200,8 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalPaymentMethodAmount, value);
     }
 
-    private ISeries[] _paymentsByDate = Array.Empty<ISeries>();
-    public ISeries[] PaymentsByDate
+    private ObservableCollection<ISeries> _paymentsByDate = new();
+    public ObservableCollection<ISeries> PaymentsByDate
     {
         get => _paymentsByDate;
         set => SetProperty(ref _paymentsByDate, value);
@@ -225,6 +230,9 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
     public bool CanAddReglement => _userSession.HasRole("COMPTABLE");
 
+    // Cached data
+    private List<PaymentListDto> _allPaymentsCache = new();
+
     public PaymentHistoryViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService, IUserSession userSession)
     {
         _unitOfWork = unitOfWork;
@@ -236,11 +244,46 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         LoadPaymentsCommand = new RelayCommand(async _ => await LoadPaymentsAsync());
         ExportExcelCommand = new RelayCommand(_ => ExportToExcel());
         AddPaymentCommand = new RelayCommand(_ => _navigationService.NavigateTo("PaymentForm"));
-        ViewProofCommand = new RelayCommand(p => ViewProof(p as Payment));
+        ViewProofCommand = new RelayCommand(p => ViewProof(p as PaymentListDto));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
         ToggleChartsCommand = new RelayCommand(_ => ShowCharts = !ShowCharts);
 
         SelectedPaymentMethod = "Tous";
+    }
+
+    private void DebounceFilter()
+    {
+        if (_searchDebounceTimer != null)
+        {
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Tick -= OnSearchDebounceTimerTick;
+        }
+
+        _searchDebounceTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _searchDebounceTimer.Tick += OnSearchDebounceTimerTick;
+        _searchDebounceTimer.Start();
+    }
+
+    private void OnSearchDebounceTimerTick(object? sender, EventArgs e)
+    {
+        if (_searchDebounceTimer != null)
+        {
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Tick -= OnSearchDebounceTimerTick;
+        }
+        ApplyFilters();
+    }
+
+    private void OnFilterChanged()
+    {
+        // For non-search filters, apply immediately without debounce
+        if (string.IsNullOrWhiteSpace(SearchInvoiceNumber))
+        {
+            ApplyFilters();
+        }
     }
 
     private void ResetFilters()
@@ -257,7 +300,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         _ = LoadPaymentsAsync();
     }
 
-    private void ViewProof(Payment? payment)
+    private void ViewProof(PaymentListDto? payment)
     {
         if (payment == null || string.IsNullOrWhiteSpace(payment.ProofFilePath))
             return;
@@ -280,71 +323,106 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
     private async Task LoadPaymentsAsync()
     {
+        // Cancel any ongoing load
+        _loadCts?.Cancel();
+        _loadCts = new CancellationTokenSource();
+        var ct = _loadCts.Token;
+        
         IsBusy = true;
         try
         {
-            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            var supplierList = new ObservableCollection<Supplier>();
-            supplierList.Add(new Supplier { Id = 0, CompanyName = "Tous" });
+            // Load suppliers
+            var suppliers = await _unitOfWork.Suppliers.GetAllAsync(ct);
+            var supplierList = new ObservableCollection<Supplier>
+            {
+                new Supplier { Id = 0, CompanyName = "Tous" }
+            };
             foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
             {
                 supplierList.Add(supplier);
             }
             Suppliers = supplierList;
-            SelectedSupplier = supplierList.First();
+            SelectedSupplier ??= supplierList.First();
 
-            var payments = await _unitOfWork.Payments.GetAllIncludingAsync(
-                p => p.Supplier,
-                p => p.Invoice,
-                p => p.CreatedBy
-            );
-            var allPaymentsList = payments.ToList();
-            _allPayments = new ObservableCollection<Payment>(allPaymentsList.OrderByDescending(p => p.PaymentDate));
-            ApplyFilters();
+            // Load payments with projections to DTO (no tracking, only needed columns)
+            var paymentsQuery = _unitOfWork.Payments.GetQueryable(true)
+                .OrderByDescending(p => p.PaymentDate)
+                .Select(p => new PaymentListDto
+                {
+                    Id = p.Id,
+                    PaymentDate = p.PaymentDate,
+                    SupplierId = p.SupplierId,
+                    SupplierCompanyName = p.Supplier.CompanyName,
+                    InvoiceId = p.InvoiceId,
+                    InvoiceNumber = p.Invoice.ExternalInvoiceNumber,
+                    AmountPaid = p.AmountPaid,
+                    PaymentMethod = p.PaymentMethod,
+                    ReferenceNumber = p.ReferenceNumber,
+                    ProofFilePath = p.ProofFilePath
+                });
+
+            _allPaymentsCache = await paymentsQuery.ToListAsync(ct);
             
-            // Calcul des KPIs (Données réelles)
+            // Calculate KPIs using projections (avoid loading all invoices into memory)
             var now = DateTime.Now;
             
-            // KPI 1: Total payé (Mois)
-            TotalPaidMonth = allPaymentsList
+            // KPI 1: Total paid this month
+            TotalPaidMonth = await _unitOfWork.Payments.GetQueryable(true)
                 .Where(p => p.PaymentDate.Month == now.Month && p.PaymentDate.Year == now.Year)
-                .Sum(p => p.AmountPaid);
-
-            // KPI 4: Total Réglé
-            TotalAmountRegle = allPaymentsList.Sum(p => p.AmountPaid);
-
-            // KPI 5: Fournisseurs Payés
-            FournisseursPayesCount = allPaymentsList.Select(p => p.SupplierId).Distinct().Count();
-
-            // KPI 6: Total Opérations
-            TotalOperationsReglementCount = allPaymentsList.Count;
-
-            // Pour les factures en attente et retards
-            var invoices = await _unitOfWork.Invoices.GetAllAsync();
+                .SumAsync(p => p.AmountPaid, ct);
             
-            // KPI 2: Factures Attente
-            PendingInvoicesCount = invoices.Count(i => i.Status == "EnAttente");
+            // KPI 4: Total amount paid ever
+            TotalAmountRegle = await _unitOfWork.Payments.GetQueryable(true)
+                .SumAsync(p => p.AmountPaid, ct);
+            
+            // KPI 5: Number of unique paid suppliers
+            FournisseursPayesCount = await _unitOfWork.Payments.GetQueryable(true)
+                .Select(p => p.SupplierId)
+                .Distinct()
+                .CountAsync(ct);
+            
+            // KPI 6: Total operations
+            TotalOperationsReglementCount = await _unitOfWork.Payments.GetQueryable(true)
+                .CountAsync(ct);
+            
+            // KPI 2: Pending invoices count
+            PendingInvoicesCount = await _unitOfWork.Invoices.GetQueryable(true)
+                .CountAsync(i => i.Status == "EnAttente", ct);
+            
+            // KPI 3: Late payments (overdue and not paid)
+            LatePaymentsCount = await _unitOfWork.Invoices.GetQueryable(true)
+                .CountAsync(i => i.DueDate.HasValue && i.DueDate.Value < now && i.Status != "Payee" && i.Status != "Rejetee", ct);
 
-            // KPI 3: Retards Paiement (Dépassement date d'échéance et non payée)
-            LatePaymentsCount = invoices.Count(i => i.DueDate.HasValue && i.DueDate.Value < now && i.Status != "Payee" && i.Status != "Rejetee");
-
-            // Calculate yesterday's data for trends
-            DateTime today = DateTime.Today;
-            DateTime yesterday = today.AddDays(-1);
-
-            var yesterdayPayments = allPaymentsList.Where(p => 
-                p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
-            var yesterdayInvoices = invoices.Where(i => 
-                i.CreatedAt.Date >= yesterday && i.CreatedAt.Date < today).ToList();
-
-            decimal yesterdayPaidMonth = yesterdayPayments
+            // Calculate yesterday's data for trends using EF
+            var today = DateTime.Today;
+            var yesterday = today.AddDays(-1);
+            
+            var yesterdayPaymentsQuery = _unitOfWork.Payments.GetQueryable(true)
+                .Where(p => p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today);
+            
+            var yesterdayPaidMonth = await yesterdayPaymentsQuery
                 .Where(p => p.PaymentDate.Month == today.Month && p.PaymentDate.Year == today.Year)
-                .Sum(p => p.AmountPaid);
-            int yesterdayPendingInvoices = yesterdayInvoices.Count(i => i.Status == "EnAttente");
-            int yesterdayLatePayments = yesterdayInvoices.Count(i => i.DueDate.HasValue && i.DueDate.Value < today && i.Status != "Payee" && i.Status != "Rejetee");
-            decimal yesterdayAmountRegle = yesterdayPayments.Sum(p => p.AmountPaid);
-            int yesterdayFournisseursPayes = yesterdayPayments.Select(p => p.SupplierId).Distinct().Count();
-            int yesterdayOperations = yesterdayPayments.Count;
+                .SumAsync(p => p.AmountPaid, ct);
+            
+            var yesterdayInvoicesQuery = _unitOfWork.Invoices.GetQueryable(true)
+                .Where(i => i.CreatedAt.Date >= yesterday && i.CreatedAt.Date < today);
+                
+            var yesterdayPendingInvoices = await yesterdayInvoicesQuery
+                .CountAsync(i => i.Status == "EnAttente", ct);
+                
+            var yesterdayLatePayments = await yesterdayInvoicesQuery
+                .CountAsync(i => i.DueDate.HasValue && i.DueDate.Value < today && i.Status != "Payee" && i.Status != "Rejetee", ct);
+                
+            var yesterdayAmountRegle = await yesterdayPaymentsQuery
+                .SumAsync(p => p.AmountPaid, ct);
+                
+            var yesterdayFournisseursPayes = await yesterdayPaymentsQuery
+                .Select(p => p.SupplierId)
+                .Distinct()
+                .CountAsync(ct);
+                
+            var yesterdayOperations = await yesterdayPaymentsQuery
+                .CountAsync(ct);
 
             // Calculate trend texts
             TotalPaidMonthTrendText = CalculateTrendText(TotalPaidMonth, yesterdayPaidMonth);
@@ -353,16 +431,24 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
             TotalAmountRegleTrendText = CalculateTrendText(TotalAmountRegle, yesterdayAmountRegle);
             FournisseursPayesCountTrendText = CalculateTrendText(FournisseursPayesCount, yesterdayFournisseursPayes);
             TotalOperationsReglementCountTrendText = CalculateTrendText(TotalOperationsReglementCount, yesterdayOperations);
+
+            // Apply initial filters
+            ApplyFilters();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancelling
         }
         finally
         {
-            IsBusy = false;
+            if (!ct.IsCancellationRequested)
+                IsBusy = false;
         }
     }
 
     private void ApplyFilters()
     {
-        var filtered = _allPayments.AsEnumerable();
+        var filtered = _allPaymentsCache.AsEnumerable();
 
         if (SelectedSupplier != null && SelectedSupplier.Id != 0)
             filtered = filtered.Where(p => p.SupplierId == SelectedSupplier.Id);
@@ -377,7 +463,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         {
             string searchInv = SearchInvoiceNumber.ToLower();
             filtered = filtered.Where(p => 
-                (p.Invoice != null && p.Invoice.ExternalInvoiceNumber != null && p.Invoice.ExternalInvoiceNumber.ToLower().Contains(searchInv)) ||
+                (p.InvoiceNumber != null && p.InvoiceNumber.ToLower().Contains(searchInv)) ||
                 (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(searchInv))
             );
         }
@@ -386,12 +472,12 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         {
             string search = SearchText.ToLower();
             filtered = filtered.Where(p => 
-                (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(search)) ||
-                (p.PaymentNumber != null && p.PaymentNumber.ToLower().Contains(search))
+                (p.ReferenceNumber != null && p.ReferenceNumber.ToLower().Contains(search))
             );
         }
 
-        Payments = new ObservableCollection<Payment>(filtered);
+        // Update Payments collection in one go
+        Payments = new ObservableCollection<PaymentListDto>(filtered);
         UpdateCharts();
     }
 
@@ -399,8 +485,8 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     {
         if (Payments == null || !Payments.Any())
         {
-            PaymentMethodSeries = [];
-            PaymentsByDate = Array.Empty<ISeries>();
+            PaymentMethodSeries.Clear();
+            PaymentsByDate.Clear();
             TotalPaymentMethodAmount = 0;
             return;
         }
@@ -413,21 +499,28 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
         TotalPaymentMethodAmount = methodData.Sum(x => x.Total);
 
-        PaymentMethodSeries = methodData.Select(d => new PieSeries<double>
+        // Update PaymentMethodSeries
+        PaymentMethodSeries.Clear();
+        foreach (var data in methodData)
         {
-            Values = new[] { d.Total },
-            Name = d.Method,
-            InnerRadius = 55,
-            Fill = d.Method switch
+            var color = data.Method switch
             {
-                "Virement" => new SolidColorPaint(new SKColor(34, 197, 94)),
-                "Chèque" => new SolidColorPaint(new SKColor(245, 158, 11)),
-                "Espèce" => new SolidColorPaint(new SKColor(168, 85, 246)),
-                "Lettres d'échange" => new SolidColorPaint(new SKColor(59, 130, 246)),
-                "Lettre d'échange" => new SolidColorPaint(new SKColor(59, 130, 246)),
-                _ => new SolidColorPaint(SKColors.Gray)
-            }
-        }).ToList();
+                "Virement" => new SKColor(34, 197, 94),
+                "Chèque" => new SKColor(245, 158, 11),
+                "Espèce" => new SKColor(168, 85, 246),
+                "Lettres d'échange" => new SKColor(59, 130, 246),
+                "Lettre d'échange" => new SKColor(59, 130, 246),
+                _ => SKColors.Gray
+            };
+            
+            PaymentMethodSeries.Add(new PieSeries<double>
+            {
+                Values = new[] { data.Total },
+                Name = data.Method,
+                InnerRadius = 55,
+                Fill = new SolidColorPaint(color)
+            });
+        }
 
         // 2. Évolution des paiements par date (Line Chart)
         var dateData = Payments
@@ -436,18 +529,16 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
             .OrderBy(x => x.Date)
             .ToList();
 
-        PaymentsByDate = new ISeries[]
+        PaymentsByDate.Clear();
+        PaymentsByDate.Add(new LineSeries<double>
         {
-            new LineSeries<double>
-            {
-                Values = dateData.Select(x => x.Total).ToArray(),
-                Name = "Paiements (MAD)",
-                Fill = new SolidColorPaint(SKColors.DeepSkyBlue.WithAlpha(50)),
-                Stroke = new SolidColorPaint(SKColors.DeepSkyBlue, 3),
-                GeometrySize = 10,
-                LineSmoothness = 1
-            }
-        };
+            Values = dateData.Select(x => x.Total).ToArray(),
+            Name = "Paiements (MAD)",
+            Fill = new SolidColorPaint(SKColors.DeepSkyBlue.WithAlpha(50)),
+            Stroke = new SolidColorPaint(SKColors.DeepSkyBlue, 3),
+            GeometrySize = 10,
+            LineSmoothness = 1
+        });
 
         XAxesPayments = new Axis[]
         {

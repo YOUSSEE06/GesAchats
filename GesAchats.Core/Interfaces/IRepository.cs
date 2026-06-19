@@ -7,12 +7,12 @@ namespace GesAchats.Core.Interfaces;
 /// </summary>
 public interface IRepository<TEntity> where TEntity : class
 {
-    Task<TEntity?> GetByIdAsync(int id);
-    Task<IEnumerable<TEntity>> GetAllAsync();
+    Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<TEntity>> GetAllIncludingAsync(params Expression<Func<TEntity, object?>>[] includeProperties);
     Task<IEnumerable<TEntity>> GetAllIncludingAsync(bool noTracking, params Expression<Func<TEntity, object?>>[] includeProperties);
-    Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate);
-    Task AddAsync(TEntity entity);
+    Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
     void Update(TEntity entity);
     void Remove(TEntity entity);
     IQueryable<TEntity> GetQueryable();

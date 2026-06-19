@@ -171,3 +171,20 @@ public class ReglementDetailDto
     public decimal RatioAPayer { get; set; }
     public string Statut { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// DTO for displaying payment list with minimal required data
+/// </summary>
+public class PaymentListDto
+{
+    public int Id { get; set; }
+    public DateTime PaymentDate { get; set; }
+    public int SupplierId { get; set; }
+    public string SupplierCompanyName { get; set; } = string.Empty;
+    public int? InvoiceId { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public decimal AmountPaid { get; set; }
+    public string PaymentMethod { get; set; } = string.Empty;
+    public string? ReferenceNumber { get; set; }
+    public string? ProofFilePath { get; set; }
+}

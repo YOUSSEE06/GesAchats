@@ -320,15 +320,14 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F5F6F7">
-        <Grid Margin="0,0,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Grid Background="#F5F6F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
         <!-- Header -->
         <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,15">
@@ -469,7 +468,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <lvc:PieChart Series="{Binding PaymentMethodSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180" />
+                            <lvc:PieChart Series="{Binding PaymentMethodSeries}" LegendPosition="Hidden" InitialRotation="-90" Height="180" AnimationsSpeed="0" />
                             <StackPanel HorizontalAlignment="Center" Margin="0,8,0,0">
                                 <TextBlock Text="{Binding TotalPaymentMethodAmount, StringFormat={}{0:N2} MAD}" FontSize="16" FontWeight="ExtraBold" Foreground="#0F172A" HorizontalAlignment="Center"/>
                                 <TextBlock Text="Total" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" FontWeight="Medium"/>
@@ -491,7 +490,7 @@
                 <!-- Évolution des paiements (Line Chart) -->
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                     <TextBlock Text="📈 Évolution des paiements" Foreground="#1A3A52" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10" HorizontalAlignment="Left"/>
-                    <lvc:CartesianChart Series="{Binding PaymentsByDate}" XAxes="{Binding XAxesPayments}" Height="220" />
+                    <lvc:CartesianChart Series="{Binding PaymentsByDate}" XAxes="{Binding XAxesPayments}" Height="220" AnimationsSpeed="0" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -519,7 +518,12 @@
                           GridLinesVisibility="Horizontal"
                           MinWidth="1300"
                           HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Auto"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.IsDeferredScrollingEnabled="True">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="#F8FAFC"/>
@@ -554,14 +558,14 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier.CompanyName}" Width="Auto" MinWidth="200">
+                        <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding SupplierCompanyName}" Width="Auto" MinWidth="200">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="NUMÉRO DE FACTURE" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="Auto" MinWidth="160">
+                        <DataGridTextColumn Header="NUMÉRO DE FACTURE" Binding="{Binding InvoiceNumber, TargetNullValue='-'}" Width="Auto" MinWidth="160">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="SemiBold"/>
@@ -634,6 +638,5 @@
                 </DataGrid>
             </Grid>
         </Border>
-        </Grid>
-    </ScrollViewer>
+    </Grid>
 </Page>
