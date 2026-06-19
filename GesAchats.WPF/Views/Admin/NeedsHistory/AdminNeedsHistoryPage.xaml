@@ -507,8 +507,7 @@
                       EnableRowVirtualization="True"
                       EnableColumnVirtualization="True"
                       VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      ScrollViewer.IsDeferredScrollingEnabled="True">
+                      VirtualizingPanel.VirtualizationMode="Recycling">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="N° Demande" Binding="{Binding NumeroBesoin}" Width="180" CellStyle="{StaticResource BlueCellStyle}"/>
                     <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="150" CellStyle="{StaticResource BlueCellStyle}"/>

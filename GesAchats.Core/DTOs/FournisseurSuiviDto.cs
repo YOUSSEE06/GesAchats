@@ -10,6 +10,16 @@ public class NeedHistoriqueDto
     public string Statut { get; set; } = string.Empty;
 }
 
+public class DeliveryNoteHistoryDto
+{
+    public int Id { get; set; }
+    public DateTime ReceptionDate { get; set; }
+    public string DeliveryNumber { get; set; } = string.Empty;
+    public string SupplierCompanyName { get; set; } = string.Empty;
+    public string? PurchaseOrderNumber { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
+
 public class FournisseurSuiviDto
 {
     public int Id { get; set; }
