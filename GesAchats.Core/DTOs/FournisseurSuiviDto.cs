@@ -1,5 +1,15 @@
 namespace GesAchats.Core.DTOs;
 
+public class NeedHistoriqueDto
+{
+    public int Id { get; set; }
+    public string NumeroBesoin { get; set; } = string.Empty;
+    public DateTime RequestedAt { get; set; }
+    public string Demandeur { get; set; } = string.Empty;
+    public int NombreArticles { get; set; }
+    public string Statut { get; set; } = string.Empty;
+}
+
 public class FournisseurSuiviDto
 {
     public int Id { get; set; }
