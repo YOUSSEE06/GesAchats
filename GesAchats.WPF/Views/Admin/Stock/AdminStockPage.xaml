@@ -4,15 +4,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Admin.Stock"
-      xmlns:converters="clr-namespace:GesAchats.WPF.Converters"
-      xmlns:entities="clr-namespace:GesAchats.Core.Entities"
       xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d"
       Title="Stock global">
     <Page.Resources>
-        <converters:StockStateToColorConverter x:Key="StockStateToColorConverter"/>
-        <converters:StockStateToStringConverter x:Key="StockStateToStringConverter"/>
-
         <Style x:Key="FilterInputStyle" TargetType="TextBox">
             <Setter Property="BorderBrush" Value="#D0CDE8"/>
             <Setter Property="BorderThickness" Value="1.5"/>
@@ -105,7 +100,7 @@
                                        Placement="Bottom" 
                                        StaysOpen="False" 
                                        Focusable="False" 
-                                       IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                       IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}" 
                                        PopupAnimation="Slide">
                                     <Border x:Name="DropDownBorder" 
                                             Background="White" 
@@ -212,6 +207,40 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="PaginationButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#D0CDE8"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" TargetName="border" Value="#F0EBFF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" TargetName="border" Value="#F0EBFF"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="#E8E0F8"/>
+                                <Setter Property="Foreground" Value="#C4C0D8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Margin="20">
@@ -305,6 +334,10 @@
                   Background="White" BorderThickness="1" BorderBrush="#E8E0F8"
                   RowHeight="44" SelectionMode="Single" GridLinesVisibility="None"
                   HeadersVisibility="Column"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
                   IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="N°" Binding="{Binding Id}" Width="50" CellStyle="{StaticResource BlueCellStyle}"/>
@@ -316,10 +349,10 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Ellipse Width="12" Height="12" Fill="{Binding Etat, Converter={StaticResource StockStateToColorConverter}}" 
+                                <Ellipse Width="12" Height="12" Fill="{Binding StateColor}" 
                                          Margin="0,0,5,0"/>
-                                <TextBlock Text="{Binding Etat, Converter={StaticResource StockStateToStringConverter}}" 
-                                                   VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding StateText}" 
+                                           VerticalAlignment="Center"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -327,15 +360,38 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- Footer Info -->
-        <StatusBar Grid.Row="3" Background="Transparent" Margin="0,10,0,0">
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Total: "/>
-                    <TextBlock Text="{Binding FilteredProducts.Count}" FontWeight="Bold"/>
-                    <TextBlock Text=" articles affichés" Margin="0,0,20,0"/>
-                </StackPanel>
-            </StatusBarItem>
-        </StatusBar>
+        <!-- Pagination -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" 
+                       Text="{Binding PaginationInfo}" 
+                       Foreground="#666666" 
+                       FontSize="13"
+                       VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right">
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding FirstPageCommand}"
+                        Content="«"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding PreviousPageCommand}"
+                        Content="‹"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding NextPageCommand}"
+                        Content="›"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding LastPageCommand}"
+                        Content="»"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

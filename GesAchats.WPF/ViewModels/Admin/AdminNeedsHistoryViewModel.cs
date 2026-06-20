@@ -5,11 +5,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Threading;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
@@ -39,7 +41,9 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
-    private CancellationTokenSource? _cts;
+    private readonly ILogger _logger;
+    private CancellationTokenSource? _searchCts;
+    private int _loadVersion;
     
     // Pagination properties
     private int _currentPage = 1;
@@ -133,7 +137,7 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         {
             if (SetProperty(ref _searchNumero, value))
             {
-                DebouncedFilter();
+                _ = DebouncedFilterAsync();
             }
         }
     }
@@ -223,11 +227,12 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
     public ICommand NextPageCommand { get; }
     public ICommand LastPageCommand { get; }
 
-    public AdminNeedsHistoryViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
+    public AdminNeedsHistoryViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger)
     {
         _unitOfWork = unitOfWork;
         _serviceProvider = serviceProvider;
-        Title = "HISTORIQUE DES BESOINS";
+        _logger = logger;
+        Title = "Historique des besoins";
 
         ViewDetailsCommand = new RelayCommand(async p => await ExecuteViewDetails(p as AdminNeedHistoryItemViewModel));
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
@@ -240,14 +245,39 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         _ = LoadDataAsync();
     }
 
-    private System.Threading.Timer? _debounceTimer;
-    private void DebouncedFilter()
+    private async Task DebouncedFilterAsync()
     {
-        _debounceTimer?.Dispose();
-        _debounceTimer = new System.Threading.Timer(async _ =>
+        var newCts = new CancellationTokenSource();
+        var oldCts = Interlocked.Exchange(ref _searchCts, newCts);
+
+        if (oldCts != null)
         {
-            await ResetAndLoadPageAsync();
-        }, null, 300, System.Threading.Timeout.Infinite);
+            oldCts.Cancel();
+            oldCts.Dispose();
+        }
+
+        try
+        {
+            await Task.Delay(400, newCts.Token);
+            CurrentPage = 1;
+            await LoadPageAsync(newCts.Token);
+        }
+        catch (OperationCanceledException) when (newCts.IsCancellationRequested)
+        {
+            // Normal cancellation, do nothing
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error during debounced filter");
+        }
+        finally
+        {
+            if (ReferenceEquals(_searchCts, newCts))
+            {
+                Interlocked.CompareExchange(ref _searchCts, null, newCts);
+            }
+            newCts.Dispose();
+        }
     }
 
     private async Task LoadDataAsync()
@@ -301,11 +331,9 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         await LoadPageAsync();
     }
 
-    private async Task LoadPageAsync()
+    private async Task LoadPageAsync(CancellationToken cancellationToken = default)
     {
-        // Cancel previous operation
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
+        var version = Interlocked.Increment(ref _loadVersion);
 
         try
         {
@@ -315,26 +343,48 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
                 SearchNumero,
                 SearchDate,
                 SelectedStatus,
-                _cts.Token);
+                cancellationToken);
 
-            Needs.Clear();
-            foreach (var dto in result.Items)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (version != _loadVersion)
+                return;
+
+            // Update UI on dispatcher thread
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
             {
-                Needs.Add(new AdminNeedHistoryItemViewModel(dto));
+                UpdateItems(result);
             }
-
-            TotalItems = result.TotalCount;
-
-            // If current page is beyond total pages, go to last page
-            if (CurrentPage > TotalPages && TotalPages > 0)
+            else
             {
-                CurrentPage = TotalPages;
-                await LoadPageAsync();
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => UpdateItems(result), DispatcherPriority.Normal, cancellationToken);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // Operation cancelled, ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading page");
+        }
+    }
+
+    private void UpdateItems(PagedResult<NeedHistoriqueDto> result)
+    {
+        Needs.Clear();
+        foreach (var dto in result.Items)
+        {
+            Needs.Add(new AdminNeedHistoryItemViewModel(dto));
+        }
+
+        TotalItems = result.TotalCount;
+
+        // If current page is beyond total pages, go to last page
+        if (CurrentPage > TotalPages && TotalPages > 0)
+        {
+            CurrentPage = TotalPages;
+            _ = LoadPageAsync();
         }
     }
 

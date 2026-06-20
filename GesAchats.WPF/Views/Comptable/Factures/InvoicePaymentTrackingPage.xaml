@@ -373,6 +373,43 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <Style x:Key="PaginationButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="#64748B"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -382,6 +419,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header with Stats -->
@@ -544,7 +582,7 @@
                         </Style>
                     </DataGrid.Resources>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Date" Binding="{Binding Invoice.InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="*">
+                        <DataGridTextColumn Header="Date" Binding="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
@@ -552,7 +590,7 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="N° Facture" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="*">
+                        <DataGridTextColumn Header="N° Facture" Binding="{Binding ExternalInvoiceNumber, TargetNullValue='-'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
@@ -561,28 +599,28 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding Invoice.Supplier.CompanyName}" Width="2*">
+                        <DataGridTextColumn Header="Fournisseur" Binding="{Binding SupplierName}" Width="2*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Montant HT" Binding="{Binding Invoice.AmountHT, StringFormat='{}{0:N2} MAD'}" Width="*">
+                        <DataGridTextColumn Header="Montant HT" Binding="{Binding AmountHT, StringFormat='{}{0:N2} MAD'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="TVA" Binding="{Binding Invoice.TaxAmount, StringFormat='{}{0:N2} MAD'}" Width="*">
+                        <DataGridTextColumn Header="TVA" Binding="{Binding TaxAmount, StringFormat='{}{0:N2} MAD'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Montant TTC" Binding="{Binding Invoice.AmountTTC, StringFormat='{}{0:N2} MAD'}" Width="*">
+                        <DataGridTextColumn Header="Montant TTC" Binding="{Binding AmountTTC, StringFormat='{}{0:N2} MAD'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
@@ -613,6 +651,48 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- Pagination -->
+        <Border Grid.Row="4" Background="White" CornerRadius="8" Margin="0,20,0,0" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding PaginationInfo}"
+                           Foreground="#64748B"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding FirstPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="0,0,6,0"
+                            IsEnabled="{Binding CanGoToFirstPage}">
+                        <TextBlock Text="«" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding PreviousPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="0,0,6,0"
+                            IsEnabled="{Binding CanGoToPreviousPage}">
+                        <TextBlock Text="‹" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding NextPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="6,0,6,0"
+                            IsEnabled="{Binding CanGoToNextPage}">
+                        <TextBlock Text="›" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding LastPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            IsEnabled="{Binding CanGoToLastPage}">
+                        <TextBlock Text="»" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

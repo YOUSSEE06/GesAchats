@@ -1,11 +1,19 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
 using GesAchats.WPF.Services;
-using Microsoft.Extensions.DependencyInjection;
 using GesAchats.WPF.Views.Comptable.Factures;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -15,6 +23,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     private readonly INavigationService _navigationService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IUserSession _userSession;
+    private readonly ILogger _logger;
 
     private bool _isAdmin;
     public bool IsAdmin
@@ -23,7 +32,58 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _isAdmin, value);
     }
 
-    private ObservableCollection<InvoiceWithPaymentsViewModel> _allFactures = new();
+    // Pagination properties
+    private int _currentPage = 1;
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationInfo));
+                if (!_isLoading && !_isInitializing)
+                {
+                    _ = LoadPageAsync();
+                }
+            }
+        }
+    }
+
+    private int _totalItems;
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationInfo));
+            }
+        }
+    }
+
+    public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+    public int PageSize => 20;
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : (CurrentPage - 1) * PageSize + 1;
+    public int LastDisplayedItem => Math.Min(CurrentPage * PageSize, TotalItems);
+    public string PaginationInfo => $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} factures";
+
+    public bool CanGoToFirstPage => CurrentPage > 1;
+    public bool CanGoToPreviousPage => CurrentPage > 1;
+    public bool CanGoToNextPage => CurrentPage < TotalPages;
+    public bool CanGoToLastPage => CurrentPage < TotalPages;
+
     private ObservableCollection<InvoiceWithPaymentsViewModel> _factures = new();
     public ObservableCollection<InvoiceWithPaymentsViewModel> Factures
     {
@@ -44,8 +104,10 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         get => _selectedSupplier;
         set
         {
-            if (SetProperty(ref _selectedSupplier, value))
-                ApplyFilters();
+            if (SetProperty(ref _selectedSupplier, value) && !_isInitializing)
+            {
+                _ = ResetAndLoadPageAsync();
+            }
         }
     }
 
@@ -55,8 +117,10 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         get => _selectedStatus;
         set
         {
-            if (SetProperty(ref _selectedStatus, value))
-                ApplyFilters();
+            if (SetProperty(ref _selectedStatus, value) && !_isInitializing)
+            {
+                _ = ResetAndLoadPageAsync();
+            }
         }
     }
 
@@ -66,8 +130,10 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         get => _selectedDate;
         set
         {
-            if (SetProperty(ref _selectedDate, value))
-                ApplyFilters();
+            if (SetProperty(ref _selectedDate, value) && !_isInitializing)
+            {
+                _ = ResetAndLoadPageAsync();
+            }
         }
     }
 
@@ -77,8 +143,11 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         get => _searchText;
         set
         {
-            if (SetProperty(ref _searchText, value))
-                ApplyFilters();
+            if (SetProperty(ref _searchText, value) && !_isInitializing)
+            {
+                _debounceTimer?.Stop();
+                _debounceTimer?.Start();
+            }
         }
     }
 
@@ -182,6 +251,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _selectedFacture, value);
     }
 
+    // Commands
     public ICommand LoadFacturesCommand { get; }
     public ICommand AddFactureCommand { get; }
     public ICommand VerifyConformityCommand { get; }
@@ -191,50 +261,77 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     public ICommand ViewBLCommand { get; }
     public ICommand ViewFileCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand LastPageCommand { get; }
 
-    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession)
+    // Debounce and cancellation
+    private readonly DispatcherTimer _debounceTimer;
+    private CancellationTokenSource? _cancellationTokenSource;
+    private bool _isLoading;
+    private bool _isInitialized;
+    private bool _isInitializing;
+
+    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession, ILogger logger)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _serviceProvider = serviceProvider;
         _userSession = userSession;
+        _logger = logger;
         Title = "Factures Fournisseurs";
         IsAdmin = _userSession.CurrentUser?.Role?.Code?.ToUpper() == "ADMIN";
 
-        LoadFacturesCommand = new RelayCommand(async _ => await LoadFacturesAsync());
+        _debounceTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _debounceTimer.Tick += async (s, e) =>
+        {
+            _debounceTimer.Stop();
+            await ResetAndLoadPageAsync();
+        };
+
+        LoadFacturesCommand = new RelayCommand(async _ => await InitializeAsync());
         AddFactureCommand = new RelayCommand(_ => _navigationService.NavigateTo("InvoiceForm"));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
-        
-        ViewDetailsCommand = new RelayCommand(async _ => 
+
+        FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CanGoToFirstPage);
+        PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CanGoToPreviousPage);
+        NextPageCommand = new RelayCommand(_ => CurrentPage++, _ => CanGoToNextPage);
+        LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CanGoToLastPage);
+
+        ViewDetailsCommand = new RelayCommand(async _ =>
         {
             if (SelectedFacture == null)
                 return;
-            
+
             using (var scope = _serviceProvider.CreateScope())
             {
-                var vm = ActivatorUtilities.CreateInstance<FactureDetailsViewModel>(scope.ServiceProvider, SelectedFacture.Invoice.Id);
+                var vm = ActivatorUtilities.CreateInstance<FactureDetailsViewModel>(scope.ServiceProvider, SelectedFacture.Id);
                 var win = ActivatorUtilities.CreateInstance<FactureDetailsWindow>(scope.ServiceProvider, vm);
-                win.Owner = System.Windows.Application.Current.MainWindow;
+                win.Owner = Application.Current.MainWindow;
                 win.ShowDialog();
-                
+
                 // Refresh after dialog closes in case something changed
-                await LoadFacturesAsync();
+                await RefreshDataAsync();
             }
         }, _ => SelectedFacture != null);
 
-        ViewBCCommand = new RelayCommand(id => 
+        ViewBCCommand = new RelayCommand(id =>
         {
             if (id is int bcId)
                 _navigationService.NavigateTo("PurchaseOrderDetails", bcId);
         });
 
-        ViewBLCommand = new RelayCommand(id => 
+        ViewBLCommand = new RelayCommand(id =>
         {
             if (id is int blId)
                 _navigationService.NavigateTo("DeliveryNoteDetails", blId);
         });
 
-        ViewFileCommand = new RelayCommand(path => 
+        ViewFileCommand = new RelayCommand(path =>
         {
             if (path is string filePath && !string.IsNullOrEmpty(filePath))
             {
@@ -243,32 +340,38 @@ public class FacturesViewModel : BaseViewModel, INavigatable
             }
         });
 
-        VerifyConformityCommand = new RelayCommand(_ => 
+        VerifyConformityCommand = new RelayCommand(_ =>
         {
             if (SelectedFacture != null)
-                _navigationService.NavigateTo("ConformityCheck", SelectedFacture.Invoice.Id);
+                _navigationService.NavigateTo("ConformityCheck", SelectedFacture.Id);
         }, _ => SelectedFacture != null);
-        
-        RegisterPaymentCommand = new RelayCommand(_ => 
+
+        RegisterPaymentCommand = new RelayCommand(_ =>
         {
             if (SelectedFacture != null)
-                _navigationService.NavigateTo("PaymentForm", SelectedFacture.Invoice.Id);
+                _navigationService.NavigateTo("PaymentForm", SelectedFacture.Id);
         }, _ => SelectedFacture != null);
     }
 
     public async void OnNavigatedTo(object parameter)
     {
-        await LoadFacturesAsync();
+        await InitializeAsync();
     }
 
-    private async Task LoadFacturesAsync()
+    private async Task InitializeAsync()
     {
+        if (_isInitialized || _isLoading)
+            return;
+
+        _isInitialized = true;
+        _isInitializing = true;
+        _isLoading = true;
         IsBusy = true;
+        
         try
         {
             var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
             var supplierList = new ObservableCollection<Supplier>();
-            // Add "Tous" option first
             var tousSupplier = new Supplier { Id = 0, CompanyName = "Tous" };
             supplierList.Add(tousSupplier);
             foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
@@ -276,89 +379,132 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 supplierList.Add(supplier);
             }
             Suppliers = supplierList;
-            SelectedSupplier = tousSupplier;
-
-            // Charger les factures avec les entités liées
-            var factures = await _unitOfWork.Invoices.GetAllIncludingAsync(
-                f => f.Supplier,
-                f => f.PurchaseOrder,
-                f => f.DeliveryNote
-            );
-
-            // Charger les paiements
-            var payments = await _unitOfWork.Payments.GetAllAsync();
-            _allPayments = payments.ToList();
-
-            // Créer les viewmodels avec les paiements
-            _allFactures = new ObservableCollection<InvoiceWithPaymentsViewModel>();
-            foreach (var invoice in factures.OrderByDescending(f => f.InvoiceDate))
-            {
-                var invoiceVm = new InvoiceWithPaymentsViewModel(invoice);
-                var invoicePayments = payments.Where(p => p.InvoiceId == invoice.Id);
-                foreach (var payment in invoicePayments)
-                {
-                    invoiceVm.Payments.Add(payment);
-                }
-                _allFactures.Add(invoiceVm);
-            }
             
-            ApplyFilters();
+            SelectedSupplier = tousSupplier;
+            SelectedStatus = "Tous";
+            SelectedDate = null;
+            SearchText = string.Empty;
+            CurrentPage = 1;
+            
+            await CalculateStatsAsync();
+            await LoadPageAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Erreur lors du chargement initial de la page Factures Comptable");
+            MessageBox.Show($"Erreur lors du chargement initial des factures: {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
+            _isInitializing = false;
+            _isLoading = false;
             IsBusy = false;
         }
     }
 
-    private void ApplyFilters()
+    private async Task RefreshDataAsync()
     {
-        var filtered = _allFactures.AsEnumerable();
-
-        if (SelectedSupplier != null && SelectedSupplier.Id != 0)
-            filtered = filtered.Where(f => f.Invoice.SupplierId == SelectedSupplier.Id);
-
-        if (!string.IsNullOrEmpty(SelectedStatus) && SelectedStatus != "Tous")
-            filtered = filtered.Where(f => f.StatusCalculated == SelectedStatus);
-
-        if (SelectedDate.HasValue)
-            filtered = filtered.Where(f => f.Invoice.InvoiceDate.Date == SelectedDate.Value.Date);
-
-        if (!string.IsNullOrEmpty(SearchText))
-        {
-            string search = SearchText.ToLower();
-            filtered = filtered.Where(f => 
-                (f.Invoice.InvoiceNumber != null && f.Invoice.InvoiceNumber.ToLower().Contains(search)) ||
-                (f.Invoice.ExternalInvoiceNumber != null && f.Invoice.ExternalInvoiceNumber.ToLower().Contains(search)) ||
-                f.Invoice.Supplier.CompanyName.ToLower().Contains(search) ||
-                (f.Invoice.PurchaseOrder != null && f.Invoice.PurchaseOrder.OrderNumber.ToLower().Contains(search)) ||
-                (f.Invoice.DeliveryNote != null && f.Invoice.DeliveryNote.DeliveryNumber.ToLower().Contains(search))
-            );
-        }
-
-        Factures = new ObservableCollection<InvoiceWithPaymentsViewModel>(filtered);
-        CalculateStats();
+        await CalculateStatsAsync();
+        await LoadPageAsync();
     }
 
-    private List<Payment> _allPayments = new(); // Store all payments for yesterday's calculations
-
-    private void CalculateStats()
+    private async Task ResetAndLoadPageAsync()
     {
-        TotalFacturesCount = _allFactures.Count;
-        TotalAmount = _allFactures.Sum(f => f.Invoice.AmountTTC);
-        PaidInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "Payée");
-        PartialInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "Partiellement payée");
-        WaitingInvoicesCount = _allFactures.Count(f => f.StatusCalculated == "En attente");
-        PendingAmount = _allFactures.Sum(f => f.Balance);
+        CurrentPage = 1;
+        await LoadPageAsync();
+    }
+
+    private async Task LoadPageAsync()
+    {
+        if (_isLoading)
+            return;
+
+        // Cancel previous operation
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = _cancellationTokenSource.Token;
+
+        try
+        {
+            _isLoading = true;
+            var result = await _unitOfWork.Invoices.GetInvoicesPagedAsync(
+                CurrentPage,
+                PageSize,
+                SearchText,
+                SelectedSupplier?.Id,
+                SelectedStatus,
+                SelectedDate,
+                cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            TotalItems = result.TotalCount;
+            UpdateItems(result.Items);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when user types quickly
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading page");
+            MessageBox.Show($"Erreur lors du chargement de la page: {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void UpdateItems(List<InvoiceDto> items)
+    {
+        var newFactures = new ObservableCollection<InvoiceWithPaymentsViewModel>();
+        foreach (var dto in items)
+        {
+            newFactures.Add(new InvoiceWithPaymentsViewModel(dto));
+        }
+        Factures = newFactures;
+    }
+
+    protected virtual async Task CalculateStatsAsync()
+    {
+        // Load all invoices for stats calculation
+        var allInvoices = await _unitOfWork.Invoices.GetAllIncludingAsync(
+            i => i.Supplier,
+            i => i.PurchaseOrder,
+            i => i.DeliveryNote
+        );
+        var allPayments = await _unitOfWork.Payments.GetAllAsync();
+
+        var allInvoiceVms = new List<InvoiceWithPaymentsViewModel>();
+        foreach (var invoice in allInvoices.OrderByDescending(i => i.InvoiceDate))
+        {
+            var vm = new InvoiceWithPaymentsViewModel(invoice);
+            var invoicePayments = allPayments.Where(p => p.InvoiceId == invoice.Id);
+            foreach (var payment in invoicePayments)
+            {
+                vm.Payments.Add(payment);
+            }
+            allInvoiceVms.Add(vm);
+        }
+
+        TotalFacturesCount = allInvoiceVms.Count;
+        TotalAmount = allInvoiceVms.Sum(f => f.AmountTTC);
+        PaidInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Payée");
+        PartialInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Partiellement payée");
+        WaitingInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "En attente");
+        PendingAmount = allInvoiceVms.Sum(f => f.Balance);
 
         // Calculate yesterday's data
         DateTime today = DateTime.Today;
         DateTime yesterday = today.AddDays(-1);
 
-        var yesterdayInvoices = _allFactures.Where(f => 
-            f.Invoice.CreatedAt.Date >= yesterday && f.Invoice.CreatedAt.Date < today).ToList();
+        var yesterdayInvoices = allInvoiceVms.Where(f =>
+            f.InvoiceDate.Date >= yesterday && f.InvoiceDate.Date < today).ToList();
 
         int yesterdayTotalCount = yesterdayInvoices.Count;
-        decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.Invoice.AmountTTC);
+        decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.AmountTTC);
         int yesterdayPaidCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Payée");
         int yesterdayPartialCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
         int yesterdayWaitingCount = yesterdayInvoices.Count(f => f.StatusCalculated == "En attente");
@@ -373,11 +519,39 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         PendingAmountTrendText = CalculateTrendText(PendingAmount, yesterdayPendingAmount);
     }
 
-    private void ResetFilters()
+    private async void ResetFilters()
     {
-        SelectedSupplier = Suppliers.FirstOrDefault();
-        SelectedStatus = "Tous";
-        SelectedDate = null;
-        SearchText = string.Empty;
+        if (_isLoading) return;
+        _isInitializing = true;
+        try
+        {
+            SelectedSupplier = Suppliers.FirstOrDefault();
+            SelectedStatus = "Tous";
+            SelectedDate = null;
+            SearchText = string.Empty;
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
+        await ResetAndLoadPageAsync();
+    }
+
+    private new string CalculateTrendText(int current, int previous)
+    {
+        if (previous == 0) return "";
+        int diff = current - previous;
+        if (diff > 0) return $"+{diff}";
+        if (diff < 0) return $"{diff}";
+        return "0";
+    }
+
+    private new string CalculateTrendText(decimal current, decimal previous)
+    {
+        if (previous == 0) return "";
+        decimal diff = current - previous;
+        if (diff > 0) return $"+{diff:N2}";
+        if (diff < 0) return $"{diff:N2}";
+        return "0";
     }
 }

@@ -21,7 +21,7 @@ public interface IUnitOfWork : IDisposable
     IPurchaseOrderDetailRepository PurchaseOrderDetails { get; }
     IDeliveryNoteRepository DeliveryNotes { get; }
     IRepository<DeliveryNoteDetail> DeliveryNoteDetails { get; }
-    IRepository<Invoice> Invoices { get; }
+    IInvoiceRepository Invoices { get; }
     IRepository<InvoiceDetail> InvoiceDetails { get; }
     IRepository<Payment> Payments { get; }
     INeedRepository Needs { get; }

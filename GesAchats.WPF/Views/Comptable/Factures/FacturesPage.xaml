@@ -296,6 +296,43 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            
+            <Style x:Key="PaginationButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="#64748B"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -305,6 +342,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Zone des statistiques -->
@@ -441,7 +479,7 @@
         </Grid>
 
         <!-- DataGrid -->
-        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="20,10,20,20" Padding="0">
+        <Border Grid.Row="3" Style="{StaticResource ModernCard}" Margin="20,10,20,10" Padding="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -464,7 +502,11 @@
                           GridLinesVisibility="Horizontal"
                           MinWidth="1400"
                           HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Auto"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="#F8FAFC"/>
@@ -491,7 +533,7 @@
                         </Style>
                     </DataGrid.Resources>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="N° FACTURE" Binding="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" Width="Auto" MinWidth="140">
+                        <DataGridTextColumn Header="N° FACTURE" Binding="{Binding ExternalInvoiceNumber, TargetNullValue='-'}" Width="Auto" MinWidth="140">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="SemiBold"/>
@@ -500,7 +542,7 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Invoice.Supplier.CompanyName}" Width="Auto" MinWidth="200">
+                        <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding SupplierName}" Width="Auto" MinWidth="200">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
@@ -513,13 +555,13 @@
                                 <DataTemplate>
                                     <TextBlock x:Name="BcTextBlock" Margin="12,8">
                                         <Hyperlink Command="{Binding DataContext.ViewBCCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                   CommandParameter="{Binding Invoice.PurchaseOrderId}"
+                                                   CommandParameter="{Binding PurchaseOrderId, Mode=OneWay}"
                                                    Foreground="#3B82F6">
-                                            <Run Text="{Binding Invoice.PurchaseOrder.OrderNumber, TargetNullValue=''}"/>
+                                            <Run Text="{Binding PurchaseOrderNumber, Mode=OneWay, TargetNullValue=''}"/>
                                         </Hyperlink>
                                     </TextBlock>
                                     <DataTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding Invoice.PurchaseOrderId}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding PurchaseOrderId, Mode=OneWay}" Value="{x:Null}">
                                             <Setter Property="Visibility" Value="Collapsed" TargetName="BcTextBlock"/>
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
@@ -532,13 +574,13 @@
                                 <DataTemplate>
                                     <TextBlock x:Name="BlTextBlock" Margin="12,8">
                                         <Hyperlink Command="{Binding DataContext.ViewBLCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                   CommandParameter="{Binding Invoice.DeliveryNoteId}"
+                                                   CommandParameter="{Binding DeliveryNoteId, Mode=OneWay}"
                                                    Foreground="#3B82F6">
-                                            <Run Text="{Binding Invoice.DeliveryNote.DeliveryNumber, TargetNullValue=''}"/>
+                                            <Run Text="{Binding DeliveryNoteNumber, Mode=OneWay, TargetNullValue=''}"/>
                                         </Hyperlink>
                                     </TextBlock>
                                     <DataTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding Invoice.DeliveryNoteId}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding DeliveryNoteId, Mode=OneWay}" Value="{x:Null}">
                                             <Setter Property="Visibility" Value="Collapsed" TargetName="BlTextBlock"/>
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
@@ -551,8 +593,8 @@
                                 <DataTemplate>
                                     <Button Content="📎" 
                                             Command="{Binding DataContext.ViewFileCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding Invoice.FilePath}"
-                                            Visibility="{Binding Invoice.FilePath, Converter={StaticResource StringToVisibilityConverter}}"
+                                            CommandParameter="{Binding FilePath}"
+                                            Visibility="{Binding FilePath, Converter={StaticResource StringToVisibilityConverter}}"
                                             Margin="12,8"
                                             Padding="10,4"
                                             FontSize="14">
@@ -584,7 +626,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="DATE" Binding="{Binding Invoice.InvoiceDate, StringFormat=dd/MM/yyyy}" Width="Auto" MinWidth="100">
+                        <DataGridTextColumn Header="DATE" Binding="{Binding InvoiceDate, StringFormat=dd/MM/yyyy}" Width="Auto" MinWidth="100">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Padding" Value="12,8"/>
@@ -592,7 +634,7 @@
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                         
-                        <DataGridTextColumn Header="TTC" Binding="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}" Width="Auto" MinWidth="140">
+                        <DataGridTextColumn Header="TTC" Binding="{Binding AmountTTC, StringFormat={}{0:N2} MAD}" Width="Auto" MinWidth="140">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -721,6 +763,48 @@
 
                 <ProgressBar IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" 
                              VerticalAlignment="Center" HorizontalAlignment="Center" Width="200" Grid.Row="1"/>
+            </Grid>
+        </Border>
+
+        <!-- Pagination -->
+        <Border Grid.Row="4" Style="{StaticResource ModernCard}" Margin="20,0,20,20" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding PaginationInfo}"
+                           Foreground="#64748B"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding FirstPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="0,0,6,0"
+                            IsEnabled="{Binding CanGoToFirstPage}">
+                        <TextBlock Text="«" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding PreviousPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="0,0,6,0"
+                            IsEnabled="{Binding CanGoToPreviousPage}">
+                        <TextBlock Text="‹" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding NextPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            Margin="6,0,6,0"
+                            IsEnabled="{Binding CanGoToNextPage}">
+                        <TextBlock Text="›" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                    <Button Command="{Binding LastPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            IsEnabled="{Binding CanGoToLastPage}">
+                        <TextBlock Text="»" FontSize="16" FontWeight="Bold"/>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

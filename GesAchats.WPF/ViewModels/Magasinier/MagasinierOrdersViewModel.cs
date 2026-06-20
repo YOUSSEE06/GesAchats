@@ -3,6 +3,7 @@ using System.Linq;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Admin;
+using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Magasinier;
 
@@ -51,8 +52,8 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         set => SetProperty(ref _pendingOrdersTrendText, value);
     }
 
-    public MagasinierOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
-        : base(unitOfWork, serviceProvider)
+    public MagasinierOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger)
+        : base(unitOfWork, serviceProvider, logger, excludeCancelled: true)
     {
         Title = "Gestion des Bons de Commande";
         
@@ -63,61 +64,16 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         }
     }
 
-    protected override void FilterData()
+    protected override async Task CalculateStatsAsync()
     {
-        // On récupère la liste de base
-        var filtered = _allOrders.AsEnumerable();
-
-        // RÈGLE : Le magasinier ne voit JAMAIS les bons de commande annulés
-        filtered = filtered.Where(x => x.Status != PurchaseOrderStatus.Cancelled);
-
-        // Filtre par texte (N° BC / Réf. Devis)
-        if (!string.IsNullOrWhiteSpace(SearchText))
-        {
-            filtered = filtered.Where(x => 
-                x.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || 
-                x.QuotationRef.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Filtre par fournisseur
-        if (!string.IsNullOrWhiteSpace(SelectedSupplier))
-            filtered = filtered.Where(x => x.SupplierName == SelectedSupplier);
-
-        // Filtre par statut
-        if (!string.IsNullOrWhiteSpace(SelectedStatus))
-            filtered = filtered.Where(x => x.Status == SelectedStatus);
-
-        // Filtre par date
-        if (SearchDate.HasValue)
-            filtered = filtered.Where(x => x.PurchaseOrder.OrderDate.Date == SearchDate.Value.Date);
-
-        var filteredList = filtered.ToList();
+        await base.CalculateStatsAsync();
         
-        Orders.Clear();
-        foreach (var item in filteredList)
-        {
-            Orders.Add(item);
-        }
-
-        // Mettre à jour les statistiques
-        TotalOrders = filteredList.Count;
-        ValidatedOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Validated);
-        PendingOrders = filteredList.Count(x => x.Status == PurchaseOrderStatus.Pending);
-
-        // Calculate yesterday's counts
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        
-        var yesterdayOrders = filteredList.Where(x => 
-            x.PurchaseOrder.CreatedAt.Date >= yesterday && x.PurchaseOrder.CreatedAt.Date < today).ToList();
-
-        int yesterdayTotal = yesterdayOrders.Count;
-        int yesterdayValidated = yesterdayOrders.Count(x => x.Status == PurchaseOrderStatus.Validated);
-        int yesterdayPending = yesterdayOrders.Count(x => x.Status == PurchaseOrderStatus.Pending);
-
-        // Calculate trend texts
-        TotalOrdersTrendText = CalculateTrendText(TotalOrders, yesterdayTotal);
-        ValidatedOrdersTrendText = CalculateTrendText(ValidatedOrders, yesterdayValidated);
-        PendingOrdersTrendText = CalculateTrendText(PendingOrders, yesterdayPending);
+        // Mettre à jour les statistiques spécifiques au magasinier
+        TotalOrders = TotalBc;
+        ValidatedOrders = BcValides;
+        PendingOrders = BcEnAttente;
+        TotalOrdersTrendText = TotalBcTrendText;
+        ValidatedOrdersTrendText = BcValidesTrendText;
+        PendingOrdersTrendText = BcEnAttenteTrendText;
     }
 }

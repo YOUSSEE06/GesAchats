@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using GesAchats.Data.Context;
 using GesAchats.Core.Interfaces;
 using GesAchats.Data;
+using GesAchats.Data.Repositories;
 using GesAchats.Core.Services;
 using GesAchats.WPF.ViewModels.Auth;
 using GesAchats.WPF.ViewModels.Magasinier;
@@ -47,8 +48,24 @@ public partial class App : Application
         // Gestion globale des erreurs
         this.DispatcherUnhandledException += (s, args) =>
         {
+            Log.Error(args.Exception, "Dispatcher unhandled exception");
             MessageBox.Show($"Une erreur non gérée est survenue : {args.Exception.Message}\n\n{args.Exception.StackTrace}", "Erreur Critique", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                Log.Error(ex, "AppDomain unhandled exception");
+                MessageBox.Show($"Une erreur fatale est survenue : {ex.Message}\n\n{ex.StackTrace}", "Erreur Fatale", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        };
+
+        TaskScheduler.UnobservedTaskException += (s, args) =>
+        {
+            Log.Error(args.Exception, "Unobserved task exception");
+            args.SetObserved();
         };
 
         try
@@ -312,6 +329,7 @@ public partial class App : Application
         services.AddTransient<IEmailVerificationService, EmailVerificationService>();
         services.AddTransient<IConformityService, ConformityService>();
         services.AddTransient<IFileStorageService>(s => new FileStorageService(AppDomain.CurrentDomain.BaseDirectory));
+        services.AddTransient<IInvoiceRepository, InvoiceRepository>();
         
         // Dashboard services
         services.AddTransient<IPurchaseOrderService, PurchaseOrderService>();

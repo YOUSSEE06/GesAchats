@@ -28,7 +28,7 @@ public class UnitOfWork : IUnitOfWork
         PurchaseOrderDetails = new PurchaseOrderDetailRepository(_context);
         DeliveryNotes = new DeliveryNoteRepository(_context);
         DeliveryNoteDetails = new Repository<DeliveryNoteDetail>(_context);
-        Invoices = new Repository<Invoice>(_context);
+        Invoices = new InvoiceRepository(_context);
         InvoiceDetails = new Repository<InvoiceDetail>(_context);
         Payments = new Repository<Payment>(_context);
         Needs = new NeedRepository(_context);
@@ -51,7 +51,7 @@ public class UnitOfWork : IUnitOfWork
     public IPurchaseOrderDetailRepository PurchaseOrderDetails { get; private set; }
     public IDeliveryNoteRepository DeliveryNotes { get; private set; }
     public IRepository<DeliveryNoteDetail> DeliveryNoteDetails { get; private set; }
-    public IRepository<Invoice> Invoices { get; private set; }
+    public IInvoiceRepository Invoices { get; private set; }
     public IRepository<InvoiceDetail> InvoiceDetails { get; private set; }
     public IRepository<Payment> Payments { get; private set; }
     public INeedRepository Needs { get; private set; }

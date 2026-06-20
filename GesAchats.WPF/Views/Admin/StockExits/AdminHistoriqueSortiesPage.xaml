@@ -223,6 +223,40 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="PaginationButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#D0CDE8"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" TargetName="border" Value="#F0EBFF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" TargetName="border" Value="#F0EBFF"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="#E8E0F8"/>
+                                <Setter Property="Foreground" Value="#C4C0D8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Background="#F5F6F7" Margin="20">
@@ -232,6 +266,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -249,21 +284,21 @@
             </Grid.ColumnDefinitions>
 
             <controls:KpiCard Grid.Column="0"
-                Title="Total des Sorties"
-                Value="{Binding TotalExits}"
-                TrendText="{Binding TotalExitsTrendText}"
-                Icon="Box"
-                IconColor="#3B82F6"
-                Margin="0,0,7,0"/>
+                              Title="Total des Sorties"
+                              Value="{Binding TotalExits}"
+                              TrendText="{Binding TotalExitsTrendText}"
+                              Icon="Box"
+                              IconColor="#3B82F6"
+                              Margin="0,0,7,0"/>
 
             <controls:KpiCard Grid.Column="1"
-                Title="Quantité Totale Sortie"
-                Value="{Binding TotalQuantityExited}"
-                TrendText="{Binding TotalQuantityExitedTrendText}"
-                Unit=""
-                Icon="ArrowDown"
-                IconColor="#F44336"
-                Margin="7,0,0,0"/>
+                              Title="Quantité Totale Sortie"
+                              Value="{Binding TotalQuantityExited}"
+                              TrendText="{Binding TotalQuantityExitedTrendText}"
+                              Unit=""
+                              Icon="ArrowDown"
+                              IconColor="#F44336"
+                              Margin="7,0,0,0"/>
         </Grid>
 
         <!-- Filters Bar -->
@@ -320,10 +355,14 @@
                           Background="White" BorderThickness="1"
                           RowHeight="44" GridLinesVisibility="None"
                           AlternatingRowBackground="#FDFCFF"
-                          HeadersVisibility="Column">
+                          HeadersVisibility="Column"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Date" Binding="{Binding ExitDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140" CellStyle="{StaticResource BlueCellStyle}"/>
-                        <DataGridTextColumn Header="Article" Binding="{Binding Product.Designation}" Width="*"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="140" CellStyle="{StaticResource BlueCellStyle}"/>
+                        <DataGridTextColumn Header="Article" Binding="{Binding ProductDesignation}" Width="*"/>
                         <DataGridTemplateColumn Header="Quantité" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -337,5 +376,39 @@
                 </DataGrid>
             </Grid>
         </Border>
+
+        <!-- Pagination -->
+        <Grid Grid.Row="5" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" 
+                       Text="{Binding PaginationInfo}" 
+                       Foreground="#666666" 
+                       FontSize="13"
+                       VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right">
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding FirstPageCommand}"
+                        Content="«"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding PreviousPageCommand}"
+                        Content="‹"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding NextPageCommand}"
+                        Content="›"
+                        Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PaginationButtonStyle}"
+                        Command="{Binding LastPageCommand}"
+                        Content="»"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

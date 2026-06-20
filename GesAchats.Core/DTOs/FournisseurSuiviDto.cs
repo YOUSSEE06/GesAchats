@@ -1,3 +1,5 @@
+using GesAchats.Core.Entities;
+
 namespace GesAchats.Core.DTOs;
 
 public class NeedHistoriqueDto
@@ -10,6 +12,37 @@ public class NeedHistoriqueDto
     public string Statut { get; set; } = string.Empty;
 }
 
+public class PurchaseOrderDto
+{
+    public int Id { get; set; }
+    public DateTime OrderDate { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string SupplierName { get; set; } = string.Empty;
+    public string? QuotationRef { get; set; }
+    public decimal TotalTTC { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
+
+public class InvoiceDto
+{
+    public int Id { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string? ExternalInvoiceNumber { get; set; }
+    public DateTime InvoiceDate { get; set; }
+    public int SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+    public int? PurchaseOrderId { get; set; }
+    public string? PurchaseOrderNumber { get; set; }
+    public int? DeliveryNoteId { get; set; }
+    public string? DeliveryNoteNumber { get; set; }
+    public decimal AmountHT { get; set; }
+    public decimal TaxAmount { get; set; }
+    public decimal AmountTTC { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? FilePath { get; set; }
+    public List<PaymentListDto>? Payments { get; set; }
+}
+
 public class DeliveryNoteHistoryDto
 {
     public int Id { get; set; }
@@ -18,6 +51,26 @@ public class DeliveryNoteHistoryDto
     public string SupplierCompanyName { get; set; } = string.Empty;
     public string? PurchaseOrderNumber { get; set; }
     public string Status { get; set; } = string.Empty;
+}
+
+public class StockGlobalDto
+{
+    public int Id { get; set; }
+    public string Designation { get; set; } = string.Empty;
+    public decimal CurrentStock { get; set; }
+    public decimal MinimumStock { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public StockState State { get; set; }
+}
+
+public class StockExitHistoryDto
+{
+    public int Id { get; set; }
+    public DateTime ExitDate { get; set; }
+    public string ProductDesignation { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public string? Reason { get; set; }
+    public decimal StockAfterExit { get; set; }
 }
 
 public class FournisseurSuiviDto

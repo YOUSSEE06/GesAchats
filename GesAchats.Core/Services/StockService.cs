@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
+using GesAchats.Core.DTOs;
 
 namespace GesAchats.Core.Services;
 
@@ -15,6 +17,7 @@ public interface IStockService
     Task<int> GetTrackedProductsCountAsync();
     Task<int> GetLowStockProductsCountAsync();
     Task<List<ProductPriceAnalysisData>> GetProductPriceAnalysisAsync(DateTime startDate, DateTime endDate, int topCount);
+    Task<PagedResult<StockGlobalDto>> GetStockGlobalPagedAsync(int pageNumber, int pageSize, string? searchText, string? selectedStatus, CancellationToken cancellationToken);
 }
 
 public class StockService : IStockService
@@ -141,5 +144,58 @@ public class StockService : IStockService
             .ToList();
             
         return result;
+    }
+
+    public async Task<PagedResult<StockGlobalDto>> GetStockGlobalPagedAsync(int pageNumber, int pageSize, string? searchText, string? selectedStatus, CancellationToken cancellationToken)
+    {
+        var query = _unitOfWork.Products.GetQueryable(true);
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            query = query.Where(p => p.Designation.Contains(searchText));
+        }
+
+        // Apply status filter directly in EF Core query
+        IQueryable<Product> filteredQuery = query;
+        if (!string.IsNullOrWhiteSpace(selectedStatus) && selectedStatus != "Tous")
+        {
+            filteredQuery = selectedStatus switch
+            {
+                "OK" => filteredQuery.Where(p => p.CurrentStock > p.MinimumStock),
+                "Alerte" => filteredQuery.Where(p => p.CurrentStock > 0 && p.CurrentStock <= p.MinimumStock),
+                "Rupture" => filteredQuery.Where(p => p.CurrentStock == 0),
+                _ => filteredQuery
+            };
+        }
+
+        // Get total count
+        var totalCount = await filteredQuery.CountAsync(cancellationToken);
+
+        // Get paginated items with projection to DTO
+        var finalItems = await filteredQuery
+            .OrderBy(p => p.Designation)
+            .ThenBy(p => p.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new StockGlobalDto
+            {
+                Id = p.Id,
+                Designation = p.Designation,
+                CurrentStock = p.CurrentStock,
+                MinimumStock = p.MinimumStock,
+                Unit = p.Unit,
+                State = p.CurrentStock == 0 ? StockState.OutOfStock :
+                        p.CurrentStock <= p.MinimumStock ? StockState.Alert : StockState.Ok
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<StockGlobalDto>
+        {
+            Items = finalItems,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 }

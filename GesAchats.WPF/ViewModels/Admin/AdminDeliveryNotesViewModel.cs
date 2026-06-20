@@ -5,10 +5,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.ViewModels.Base;
+using Serilog;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
@@ -48,8 +50,9 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
-    private CancellationTokenSource? _cts;
-    private System.Threading.Timer? _debounceTimer;
+    private readonly ILogger _logger;
+    private CancellationTokenSource? _searchCts;
+    private int _loadVersion;
 
     // Filter properties
     private string _searchText = string.Empty;
@@ -167,7 +170,7 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _searchText, value))
-                DebouncedFilter();
+                _ = DebouncedFilterAsync();
         }
     }
 
@@ -214,10 +217,11 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     public ICommand NextPageCommand { get; }
     public ICommand LastPageCommand { get; }
 
-    public AdminDeliveryNotesViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
+    public AdminDeliveryNotesViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger)
     {
         _unitOfWork = unitOfWork;
         _serviceProvider = serviceProvider;
+        _logger = logger;
         Title = "Réception des Bons de Livraison (BL)";
 
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
@@ -292,13 +296,39 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         }
     }
 
-    private void DebouncedFilter()
+    private async Task DebouncedFilterAsync()
     {
-        _debounceTimer?.Dispose();
-        _debounceTimer = new System.Threading.Timer(async _ =>
+        var newCts = new CancellationTokenSource();
+        var oldCts = Interlocked.Exchange(ref _searchCts, newCts);
+
+        if (oldCts != null)
         {
-            await ResetAndLoadPageAsync();
-        }, null, 300, System.Threading.Timeout.Infinite);
+            oldCts.Cancel();
+            oldCts.Dispose();
+        }
+
+        try
+        {
+            await Task.Delay(400, newCts.Token);
+            CurrentPage = 1;
+            await LoadPageAsync(newCts.Token);
+        }
+        catch (OperationCanceledException) when (newCts.IsCancellationRequested)
+        {
+            // Normal cancellation, do nothing
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error during debounced filter");
+        }
+        finally
+        {
+            if (ReferenceEquals(_searchCts, newCts))
+            {
+                Interlocked.CompareExchange(ref _searchCts, null, newCts);
+            }
+            newCts.Dispose();
+        }
     }
 
     private async Task ResetAndLoadPageAsync()
@@ -307,11 +337,9 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         await LoadPageAsync();
     }
 
-    private async Task LoadPageAsync()
+    private async Task LoadPageAsync(CancellationToken cancellationToken = default)
     {
-        // Cancel previous operation
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
+        var version = Interlocked.Increment(ref _loadVersion);
 
         try
         {
@@ -322,26 +350,48 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
                 SelectedFilterSupplier,
                 SelectedStatus,
                 FilterReceptionDate,
-                _cts.Token);
+                cancellationToken);
 
-            DeliveryNotes.Clear();
-            foreach (var dto in result.Items)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (version != _loadVersion)
+                return;
+
+            // Update UI on dispatcher thread
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
             {
-                DeliveryNotes.Add(new AdminDeliveryNoteItemViewModel(dto));
+                UpdateItems(result);
             }
-
-            TotalItems = result.TotalCount;
-
-            // If current page is beyond total pages, go to last page
-            if (CurrentPage > TotalPages && TotalPages > 0)
+            else
             {
-                CurrentPage = TotalPages;
-                await LoadPageAsync();
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => UpdateItems(result), DispatcherPriority.Normal, cancellationToken);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // Operation cancelled, ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading page");
+        }
+    }
+
+    private void UpdateItems(PagedResult<DeliveryNoteHistoryDto> result)
+    {
+        DeliveryNotes.Clear();
+        foreach (var dto in result.Items)
+        {
+            DeliveryNotes.Add(new AdminDeliveryNoteItemViewModel(dto));
+        }
+
+        TotalItems = result.TotalCount;
+
+        // If current page is beyond total pages, go to last page
+        if (CurrentPage > TotalPages && TotalPages > 0)
+        {
+            CurrentPage = TotalPages;
+            _ = LoadPageAsync();
         }
     }
 
