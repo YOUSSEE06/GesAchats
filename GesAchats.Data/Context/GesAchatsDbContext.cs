@@ -34,9 +34,8 @@ public class GesAchatsDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            // Cette configuration sera normalement faite via l'injection de dépendances dans le projet WPF
-            // Pour les outils de design (migrations), utilisez appsettings.local.json dans le projet WPF
-            // Ou configurez manuellement avec : optionsBuilder.UseNpgsql("votre_chaine_de_connexion");
+            // Cette configuration est faite via l'injection de dépendances dans le projet WPF
+            // (App.xaml.cs) qui pointe toujours vers Supabase.
         }
         
         // Supprimer l'avertissement sur les modifications de modèle en attente

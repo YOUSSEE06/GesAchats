@@ -72,8 +72,7 @@ public partial class App : Application
             {
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                    .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
                 Configuration = builder.Build();
 
@@ -300,9 +299,17 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // Configuration de la base de données - Transient pour WPF pour éviter les conflits de DbContext
+        // Configuration de la base de données - Transient pour WPF pour éviter les conflits de DbContext.
+        // SUPABASE est forcé dans tous les cas pour éviter qu'un ancien appsettings.json (localhost)
+        // ou un fichier manquant ne fasse pointer l'application vers une ancienne base locale.
+        var connStr = Configuration.GetConnectionString("DefaultConnection") ?? "";
+        if (!connStr.Contains("supabase.com", StringComparison.OrdinalIgnoreCase))
+        {
+            connStr = "Host=aws-1-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.pwnqodqomtnfhbeiuzrf;Password=?ys7qd*?3GpW+?*;SSL Mode=Require;Trust Server Certificate=true;Timeout=15;CommandTimeout=30;";
+        }
+
         services.AddDbContext<GesAchatsDbContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")),
+            options.UseNpgsql(connStr),
             ServiceLifetime.Transient);
 
         // Configuration Smtp
