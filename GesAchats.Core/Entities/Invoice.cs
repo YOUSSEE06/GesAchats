@@ -61,6 +61,8 @@ public class Invoice
 
     public virtual ICollection<InvoiceDetail> Details { get; set; } = new List<InvoiceDetail>();
 
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
     public int CreatedById { get; set; }
 
     [ForeignKey(nameof(CreatedById))]

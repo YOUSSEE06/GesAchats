@@ -20,6 +20,19 @@ public class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             .FirstOrDefaultAsync(i => i.Id == id);
     }
 
+    /// <summary>
+    /// Factures avec fournisseur et règlements associés, pour calculer le solde (montant_ttc - somme des règlements).
+    /// </summary>
+    public async Task<IEnumerable<Invoice>> GetInvoicesWithSupplierAndPaymentsAsync()
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(i => i.Supplier)
+            .Include(i => i.Payments)
+            .OrderByDescending(i => i.InvoiceDate)
+            .ToListAsync();
+    }
+
     public async Task<PagedResult<InvoiceDto>> GetInvoicesPagedAsync(int pageNumber, int pageSize, string? searchText, int? supplierId, string? status, DateTime? date, CancellationToken cancellationToken)
     {
         var query = _dbSet.AsNoTracking();

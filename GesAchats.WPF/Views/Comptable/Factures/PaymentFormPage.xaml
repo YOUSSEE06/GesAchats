@@ -142,11 +142,11 @@
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}"/>
+                                        <TextBlock Text="{Binding Invoice.ExternalInvoiceNumber, TargetNullValue='-'}" FontWeight="SemiBold"/>
                                         <TextBlock Text=" - "/>
                                         <TextBlock Text="{Binding Invoice.Supplier.CompanyName}"/>
-                                        <TextBlock Text=" - "/>
-                                        <TextBlock Text="{Binding Invoice.AmountTTC, StringFormat={}{0:N2} MAD}"/>
+                                        <TextBlock Text=" - Reste: "/>
+                                        <TextBlock Text="{Binding Balance, StringFormat={}{0:N2} MAD}" FontWeight="Bold" Foreground="#FF9800"/>
                                         <TextBlock Text=" - "/>
                                         <TextBlock Text="{Binding StatusCalculated}" FontWeight="SemiBold" Foreground="{Binding StatusColor}"/>
                                     </StackPanel>

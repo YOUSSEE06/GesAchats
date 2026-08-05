@@ -94,24 +94,26 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
         IsBusy = true;
         try
         {
-            var invoices = await _unitOfWork.Invoices.GetAllIncludingAsync(i => i.Supplier);
-            var payments = await _unitOfWork.Payments.GetAllAsync();
-            
+            // Une seule requête : factures + fournisseur + règlements (Include Payments)
+            var invoices = await _unitOfWork.Invoices.GetInvoicesWithSupplierAndPaymentsAsync();
+
             var invoiceViewModels = new List<InvoiceWithPaymentsViewModel>();
             foreach (var invoice in invoices)
             {
                 var vm = new InvoiceWithPaymentsViewModel(invoice);
-                var invoicePayments = payments.Where(p => p.InvoiceId == invoice.Id);
-                foreach (var payment in invoicePayments)
+                foreach (var payment in invoice.Payments)
                 {
                     vm.Payments.Add(payment);
                 }
                 invoiceViewModels.Add(vm);
             }
-            
-            // Keep only invoices that are not fully paid
+
+            // Afficher uniquement les factures avec un solde restant (reste > 0) :
+            // - facture payée (reste = 0) -> exclue
+            // - facture partiellement payée -> reste = TTC - SUM(règlements)
+            // - aucune règlement -> reste = TTC
             Invoices = new ObservableCollection<InvoiceWithPaymentsViewModel>(
-                invoiceViewModels.Where(i => i.StatusCalculated != "Payée").OrderByDescending(i => i.Invoice.InvoiceDate));
+                invoiceViewModels.Where(i => i.Balance > 0).OrderByDescending(i => i.InvoiceDate));
         }
         finally
         {
