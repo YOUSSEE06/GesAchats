@@ -1066,40 +1066,4 @@ public partial class EmployeeManagementViewModel : ObservableObject
             IsBusy = false;
         }
     }
-
-    [RelayCommand]
-    private async Task SyncSupabaseAccounts()
-    {
-        try
-        {
-            IsBusy = true;
-            StatusMessage = "Synchronisation des comptes Supabase...";
-
-            var results = await _employeeService.SyncSupabaseAccountsAsync();
-            if (results.Count == 0)
-            {
-                StatusMessage = "Aucun compte à synchroniser : tous les utilisateurs sont déjà liés à Supabase.";
-                MessageBox.Show("Aucun compte nécessitant une synchronisation Supabase.", "Synchronisation", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                var lines = results.Select(r => $"• {r.FullName} — {r.Email}\n   Mot de passe temporaire : {r.TemporaryPassword}");
-                var text = string.Join("\n\n", lines);
-                StatusMessage = $"{results.Count} compte(s) synchronisé(s).";
-                MessageBox.Show(text, "Comptes synchronisés — Transmettez ces mots de passe aux employés", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            await LoadEmployeesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error syncing Supabase accounts");
-            StatusMessage = "Erreur lors de la synchronisation des comptes.";
-            MessageBox.Show("Une erreur est survenue pendant la synchronisation.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
 }
