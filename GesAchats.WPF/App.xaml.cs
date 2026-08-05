@@ -29,6 +29,7 @@ using GesAchats.WPF.Views.Acheteur.Commandes;
 using GesAchats.WPF.Services;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using Npgsql;
 
 using GesAchats.WPF.Views.Magasinier.NeedsHistory;
 
@@ -39,14 +40,16 @@ public partial class App : Application
     public IServiceProvider ServiceProvider { get; private set; } = null!;
     public IConfiguration Configuration { get; private set; } = null!;
 
+    private static string _resolvedConnectionString = null!;
+    private static string _resolvedEndpointLabel = "configuration .env";
+    private static string _resolvedEndpointDiagnostic = "(aucun)";
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // Correction globale pour Npgsql/PostgreSQL : force l'utilisation des DateTime UTC
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-        // Gestion globale des erreurs
         this.DispatcherUnhandledException += (s, args) =>
         {
             Log.Error(args.Exception, "Dispatcher unhandled exception");
@@ -70,74 +73,71 @@ public partial class App : Application
         };
 
         try
+        {
+            EnvLoader.Load(AppDomain.CurrentDomain.BaseDirectory);
+
+            var anonKey = EnvLoader.Get("SUPABASE_ANON_KEY") ?? EnvLoader.Get("SUPABASE_PUBLISHABLE_KEY");
+            if (string.IsNullOrWhiteSpace(anonKey) || anonKey.Contains("COLLEZ", StringComparison.OrdinalIgnoreCase) || anonKey.Contains("TON_", StringComparison.OrdinalIgnoreCase))
             {
-                // Chargement du fichier .env (secrets) situé à côté de l'exécutable.
-                EnvLoader.Load(AppDomain.CurrentDomain.BaseDirectory);
+                MessageBox.Show(
+                    "SUPABASE_ANON_KEY / SUPABASE_PUBLISHABLE_KEY n'est pas configurée dans le fichier .env.\n\n" +
+                    "La connexion et le bootstrap Supabase Auth échoueront tant que la clé n'est pas renseignée " +
+                    "(Dashboard Supabase → Settings → API → anon key).",
+                    "Configuration incomplète", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
-                var anonKey = EnvLoader.Get("SUPABASE_ANON_KEY");
-                if (string.IsNullOrWhiteSpace(anonKey) || anonKey.Contains("COLLEZ", StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox.Show(
-                        "SUPABASE_ANON_KEY n'est pas configurée dans le fichier .env.\n\n" +
-                        "La connexion et le bootstrap Supabase Auth échoueront tant que la clé n'est pas renseignée " +
-                        "(Dashboard Supabase → Settings → API → anon key).",
-                        "Configuration incomplète", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            Configuration = builder.Build();
 
-                Configuration = builder.Build();
+            var serviceCollection = new ServiceCollection();
 
-                var serviceCollection = new ServiceCollection();
-                ConfigureServices(serviceCollection);
+            var (connStr, label, diag) = await ProbeBestConnectionStringAsync();
+            _resolvedConnectionString = connStr;
+            _resolvedEndpointLabel = label;
+            _resolvedEndpointDiagnostic = diag;
+            Log.Information("Endpoint BDD sélectionné : {Label} — diagnostic : {Diag}", label, diag);
 
-                ServiceProvider = serviceCollection.BuildServiceProvider();
+            ConfigureServices(serviceCollection, connStr);
 
-                // Initialisation de la base de données (Seed) de manière asynchrone sans bloquer l'UI
+            ServiceProvider = serviceCollection.BuildServiceProvider();
+
             try
             {
                 using (var scope = ServiceProvider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<GesAchatsDbContext>();
-                    
-                    // Étape 1: Vérifier et ajouter les colonnes manquantes à la table Products
+
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
-                            -- Ajouter LastPurchaseDate si elle n'existe pas
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Products' AND column_name = 'LastPurchaseDate') THEN
                                 ALTER TABLE ""Products"" ADD COLUMN ""LastPurchaseDate"" TIMESTAMP WITH TIME ZONE NULL;
                             END IF;
 
-                            -- Ajouter DailyConsumption si elle n'existe pas
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Products' AND column_name = 'DailyConsumption') THEN
                                 ALTER TABLE ""Products"" ADD COLUMN ""DailyConsumption"" NUMERIC(18,2) NOT NULL DEFAULT 1;
                             END IF;
 
-                            -- Ajouter IsNew si elle n'existe pas
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Products' AND column_name = 'IsNew') THEN
                                 ALTER TABLE ""Products"" ADD COLUMN ""IsNew"" BOOLEAN NOT NULL DEFAULT false;
                             END IF;
 
-                            -- Ajouter CreatedBy si elle n'existe pas
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Products' AND column_name = 'CreatedBy') THEN
                                 ALTER TABLE ""Products"" ADD COLUMN ""CreatedBy"" VARCHAR(255) NULL;
                             END IF;
 
-                            -- Ajouter SupabaseAuthId à la table Users si elle n'existe pas
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Users' AND column_name = 'SupabaseAuthId') THEN
                                 ALTER TABLE ""Users"" ADD COLUMN ""SupabaseAuthId"" UUID NULL;
                             END IF;
 
-                            -- RÉPARATION DU MODULE COMPTABLE (bc_id, bl_id, etc.)
-                            -- 1. Renommage des tables si nécessaire
                             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Invoices') AND 
                                NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
                                 ALTER TABLE ""Invoices"" RENAME TO factures;
@@ -153,7 +153,6 @@ public partial class App : Application
                                 ALTER TABLE ""DeliveryNotes"" RENAME TO bons_livraison;
                             END IF;
 
-                            -- 2. Ajout des colonnes à la table factures
                             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'factures') THEN
                                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='factures' AND column_name='bc_id') THEN
                                     ALTER TABLE factures ADD COLUMN bc_id INTEGER;
@@ -174,55 +173,45 @@ public partial class App : Application
                         END $$;
                     ");
 
-                    // Étape 2: Vérifier si la table __EFMigrationsHistory existe, et marquer toutes les migrations comme appliquées si nécessaire
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
-                            -- Vérifier si la table __EFMigrationsHistory existe
                             IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory') THEN
-                                -- Vérifier et insérer InitialPostgres
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260430151534_InitialPostgres') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260430151534_InitialPostgres', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer UpdateComptableModule
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260505165725_UpdateComptableModule') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260505165725_UpdateComptableModule', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer AddInvoiceFilePath
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113458_AddInvoiceFilePath') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506113458_AddInvoiceFilePath', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer SyncInvoiceModel
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506113841_SyncInvoiceModel') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506113841_SyncInvoiceModel', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer FixPendingChanges
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260506114425_FixPendingChanges') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260506114425_FixPendingChanges', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer AddMagasin
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260528151908_AddMagasin') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260528151908_AddMagasin', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer AddSetNullForPurchaseOrderNeedId
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260530010111_AddSetNullForPurchaseOrderNeedId') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260530010111_AddSetNullForPurchaseOrderNeedId', '8.0.10');
                                 END IF;
 
-                                -- Vérifier et insérer AddDashboardKpiSnapshot (la nouvelle migration)
                                 IF NOT EXISTS (SELECT 1 FROM ""__EFMigrationsHistory"" WHERE ""MigrationId"" = '20260601020010_AddDashboardKpiSnapshot') THEN
                                     INSERT INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
                                     VALUES ('20260601020010_AddDashboardKpiSnapshot', '10.0.7');
@@ -231,14 +220,11 @@ public partial class App : Application
                         END $$;
                     ");
 
-                    // Étape 3: Appliquer les migrations restantes (notamment AddMagasin)
                     await context.Database.MigrateAsync();
                     
-                    // Étape 4: Nettoyer les magasins dupliqués
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
-                            -- Garder seulement le premier magasin pour chaque nom, et supprimer les doublons
                             DELETE FROM ""Magasins""
                             WHERE ""Id"" NOT IN (
                                 SELECT MIN(""Id"")
@@ -246,19 +232,16 @@ public partial class App : Application
                                 GROUP BY ""Nom""
                             );
 
-                            -- Mettre à jour les produits qui pointaient vers des magasins supprimés, pour pointer vers le premier magasin
                             UPDATE ""Products""
                             SET ""MagasinId"" = (SELECT MIN(""Id"") FROM ""Magasins"" WHERE ""Nom"" = 'Magasin Principal')
                             WHERE ""MagasinId"" NOT IN (SELECT ""Id"" FROM ""Magasins"");
                         END $$;
                     ");
 
-                    // Étape 5: Seeding minimal (rôles + compte admin lié à Supabase Auth)
                     var supabaseAuthClient = scope.ServiceProvider.GetRequiredService<SupabaseAuthClient>();
                     await DbInitializer.SeedRolesAsync(context);
                     await DbInitializer.BootstrapAdminAsync(context, supabaseAuthClient);
 
-                    // Étape 6: Créer la table StockExits manuellement si elle n'existe pas
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
@@ -280,7 +263,6 @@ public partial class App : Application
                         END $$;
                     ");
 
-                    // Étape 7: Créer la table DashboardKpiSnapshots manuellement si elle n'existe pas
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
                         BEGIN
@@ -303,30 +285,206 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur lors de l'initialisation de la base de données :\n{ex.Message}\n\n{ex.StackTrace}\n\nInner Exception : {ex.InnerException?.Message}", 
-                    "Erreur de Base de Données", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowDatabaseStartupError(ex, _resolvedConnectionString, _resolvedEndpointLabel, _resolvedEndpointDiagnostic);
             }
 
-                // Démarrage de l'interface utilisateur
-                var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
-                loginWindow.Show();
+            var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
+            loginWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}\n\nInner Exception : {ex.InnerException?.Message}", 
+                "Erreur de Démarrage", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Sonde plusieurs endpoints (celui du .env, puis les poolers aws-0 et aws-1 en
+    /// mode session et transaction) et retourne la 1ère chaîne de connexion qui
+    /// fonctionne. Inclut un diagnostic clair si aucun endpoint ne répond.
+    /// </summary>
+    private static async Task<(string ConnectionString, string Label, string Diagnostic)> ProbeBestConnectionStringAsync()
+    {
+        var errors = new System.Collections.Generic.List<string>();
+        var poolerUser = EnvLoader.BuildPoolerUsername();
+
+        var candidates = new System.Collections.Generic.List<(string ConnStr, string Label)>();
+
+        try
+        {
+            candidates.Add((EnvLoader.BuildConnectionString(), "Endpoint .env principal"));
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"[.env] Impossible de construire la chaîne principale : {ex.Message}");
+        }
+
+        foreach (var ep in EnvLoader.FallbackPoolerEndpoints)
+        {
+            try
+            {
+                var cs = EnvLoader.BuildConnectionString(
+                    host: ep.Host,
+                    port: ep.Port.ToString(),
+                    username: poolerUser);
+                candidates.Add((cs, ep.Label));
+            }
+            catch { }
+        }
+
+        var refDb = EnvLoader.InferProjectRef();
+        if (!string.IsNullOrEmpty(refDb))
+        {
+            try
+            {
+                var directCs = EnvLoader.BuildConnectionString(
+                    host: $"db.{refDb}.supabase.co",
+                    port: "5432",
+                    username: "postgres");
+                candidates.Add((directCs, $"Connexion directe db.{refDb}.supabase.co (IPv6 uniquement)"));
+            }
+            catch { }
+        }
+
+        foreach (var (connStr, label) in candidates)
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(12));
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync(cts.Token);
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT 1";
+                await cmd.ExecuteNonQueryAsync(cts.Token);
+                return (connStr, label, $"OK via {label}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur fatale au démarrage de l'application :\n{ex.Message}\n\n{ex.StackTrace}\n\nInner Exception : {ex.InnerException?.Message}", 
-                    "Erreur de Démarrage", MessageBoxButton.OK, MessageBoxImage.Error);
-                Shutdown();
+                var shortMsg = ex.InnerException?.Message ?? ex.Message;
+                errors.Add($"[{label}] {ex.GetType().Name}: {Truncate(shortMsg, 180)}");
+                Log.Warning("Échec sonde BDD {Label} : {Msg}", label, shortMsg);
             }
+        }
+
+        var diag = "Aucun endpoint Supabase n'a pu être joint. " +
+                   "Le pooler Supavisor renvoie « tenant/user not found » : le mot de passe base de données " +
+                   "(SUPABASE_PASSWORD) doit être réinitialisé depuis le Dashboard Supabase → Settings → Database " +
+                   "puis recopié dans le .env. Si vous êtes sur un réseau IPv4-only, n'utilisez pas la connexion " +
+                   "directe db.* (IPv6 uniquement) — prenez le Pooler Session / Transaction dans le bouton « Connect ».";
+
+        var fallbackConn = candidates.Count > 0 ? candidates[0].ConnStr : EnvLoader.BuildConnectionString();
+        return (fallbackConn, candidates.Count > 0 ? candidates[0].Label : ".env (défaut)",
+            diag + "\n\nDétails des sondages :\n- " + string.Join("\n- ", errors));
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private static void ShowDatabaseStartupError(Exception ex, string connStr, string label, string? probeDiagnostic = null)
     {
-        // Configuration de la base de données - Transient pour WPF pour éviter les conflits de DbContext.
-        // Les identifiants proviennent uniquement du fichier .env (voir EnvLoader).
-        var connStr = EnvLoader.BuildConnectionString();
+        var shortConn = MaskConnStr(connStr);
+        var combinedErrText = ex.Message + " " + ex.InnerException?.Message;
+        var isTenantNotFound = combinedErrText.Contains("tenant", StringComparison.OrdinalIgnoreCase)
+                               || combinedErrText.Contains("ENOTFOUND", StringComparison.OrdinalIgnoreCase);
+        var isSocketNoData = combinedErrText.Contains("aucune donnée du type requise", StringComparison.OrdinalIgnoreCase)
+                            || combinedErrText.Contains("no such host", StringComparison.OrdinalIgnoreCase)
+                            || combinedErrText.Contains("Socket", StringComparison.OrdinalIgnoreCase)
+                            || combinedErrText.Contains("WSANO_DATA", StringComparison.OrdinalIgnoreCase)
+                            || combinedErrText.Contains("TemporaryFailure", StringComparison.OrdinalIgnoreCase);
+        var isPasswordAuth = combinedErrText.Contains("password authentication", StringComparison.OrdinalIgnoreCase)
+                            || combinedErrText.Contains("mot de passe", StringComparison.OrdinalIgnoreCase);
 
+        string hint;
+        if (isTenantNotFound)
+        {
+            hint =
+                "🐛 Cause : Le Pooler Supavisor (aws-0 / aws-1) ne reconnaît PAS le couple tenant + mot de passe.\n" +
+                "   C'est quasi-systématiquement un problème de synchronisation mot-de-passe <-> pooler chez Supabase.\n\n" +
+                "👉 À faire IMPÉRATIVEMENT dans cet ordre :\n" +
+                "   1. Dashboard Supabase → Project Settings → Database.\n" +
+                "   2. Section « Database password » → bouton « Reset database password ».\n" +
+                "      ⚠️ Choisissez un mdp SANS le caractère « ; » (séparateur de la connection string).\n" +
+                "   3. ATTENDEZ 1 à 2 MINUTES (le pooler Supavisor a un cache sur les secrets).\n" +
+                "   4. Bouton vert « Connect » en haut à droite → Connection string → onglet « C# / ADO.NET ».\n" +
+                "   5. Choisissez « Session pooler » (PORT 5432 — IPv4, compatible tous réseaux) et « Copy ».\n" +
+                "   6. Mettez à jour le fichier « .env » À DEUX ENDROITS :\n" +
+                "        • GesAchats.WPF\\.env\n" +
+                "        • GesAchats.WPF\\bin\\Debug\\net10.0-windows\\.env\n" +
+                "      SUPABASE_HOST     = aws-X-eu-west-2.pooler.supabase.com\n" +
+                "      SUPABASE_PORT     = 5432\n" +
+                "      SUPABASE_USERNAME = postgres.ukntkgwtkspyjzrnlmxg\n" +
+                "      SUPABASE_PASSWORD = <le NOUVEAU mot de passe (étape 2)>\n\n" +
+                "   7. Relancez l'application. Si ça échoue encore, attendez 60s de plus (propagation Supabase).";
+        }
+        else if (isPasswordAuth)
+        {
+            hint =
+                "🐛 Cause : Échec « password authentication failed » avec un rôle Postgres valide.\n\n" +
+                "👉 À faire :\n" +
+                "   • Réinitialisez le mot de passe DB dans Supabase Dashboard → Settings → Database.\n" +
+                "   • Vérifiez que SUPABASE_PASSWORD dans le .env ne contient pas de « ; » ou d'espace trailing.\n" +
+                "   • Attendez 1-2 min après le reset (délai pooler).";
+        }
+        else if (isSocketNoData)
+        {
+            hint =
+                "🐛 Cause la plus fréquente : réseau IPv4-only + connexion directe db.*.supabase.co (IPv6-only).\n" +
+                "   Sinon : DNS / firewall d'entreprise / proxy / VPN qui bloque le pooler.\n\n" +
+                "👉 À faire :\n" +
+                "   1. Dans Dashboard Supabase → Connect → Connection string → prenez « Session pooler » (IPv4).\n" +
+                "   2. Vérifiez les règles firewall : trafic sortant TCP vers aws-0-eu-west-2.pooler.supabase.com:5432\n" +
+                "      et aws-1-eu-west-2.pooler.supabase.com:5432 / :6543.\n" +
+                "   3. Si VPN / proxy / réseau d'entreprise : testez depuis une connexion 4G/5G pour isoler.";
+        }
+        else
+        {
+            hint =
+                "👉 Conseils génériques :\n" +
+                "   • Vérifiez SUPABASE_HOST / PORT / USERNAME / PASSWORD dans le .env.\n" +
+                "   • Reset du mot de passe DB dans Dashboard Supabase → Settings → Database.\n" +
+                "   • Les 2 fichiers .env (source + bin\\…) doivent être à jour.";
+        }
+
+        var msg =
+            $"Erreur lors de l'initialisation de la base de données.\n\n" +
+            $"Endpoint utilisé  : {label}\n" +
+            $"Connection string : {shortConn}\n\n" +
+            $"Type    : {ex.GetType().Name}\n" +
+            $"Message : {ex.Message}\n" +
+            $"Inner   : {ex.InnerException?.Message}\n" +
+            $"------------------------------------------------------------------\n" +
+            $"{hint}\n" +
+            $"------------------------------------------------------------------\n";
+
+        if (!string.IsNullOrWhiteSpace(probeDiagnostic) && !probeDiagnostic.StartsWith("OK via", StringComparison.OrdinalIgnoreCase))
+        {
+            msg += $"\n📋 RÉSULTAT DES 6 SONDAGES (avant initialisation) :\n{probeDiagnostic}\n\n";
+        }
+
+        msg += $"Stack trace :\n{ex.StackTrace}";
+
+        MessageBox.Show(msg, "Erreur de Base de Données (Supabase / PostgreSQL)",
+            MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private static string Truncate(string s, int n) => string.IsNullOrEmpty(s) ? "" : s.Length <= n ? s : s.Substring(0, n) + "…";
+
+    private static string MaskConnStr(string cs)
+    {
+        if (string.IsNullOrEmpty(cs)) return "(vide)";
+        try
+        {
+            var cb = new NpgsqlConnectionStringBuilder(cs);
+            return $"Host={cb.Host};Port={cb.Port};Database={cb.Database};Username={cb.Username};Password=***;SslMode={cb.SslMode}";
+        }
+        catch
+        {
+            return "(non affichable)";
+        }
+    }
+
+    private void ConfigureServices(IServiceCollection services, string connectionString)
+    {
         services.AddDbContext<GesAchatsDbContext>(options =>
-            options.UseNpgsql(connStr),
+            options.UseNpgsql(connectionString),
             ServiceLifetime.Transient);
 
         // Configuration Smtp - valeurs issues uniquement du fichier .env
