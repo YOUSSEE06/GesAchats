@@ -1,8 +1,8 @@
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.Core.DTOs;
+using GesAchats.Core.Security;
 using Serilog;
-using BCryptNet = BCrypt.Net.BCrypt;
 using System.Text.RegularExpressions;
 
 namespace GesAchats.Core.Services;
@@ -19,14 +19,16 @@ public class EmployeeService : IEmployeeService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailVerificationService _emailVerificationService;
+    private readonly SupabaseAuthClient _authClient;
     private readonly ILogger _logger;
     private readonly Dictionary<string, PendingEmployeeInfo> _pendingEmployeeInfo = new();
 
-    public EmployeeService(IUnitOfWork unitOfWork, ILogger logger, IEmailVerificationService emailVerificationService)
+    public EmployeeService(IUnitOfWork unitOfWork, ILogger logger, IEmailVerificationService emailVerificationService, SupabaseAuthClient authClient)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _emailVerificationService = emailVerificationService;
+        _authClient = authClient;
     }
 
     public async Task<IEnumerable<EmployeeDto>> GetEmployeesAsync()
@@ -222,9 +224,6 @@ public class EmployeeService : IEmployeeService
             // First check if there's existing active user for that role!
             var hasExistingActive = await _unitOfWork.UserRepository.GetActiveUserByRoleAsync(role.Code) != null;
 
-            // Generate random temporary password!
-            var tempPassword = GenerateRandomPassword();
-
             // Create user NOW!
             var user = new User
             {
@@ -232,7 +231,7 @@ public class EmployeeService : IEmployeeService
                 Email = normalizedEmail,
                 Login = normalizedEmail,
                 RoleId = role.Id,
-                PasswordHash = BCryptNet.HashPassword(tempPassword),
+                PasswordHash = string.Empty, // Supabase Auth gère le mot de passe.
                 IsActive = !hasExistingActive,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -241,10 +240,26 @@ public class EmployeeService : IEmployeeService
             await _unitOfWork.UserRepository.AddAsync(user);
             await _unitOfWork.CompleteAsync();
 
+            // Crée le compte correspondant dans Supabase Auth : l'employé pourra se connecter
+            // immédiatement avec le mot de passe temporaire (Confirm email désactivé).
+            var tempPassword = GenerateRandomPassword();
+            var signUp = await _authClient.SignUpAsync(normalizedEmail, tempPassword);
+            if (signUp.success && signUp.userId.HasValue)
+            {
+                user.SupabaseAuthId = signUp.userId;
+                user.UpdatedAt = DateTime.UtcNow;
+                await _unitOfWork.CompleteAsync();
+                _logger.Information("Compte Supabase créé pour {Email}", normalizedEmail);
+            }
+            else if (!signUp.alreadyExists)
+            {
+                _logger.Warning("Création du compte Supabase échouée pour {Email} : {Message}", normalizedEmail, signUp.message);
+            }
+
             // Remove from pending!
             _pendingEmployeeInfo.Remove(normalizedEmail);
 
-            return (true, "Compte employé créé avec succès. L'employé doit utiliser la réinitialisation du mot de passe pour définir son mot de passe.");
+            return (true, "Compte employé créé avec succès. Le mot de passe temporaire a été créé chez Supabase : remettez-le à l'employé.");
         }
         catch (Exception ex)
         {
@@ -255,30 +270,7 @@ public class EmployeeService : IEmployeeService
 
     private string GenerateRandomPassword()
     {
-        // Generate a random password that meets security requirements!
-        const string lowerChars = "abcdefghijklmnopqrstuvwxyz";
-        const string upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const string numberChars = "0123456789";
-        const string specialChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
-
-        var random = new Random();
-        var password = new List<char>
-        {
-            upperChars[random.Next(upperChars.Length)],
-            lowerChars[random.Next(lowerChars.Length)],
-            numberChars[random.Next(numberChars.Length)],
-            specialChars[random.Next(specialChars.Length)]
-        };
-
-        // Add 4 more random characters
-        var allChars = lowerChars + upperChars + numberChars + specialChars;
-        for (int i = 0; i < 4; i++)
-        {
-            password.Add(allChars[random.Next(allChars.Length)]);
-        }
-
-        // Shuffle the password!
-        return new string(password.OrderBy(c => random.Next()).ToArray());
+        return PasswordGenerator.Generate();
     }
 
     public async Task<(bool success, string message)> DeleteEmployeeAsync(int userId)
@@ -321,5 +313,60 @@ public class EmployeeService : IEmployeeService
             _logger.Error(ex, "Error deleting employee {UserId}", userId);
             return (false, "Une erreur est survenue.");
         }
+    }
+
+    /// <summary>
+    /// Crée les comptes Supabase Auth manquants pour les utilisateurs existants (migration).
+    /// Retourne la liste (email, mot de passe temporaire) à transmettre aux employés.
+    /// </summary>
+    public async Task<List<(string Email, string TemporaryPassword, string FullName)>> SyncSupabaseAccountsAsync()
+    {
+        var results = new List<(string Email, string TemporaryPassword, string FullName)>();
+
+        var users = await _unitOfWork.UserRepository.GetAllIncludingAsync(u => u.Role);
+        var toSync = users.Where(u => u.SupabaseAuthId == null).ToList();
+
+        if (toSync.Count == 0)
+        {
+            _logger.Information("SyncSupabaseAccounts: aucun compte à synchroniser.");
+            return results;
+        }
+
+        foreach (var user in toSync)
+        {
+            var password = GenerateRandomPassword();
+            var signUp = await _authClient.SignUpAsync(user.Email, password);
+
+            if (signUp.success && signUp.userId.HasValue)
+            {
+                user.SupabaseAuthId = signUp.userId;
+                user.UpdatedAt = DateTime.UtcNow;
+                _unitOfWork.UserRepository.Update(user);
+                results.Add((user.Email, password, user.FullName ?? user.Login));
+            }
+            else if (signUp.alreadyExists)
+            {
+                // Déjà présent chez Supabase : tente une liaison avec le mot de passe généré.
+                var signIn = await _authClient.SignInWithPasswordAsync(user.Email, password);
+                if (signIn.success && signIn.userId.HasValue)
+                {
+                    user.SupabaseAuthId = signIn.userId;
+                    user.UpdatedAt = DateTime.UtcNow;
+                    _unitOfWork.UserRepository.Update(user);
+                    results.Add((user.Email, password, user.FullName ?? user.Login));
+                }
+                else
+                {
+                    _logger.Warning("Compte Supabase existant pour {Email} avec un autre mot de passe : « mot de passe oublié » requis.", user.Email);
+                }
+            }
+            else
+            {
+                _logger.Warning("Échec de création Supabase pour {Email} : {Message}", user.Email, signUp.message);
+            }
+        }
+
+        await _unitOfWork.CompleteAsync();
+        return results;
     }
 }

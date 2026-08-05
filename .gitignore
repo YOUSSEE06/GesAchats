@@ -90,6 +90,11 @@ publish/
 *.sqlite
 *.sqlite3
 
+# Secrets - fichiers .env (jamais commiter)
+.env
+.env.*
+!.env.example
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -98,9 +103,6 @@ publish/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# But allow the example template to be committed
-!appsettings.local.json.example
 
 # Temporary files
 *.cache

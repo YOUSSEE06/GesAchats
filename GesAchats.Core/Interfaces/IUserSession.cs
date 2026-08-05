@@ -7,6 +7,8 @@ namespace GesAchats.Core.Interfaces
     {
         User? CurrentUser { get; }
         bool IsLoggedIn { get; }
+        string? AccessToken { get; set; }
+        string? RefreshToken { get; set; }
         void StartSession(User user);
         void EndSession();
         bool HasAccess(AccessModule module, AccessLevel requiredLevel = AccessLevel.Read);

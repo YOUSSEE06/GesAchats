@@ -9,7 +9,6 @@ using GesAchats.Core.DTOs;
 using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using Serilog;
-using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace GesAchats.WPF.ViewModels.Admin;
 
@@ -40,6 +39,7 @@ public partial class EmployeeManagementViewModel : ObservableObject
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserSession _userSession;
     private readonly IEmailVerificationService _emailVerificationService;
+    private readonly IAuthService _authService;
 
     [ObservableProperty]
     private bool _isAddEmployeeFormVisible;
@@ -226,13 +226,14 @@ public partial class EmployeeManagementViewModel : ObservableObject
     public bool IsPasswordChangeVerifyCodeStep => CurrentAdminPasswordChangeStep == AdminPasswordChangeStep.VerifyCode;
     public bool IsPasswordChangeNewPasswordStep => CurrentAdminPasswordChangeStep == AdminPasswordChangeStep.NewPassword;
 
-    public EmployeeManagementViewModel(IEmployeeService employeeService, ILogger logger, IUnitOfWork unitOfWork, IUserSession userSession, IEmailVerificationService emailVerificationService)
+    public EmployeeManagementViewModel(IEmployeeService employeeService, ILogger logger, IUnitOfWork unitOfWork, IUserSession userSession, IEmailVerificationService emailVerificationService, IAuthService authService)
     {
         _employeeService = employeeService;
         _logger = logger;
         _unitOfWork = unitOfWork;
         _userSession = userSession;
         _emailVerificationService = emailVerificationService;
+        _authService = authService;
         // Load roles and admin data on initialization
         LoadRolesAsync().ConfigureAwait(false);
         LoadAdminData();
@@ -304,15 +305,9 @@ public partial class EmployeeManagementViewModel : ObservableObject
                 return;
             }
 
-            // Get fresh user from DB to make sure we have the latest PasswordHash
-            var currentAdmin = await _unitOfWork.Users.GetByIdAsync(_userSession.CurrentUser.Id);
-            if (currentAdmin == null)
-            {
-                AdminEmailEditMessage = "Session administrateur introuvable.";
-                return;
-            }
-
-            if (!BCryptNet.Verify(CurrentAdminPassword, currentAdmin.PasswordHash))
+            // Verifie les identifiants via Supabase Auth (le mot de passe n'est pas stocké localement).
+            var credentialsValid = await _authService.VerifyCredentialsAsync(_userSession.CurrentUser.Id, CurrentAdminPassword);
+            if (!credentialsValid)
             {
                 AdminEmailEditMessage = "Mot de passe incorrect.";
                 return;
@@ -421,33 +416,19 @@ public partial class EmployeeManagementViewModel : ObservableObject
                 return;
             }
 
-            // Update the admin's email
+            // Update the admin's email (Supabase Auth + profil local)
             if (_userSession.CurrentUser == null)
             {
                 AdminEmailEditMessage = "Session administrateur introuvable.";
                 return;
             }
 
-            var currentAdmin = await _unitOfWork.Users.GetByIdAsync(_userSession.CurrentUser.Id);
-            if (currentAdmin == null)
+            var emailUpdate = await _authService.UpdateEmailAsync(_userSession.CurrentUser.Id, normalizedNewEmail);
+            if (!emailUpdate.success)
             {
-                AdminEmailEditMessage = "Session administrateur introuvable.";
+                AdminEmailEditMessage = emailUpdate.message;
                 return;
             }
-
-            currentAdmin.Email = normalizedNewEmail;
-            // If login is the same as email, update login too
-            if (currentAdmin.Login == _userSession.CurrentUser.Email)
-            {
-                currentAdmin.Login = normalizedNewEmail;
-            }
-            currentAdmin.UpdatedAt = DateTime.UtcNow;
-
-            _unitOfWork.Users.Update(currentAdmin);
-            await _unitOfWork.CompleteAsync();
-
-            // Update the session user
-            _userSession.StartSession(currentAdmin);
 
             // Update the ViewModel properties
             AdminEmail = normalizedNewEmail;
@@ -608,11 +589,11 @@ public partial class EmployeeManagementViewModel : ObservableObject
                 return;
             }
 
-            // Reset password using existing service
-            var resetResult = await _emailVerificationService.ResetPasswordAsync(_userSession.CurrentUser.Email, AdminPasswordVerificationCode, NewAdminPassword);
-            if (!resetResult.success)
+            // Change le mot de passe via Supabase Auth (jeton de session).
+            var updateResult = await _authService.UpdatePasswordAsync(_userSession.CurrentUser.Id, NewAdminPassword);
+            if (!updateResult.success)
             {
-                AdminPasswordChangeMessage = resetResult.message;
+                AdminPasswordChangeMessage = updateResult.message;
                 return;
             }
 
@@ -984,6 +965,42 @@ public partial class EmployeeManagementViewModel : ObservableObject
             _logger.Error(ex, "Error deleting employee {UserId}", userId);
             StatusMessage = "Une erreur est survenue.";
             MessageBox.Show("Une erreur est survenue.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SyncSupabaseAccounts()
+    {
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Synchronisation des comptes Supabase...";
+
+            var results = await _employeeService.SyncSupabaseAccountsAsync();
+            if (results.Count == 0)
+            {
+                StatusMessage = "Aucun compte à synchroniser : tous les utilisateurs sont déjà liés à Supabase.";
+                MessageBox.Show("Aucun compte nécessitant une synchronisation Supabase.", "Synchronisation", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                var lines = results.Select(r => $"• {r.FullName} — {r.Email}\n   Mot de passe temporaire : {r.TemporaryPassword}");
+                var text = string.Join("\n\n", lines);
+                StatusMessage = $"{results.Count} compte(s) synchronisé(s).";
+                MessageBox.Show(text, "Comptes synchronisés — Transmettez ces mots de passe aux employés", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            await LoadEmployeesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error syncing Supabase accounts");
+            StatusMessage = "Erreur lors de la synchronisation des comptes.";
+            MessageBox.Show("Une erreur est survenue pendant la synchronisation.", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {

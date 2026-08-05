@@ -14,6 +14,6 @@ dotnet run --project GesAchats.WPF/GesAchats.WPF.csproj
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERREUR] Impossible de lancer l'application.
-    echo Verifiez que PostgreSQL est bien demarre.
+    echo Verifiez que le fichier .env est present a cote de l'application.
     pause
 )

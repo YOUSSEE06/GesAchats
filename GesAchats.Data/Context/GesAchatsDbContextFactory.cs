@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using GesAchats.Data.Context;
+using GesAchats.Core.Helpers;
 
 namespace GesAchats.Data.Context;
 
@@ -8,8 +9,12 @@ public class GesAchatsDbContextFactory : IDesignTimeDbContextFactory<GesAchatsDb
 {
     public GesAchatsDbContext CreateDbContext(string[] args)
     {
+        // Design-time (migrations) : charge le .env depuis le dossier courant
+        // (normalement le projet WPF) ou le dossier de la solution.
+        EnvLoader.Load(Environment.CurrentDirectory);
+
         var optionsBuilder = new DbContextOptionsBuilder<GesAchatsDbContext>();
-        optionsBuilder.UseNpgsql("Host=aws-1-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.pwnqodqomtnfhbeiuzrf;Password=?ys7qd*?3GpW+?*;SSL Mode=Require;Trust Server Certificate=true;Timeout=15;CommandTimeout=30;");
+        optionsBuilder.UseNpgsql(EnvLoader.BuildConnectionString());
 
         return new GesAchatsDbContext(optionsBuilder.Options);
     }

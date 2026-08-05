@@ -27,6 +27,12 @@ public class User
     [MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Identifiant du compte correspondant dans Supabase Auth (auth.users).
+    /// Le mot de passe est géré par Supabase ; ce champ relie le profil métier au compte d'authentification.
+    /// </summary>
+    public Guid? SupabaseAuthId { get; set; }
+
     public int RoleId { get; set; }
 
     [ForeignKey(nameof(RoleId))]

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using GesAchats.Data.Context;
 using GesAchats.Core.Interfaces;
+using GesAchats.Core.Helpers;
 using GesAchats.Data;
 using GesAchats.Data.Repositories;
 using GesAchats.Core.Services;
@@ -70,6 +71,19 @@ public partial class App : Application
 
         try
             {
+                // Chargement du fichier .env (secrets) situé à côté de l'exécutable.
+                EnvLoader.Load(AppDomain.CurrentDomain.BaseDirectory);
+
+                var anonKey = EnvLoader.Get("SUPABASE_ANON_KEY");
+                if (string.IsNullOrWhiteSpace(anonKey) || anonKey.Contains("COLLEZ", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show(
+                        "SUPABASE_ANON_KEY n'est pas configurée dans le fichier .env.\n\n" +
+                        "La connexion et le bootstrap Supabase Auth échoueront tant que la clé n'est pas renseignée " +
+                        "(Dashboard Supabase → Settings → API → anon key).",
+                        "Configuration incomplète", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -114,6 +128,12 @@ public partial class App : Application
                             IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                                            WHERE table_name = 'Products' AND column_name = 'CreatedBy') THEN
                                 ALTER TABLE ""Products"" ADD COLUMN ""CreatedBy"" VARCHAR(255) NULL;
+                            END IF;
+
+                            -- Ajouter SupabaseAuthId à la table Users si elle n'existe pas
+                            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                           WHERE table_name = 'Users' AND column_name = 'SupabaseAuthId') THEN
+                                ALTER TABLE ""Users"" ADD COLUMN ""SupabaseAuthId"" UUID NULL;
                             END IF;
 
                             -- RÉPARATION DU MODULE COMPTABLE (bc_id, bl_id, etc.)
@@ -233,8 +253,10 @@ public partial class App : Application
                         END $$;
                     ");
 
-                    // Étape 5: Seed des données
-                    await DbInitializer.SeedDataAsync(context);
+                    // Étape 5: Seeding minimal (rôles + compte admin lié à Supabase Auth)
+                    var supabaseAuthClient = scope.ServiceProvider.GetRequiredService<SupabaseAuthClient>();
+                    await DbInitializer.SeedRolesAsync(context);
+                    await DbInitializer.BootstrapAdminAsync(context, supabaseAuthClient);
 
                     // Étape 6: Créer la table StockExits manuellement si elle n'existe pas
                     await context.Database.ExecuteSqlRawAsync(@"
@@ -300,30 +322,31 @@ public partial class App : Application
     private void ConfigureServices(IServiceCollection services)
     {
         // Configuration de la base de données - Transient pour WPF pour éviter les conflits de DbContext.
-        // SUPABASE est forcé dans tous les cas pour éviter qu'un ancien appsettings.json (localhost)
-        // ou un fichier manquant ne fasse pointer l'application vers une ancienne base locale.
-        var connStr = Configuration.GetConnectionString("DefaultConnection") ?? "";
-        if (!connStr.Contains("supabase.com", StringComparison.OrdinalIgnoreCase))
-        {
-            connStr = "Host=aws-1-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.pwnqodqomtnfhbeiuzrf;Password=?ys7qd*?3GpW+?*;SSL Mode=Require;Trust Server Certificate=true;Timeout=15;CommandTimeout=30;";
-        }
+        // Les identifiants proviennent uniquement du fichier .env (voir EnvLoader).
+        var connStr = EnvLoader.BuildConnectionString();
 
         services.AddDbContext<GesAchatsDbContext>(options =>
             options.UseNpgsql(connStr),
             ServiceLifetime.Transient);
 
-        // Configuration Smtp
-        var smtpSettings = Configuration.GetSection("Smtp").Get<GesAchats.Core.Helpers.SmtpSettings>();
-        if (smtpSettings == null)
+        // Configuration Smtp - valeurs issues uniquement du fichier .env
+        var smtpSettings = new GesAchats.Core.Helpers.SmtpSettings
         {
-            smtpSettings = new GesAchats.Core.Helpers.SmtpSettings();
-        }
+            Host = EnvLoader.Get("SMTP_HOST") ?? string.Empty,
+            Port = int.TryParse(EnvLoader.Get("SMTP_PORT"), out var smtpPort) ? smtpPort : 587,
+            Username = EnvLoader.Get("SMTP_USERNAME") ?? string.Empty,
+            Password = EnvLoader.Get("SMTP_PASSWORD") ?? string.Empty,
+            FromEmail = EnvLoader.Get("SMTP_FROM_EMAIL") ?? string.Empty,
+            FromName = EnvLoader.Get("SMTP_FROM_NAME") ?? string.Empty,
+            UseStartTls = string.Equals(EnvLoader.Get("SMTP_USE_STARTTLS"), "true", StringComparison.OrdinalIgnoreCase)
+        };
         services.AddSingleton(smtpSettings);
 
         // Injection des dépendances Data & Services
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IUserSession, UserSession>();
+        services.AddSingleton<SupabaseAuthClient>();
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IStockService, StockService>();
         services.AddTransient<IDashboardService, DashboardService>();

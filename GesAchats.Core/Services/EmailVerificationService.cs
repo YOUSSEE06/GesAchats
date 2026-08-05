@@ -11,11 +11,52 @@ public class EmailVerificationService : IEmailVerificationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly SupabaseAuthClient _authClient;
 
-    public EmailVerificationService(IUnitOfWork unitOfWork, IEmailService emailService)
+    public EmailVerificationService(IUnitOfWork unitOfWork, IEmailService emailService, SupabaseAuthClient authClient)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _authClient = authClient;
+    }
+
+    /// <summary>
+    /// Envoie l'email de réinitialisation de mot de passe via Supabase Auth (auth/v1/recover).
+    /// L'utilisateur reçoit un lien officiel Supabase pour définir son nouveau mot de passe.
+    /// </summary>
+    public async Task<(bool success, string message)> SendPasswordRecoveryEmailAsync(string email)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return (false, "Veuillez saisir votre email.");
+            }
+
+            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            if (!emailRegex.IsMatch(email))
+            {
+                return (false, "Format email invalide.");
+            }
+
+            var user = await _unitOfWork.Users.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return (false, "Email invalide ou introuvable.");
+            }
+
+            if (!user.IsActive)
+            {
+                return (false, "Ce compte est désactivé.");
+            }
+
+            return await _authClient.RecoverAsync(email);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error sending password recovery email to {Email}", email);
+            return (false, "Une erreur est survenue. Veuillez réessayer.");
+        }
     }
 
     public async Task<(bool success, string message)> SendVerificationCodeAsync(string email)

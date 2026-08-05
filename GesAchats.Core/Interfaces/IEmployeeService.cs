@@ -11,4 +11,5 @@ public interface IEmployeeService
     Task<(bool success, string message)> SendCreateUserCodeAsync(string fullName, string email, int roleId);
     Task<(bool success, string message)> CreateEmployeeAsync(string email, string code);
     Task<(bool success, string message)> DeleteEmployeeAsync(int userId);
+    Task<List<(string Email, string TemporaryPassword, string FullName)>> SyncSupabaseAccountsAsync();
 }

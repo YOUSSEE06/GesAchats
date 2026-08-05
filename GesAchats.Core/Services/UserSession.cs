@@ -10,6 +10,8 @@ namespace GesAchats.Core.Services
     {
         public User? CurrentUser { get; private set; }
         public bool IsLoggedIn => CurrentUser != null;
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         private readonly Dictionary<string, List<ModulePermission>> _permissions;
 

@@ -1,5 +1,0 @@
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=aws-1-eu-west-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.VOTRE_PROJECT_REF;Password=VOTRE_MOT_DE_PASSE_DB;SSL Mode=Require;Trust Server Certificate=true;Timeout=15;CommandTimeout=30;"
-  }
-}
