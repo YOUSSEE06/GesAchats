@@ -129,21 +129,21 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="DATE" Binding="{Binding PurchaseOrder.OrderDate, StringFormat='dd/MM/yyyy'}" Width="130" MinWidth="110">
+                                <DataGridTextColumn Header="DATE" Binding="{Binding DeliveryNote.ReceptionDate, StringFormat='dd/MM/yyyy'}" Width="130" MinWidth="110">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding PurchaseOrder.Supplier.CompanyName}" Width="*" MinWidth="200">
+                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding DeliveryNote.Supplier.CompanyName}" Width="*" MinWidth="200">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="QUANTITÉ" Binding="{Binding Quantity}" Width="130" MinWidth="110">
+                                <DataGridTextColumn Header="QUANTITÉ" Binding="{Binding QuantityReceived}" Width="130" MinWidth="110">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>

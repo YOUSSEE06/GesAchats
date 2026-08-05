@@ -12,16 +12,16 @@ public class PriceAnalysisService : IPriceAnalysisService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<IEnumerable<PurchaseOrderDetail>> GetPriceHistoryForProductAsync(int productId)
+    public async Task<IEnumerable<DeliveryNoteDetail>> GetPriceHistoryForProductAsync(int productId)
     {
-        return await _unitOfWork.PurchaseOrderDetails.GetHistoryByProductAsync(productId);
+        return await _unitOfWork.DeliveryNotes.GetDeliveryHistoryByProductAsync(productId);
     }
 
     public async Task<Dictionary<int, decimal>> GetAveragePriceBySupplierAsync(int productId)
     {
         var details = await GetPriceHistoryForProductAsync(productId);
         return details
-            .GroupBy(d => d.PurchaseOrder.SupplierId)
+            .GroupBy(d => d.DeliveryNote.SupplierId)
             .ToDictionary(g => g.Key, g => g.Average(d => d.UnitPriceHT));
     }
 

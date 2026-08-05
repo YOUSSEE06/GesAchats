@@ -177,26 +177,26 @@ public class ProductStatsViewModel : BaseViewModel, INavigatable
         try
         {
             var history = (await _priceService.GetPriceHistoryForProductAsync(Product.Id))
-                .OrderBy(x => x.PurchaseOrder.OrderDate)
+                .OrderBy(x => x.DeliveryNote.ReceptionDate)
                 .ToList();
 
             // Filtrage par période
             if (SelectedPeriod == "7 derniers jours")
             {
                 var threshold = DateTime.Now.AddDays(-7);
-                history = history.Where(x => x.PurchaseOrder.OrderDate >= threshold).ToList();
+                history = history.Where(x => x.DeliveryNote.ReceptionDate >= threshold).ToList();
             }
             else if (SelectedPeriod == "30 derniers jours")
             {
                 var threshold = DateTime.Now.AddDays(-30);
-                history = history.Where(x => x.PurchaseOrder.OrderDate >= threshold).ToList();
+                history = history.Where(x => x.DeliveryNote.ReceptionDate >= threshold).ToList();
             }
             else if (SelectedPeriod == "Personnalisé")
             {
                 if (StartDate.HasValue)
-                    history = history.Where(x => x.PurchaseOrder.OrderDate >= StartDate.Value).ToList();
+                    history = history.Where(x => x.DeliveryNote.ReceptionDate >= StartDate.Value).ToList();
                 if (EndDate.HasValue)
-                    history = history.Where(x => x.PurchaseOrder.OrderDate <= EndDate.Value).ToList();
+                    history = history.Where(x => x.DeliveryNote.ReceptionDate <= EndDate.Value).ToList();
             }
 
             if (!history.Any())
@@ -214,14 +214,14 @@ public class ProductStatsViewModel : BaseViewModel, INavigatable
             AveragePrice = history.Average(x => x.UnitPriceHT);
             MinPrice = history.Min(x => x.UnitPriceHT);
             MaxPrice = history.Max(x => x.UnitPriceHT);
-            TotalQuantity = (double)history.Sum(x => x.Quantity);
+            TotalQuantity = (double)history.Sum(x => x.QuantityReceived);
 
             var values = history.Select(x => new PurchasePoint
             {
-                Date = x.PurchaseOrder.OrderDate,
+                Date = x.DeliveryNote.ReceptionDate,
                 Price = (double)x.UnitPriceHT,
-                SupplierName = x.PurchaseOrder.Supplier?.CompanyName ?? "Inconnu",
-                Quantity = (double)x.Quantity
+                SupplierName = x.DeliveryNote.Supplier?.CompanyName ?? "Inconnu",
+                Quantity = (double)x.QuantityReceived
             }).ToArray();
 
             Series.Clear();

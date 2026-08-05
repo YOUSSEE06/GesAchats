@@ -30,7 +30,7 @@ public class PurchaseHistoryViewModel : BaseViewModel
     private List<ProductHistoryViewModel> _allProducts = new();
 
     public ObservableCollection<ProductHistoryViewModel> Products { get; } = new ObservableCollection<ProductHistoryViewModel>();
-    public ObservableCollection<PurchaseOrderDetail> DetailedHistory { get; } = new ObservableCollection<PurchaseOrderDetail>();
+    public ObservableCollection<DeliveryNoteDetail> DetailedHistory { get; } = new ObservableCollection<DeliveryNoteDetail>();
 
     public ICommand NavigateToStatsCommand { get; }
 
@@ -130,7 +130,7 @@ public class PurchaseHistoryViewModel : BaseViewModel
         {
             var history = await _priceService.GetPriceHistoryForProductAsync(SelectedProduct.Product.Id);
             DetailedHistory.Clear();
-            foreach (var item in history.OrderByDescending(x => x.PurchaseOrder.OrderDate))
+            foreach (var item in history.OrderByDescending(x => x.DeliveryNote.ReceptionDate))
             {
                 DetailedHistory.Add(item);
             }

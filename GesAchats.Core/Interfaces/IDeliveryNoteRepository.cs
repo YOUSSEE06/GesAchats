@@ -7,4 +7,5 @@ public interface IDeliveryNoteRepository : IRepository<DeliveryNote>
 {
     Task<IEnumerable<DeliveryNote>> GetAllWithDetailsAsync();
     Task<PagedResult<DeliveryNoteHistoryDto>> GetBonsLivraisonPagedAsync(int pageNumber, int pageSize, string? searchText, string? selectedSupplier, string? selectedStatus, DateTime? filterReceptionDate, CancellationToken cancellationToken);
+    Task<IEnumerable<DeliveryNoteDetail>> GetDeliveryHistoryByProductAsync(int productId);
 }

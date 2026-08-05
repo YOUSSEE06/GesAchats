@@ -85,4 +85,18 @@ public class DeliveryNoteRepository : Repository<DeliveryNote>, IDeliveryNoteRep
             PageSize = pageSize
         };
     }
+
+    /// <summary>
+    /// Historique des achats basé uniquement sur les Bons de Livraison (BL), quel que soit leur statut.
+    /// </summary>
+    public async Task<IEnumerable<DeliveryNoteDetail>> GetDeliveryHistoryByProductAsync(int productId)
+    {
+        return await _context.Set<DeliveryNoteDetail>()
+            .AsNoTracking()
+            .Include(d => d.DeliveryNote)
+                .ThenInclude(n => n.Supplier)
+            .Where(d => d.ProductId == productId)
+            .OrderByDescending(d => d.DeliveryNote.ReceptionDate)
+            .ToListAsync();
+    }
 }

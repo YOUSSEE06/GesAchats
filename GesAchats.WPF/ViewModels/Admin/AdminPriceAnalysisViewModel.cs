@@ -67,8 +67,8 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
         }
     }
 
-    private ObservableCollection<PurchaseOrderDetail> _purchaseHistory = new();
-    public ObservableCollection<PurchaseOrderDetail> PurchaseHistory
+    private ObservableCollection<DeliveryNoteDetail> _purchaseHistory = new();
+    public ObservableCollection<DeliveryNoteDetail> PurchaseHistory
     {
         get => _purchaseHistory;
         set => SetProperty(ref _purchaseHistory, value);
@@ -100,7 +100,7 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
 
             foreach (var p in allProducts.OrderBy(x => x.Designation))
             {
-                var history = await _unitOfWork.PurchaseOrderDetails.GetHistoryByProductAsync(p.Id);
+                var history = await _unitOfWork.DeliveryNotes.GetDeliveryHistoryByProductAsync(p.Id);
                 var historyList = history.ToList();
 
                 var summary = new ProductPriceSummaryViewModel(p)
@@ -139,7 +139,7 @@ public class AdminPriceAnalysisViewModel : BaseViewModel
         try
         {
             var history = await _priceAnalysisService.GetPriceHistoryForProductAsync(SelectedProduct.Product.Id);
-            PurchaseHistory = new ObservableCollection<PurchaseOrderDetail>(history.OrderByDescending(h => h.PurchaseOrder.OrderDate));
+            PurchaseHistory = new ObservableCollection<DeliveryNoteDetail>(history.OrderByDescending(h => h.DeliveryNote.ReceptionDate));
         }
         catch (Exception ex)
         {
