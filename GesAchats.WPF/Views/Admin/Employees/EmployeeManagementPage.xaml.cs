@@ -36,5 +36,14 @@ public partial class EmployeeManagementPage : Page
                 vm.ConfirmAdminPassword = AdminConfirmPasswordBox.Password;
             }
         };
+
+        // Bind full name change PasswordBox to ViewModel
+        AdminFullNamePasswordBox.PasswordChanged += (sender, args) =>
+        {
+            if (DataContext is EmployeeManagementViewModel vm)
+            {
+                vm.AdminFullNameEditPassword = AdminFullNamePasswordBox.Password;
+            }
+        };
     }
 }

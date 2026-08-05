@@ -407,6 +407,42 @@ public class SupabaseAuthClient
         }
     }
 
+    /// <summary>
+    /// Met à jour les métadonnées (user_metadata) du compte Supabase connecté (nécessite son jeton d'accès).
+    /// Synchronisation du nom complet : best effort, ne bloque jamais une mise à jour locale.
+    /// </summary>
+    public async Task<(bool success, string message)> UpdateUserMetadataAsync(string accessToken, string fullName)
+    {
+        var config = ValidateConfig();
+        if (!config.success) return (false, config.message);
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return (false, "Session expirée. Veuillez vous reconnecter.");
+        }
+
+        try
+        {
+            using var request = CreateRequest(HttpMethod.Put, "/auth/v1/user", new { data = new { full_name = fullName } });
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            using var response = await _http.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                return (true, "Métadonnées utilisateur mises à jour.");
+            }
+
+            var err = JsonSerializer.Deserialize<ErrorResponse>(json);
+            Log.Warning("Supabase update metadata failed for user metadata: {Error}", err?.Error ?? err?.ErrorDescription ?? json);
+            return (false, "Échec de la mise à jour des métadonnées chez Supabase.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Supabase update metadata error");
+            return (false, "Impossible de contacter le service d'authentification.");
+        }
+    }
+
     private sealed class TokenResponse
     {
         [JsonPropertyName("access_token")]

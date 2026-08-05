@@ -9,4 +9,5 @@ public interface IAuthService
     Task<bool> VerifyCredentialsAsync(int userId, string password);
     Task<(bool success, string message)> UpdatePasswordAsync(int userId, string newPassword);
     Task<(bool success, string message)> UpdateEmailAsync(int userId, string newEmail);
+    Task<(bool success, string message)> UpdateFullNameAsync(int userId, string newFullName);
 }

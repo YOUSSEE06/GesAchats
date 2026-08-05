@@ -818,6 +818,12 @@
                                             <TextBlock Text="Changer mot de passe"/>
                                         </StackPanel>
                                     </Button>
+                                    <Button Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding ShowAdminFullNameEditCommand}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <fa:IconImage Icon="Pen" Width="14" Height="14" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Changer le nom complet"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
 
                                 <!-- Session Error Message -->
@@ -906,6 +912,54 @@
                                                 </Button>
                                             </StackPanel>
                                         </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Sub-section: Secure Full Name Modification (Hidden by default) -->
+                                <Border DockPanel.Dock="Top" 
+                                        Background="#F0FDFA" 
+                                        Padding="16" 
+                                        CornerRadius="10"
+                                        Margin="0,0,0,12"
+                                        Visibility="{Binding IsAdminFullNameEditVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel>
+                                        <TextBlock Text="Changer mon nom complet (sécurisé)" FontSize="14" FontWeight="SemiBold" Foreground="#0D9488" Margin="0,0,0,12"/>
+
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="Mot de passe actuel" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                            <PasswordBox x:Name="AdminFullNamePasswordBox" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1" FontSize="13" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="Nouveau nom complet" FontSize="12" Foreground="#64748B" Margin="0,0,0,6"/>
+                                            <TextBox Style="{StaticResource TextBoxStyle}" Text="{Binding NewAdminFullName, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <Button Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Padding="14,8" Command="{Binding ConfirmAdminFullNameEditCommand}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <fa:IconImage Icon="Check" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Valider le changement"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Style="{StaticResource DangerButton}" Padding="14,8" Command="{Binding CancelAdminFullNameEditCommand}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <fa:IconImage Icon="Xmark" Width="12" Height="12" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Annuler"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <!-- Loading indicator -->
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,8">
+                                            <ProgressBar IsIndeterminate="True" Width="120" Height="6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Vérification en cours..." FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding AdminFullNameEditMessage}" 
+                                                   FontSize="13" 
+                                                   Foreground="#DC2626" 
+                                                   Visibility="{Binding AdminFullNameEditMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Border>
 

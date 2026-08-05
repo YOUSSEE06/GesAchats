@@ -139,4 +139,37 @@ public class AuthService : IAuthService
         }
         return update;
     }
+
+    /// <summary>
+    /// Modifie le nom complet de l'utilisateur connecté (table locale Users)
+    /// et synchronise le nom dans les métadonnées Supabase (best effort).
+    /// </summary>
+    public async Task<(bool success, string message)> UpdateFullNameAsync(int userId, string newFullName)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+            return (false, "Utilisateur introuvable.");
+
+        var name = newFullName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return (false, "Le nom complet est requis.");
+
+        var token = _userSession.AccessToken;
+        if (string.IsNullOrWhiteSpace(token))
+            return (false, "Session expirée. Veuillez vous reconnecter.");
+
+        var meta = await _authClient.UpdateUserMetadataAsync(token, name);
+        if (!meta.success)
+        {
+            // Non bloquant : la table locale reste la source de vérité de l'application.
+            Log.Warning("Supabase metadata update failed for user {UserId}: {Message}", userId, meta.message);
+        }
+
+        user.FullName = name;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _unitOfWork.CompleteAsync();
+
+        _userSession.StartSession(user);
+        return (true, "Nom complet modifié avec succès.");
+    }
 }

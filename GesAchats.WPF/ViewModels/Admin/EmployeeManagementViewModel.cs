@@ -157,6 +157,19 @@ public partial class EmployeeManagementViewModel : ObservableObject
     [ObservableProperty]
     private string _adminEmailEditMessage = string.Empty;
 
+    // Full Name Change Properties
+    [ObservableProperty]
+    private bool _isAdminFullNameEditVisible;
+
+    [ObservableProperty]
+    private string _adminFullNameEditPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _newAdminFullName = string.Empty;
+
+    [ObservableProperty]
+    private string _adminFullNameEditMessage = string.Empty;
+
     // Password Change Properties
     [ObservableProperty]
     private bool _isAdminPasswordChangeVisible;
@@ -452,6 +465,88 @@ public partial class EmployeeManagementViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+    #region Full Name Change
+    [RelayCommand]
+    private void ShowAdminFullNameEdit()
+    {
+        IsAdminFullNameEditVisible = true;
+        AdminFullNameEditPassword = string.Empty;
+        NewAdminFullName = string.Empty;
+        AdminFullNameEditMessage = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelAdminFullNameEdit()
+    {
+        IsAdminFullNameEditVisible = false;
+        AdminFullNameEditPassword = string.Empty;
+        NewAdminFullName = string.Empty;
+        AdminFullNameEditMessage = "Action annulée.";
+    }
+
+    [RelayCommand]
+    private async Task ConfirmAdminFullNameEdit()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(AdminFullNameEditPassword))
+            {
+                AdminFullNameEditMessage = "Veuillez saisir votre mot de passe.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewAdminFullName))
+            {
+                AdminFullNameEditMessage = "Veuillez saisir le nouveau nom complet.";
+                return;
+            }
+
+            if (_userSession.CurrentUser == null)
+            {
+                AdminFullNameEditMessage = "Session administrateur introuvable.";
+                return;
+            }
+
+            IsBusy = true;
+            AdminFullNameEditMessage = string.Empty;
+
+            // Étape 1 : vérification du mot de passe via Supabase Auth
+            // (le mot de passe n'est jamais stocké localement).
+            var credentialsValid = await _authService.VerifyCredentialsAsync(_userSession.CurrentUser.Id, AdminFullNameEditPassword);
+            if (!credentialsValid)
+            {
+                AdminFullNameEditMessage = "Mot de passe incorrect.";
+                return;
+            }
+
+            // Étape 2 : mise à jour du nom complet (base locale + métadonnées Supabase).
+            var result = await _authService.UpdateFullNameAsync(_userSession.CurrentUser.Id, NewAdminFullName);
+            if (!result.success)
+            {
+                AdminFullNameEditMessage = result.message;
+                return;
+            }
+
+            // Étape 3 : rafraîchissement de l'interface.
+            AdminFullName = NewAdminFullName.Trim();
+
+            IsAdminFullNameEditVisible = false;
+            AdminFullNameEditPassword = string.Empty;
+            NewAdminFullName = string.Empty;
+            AdminFullNameEditMessage = "Nom complet modifié avec succès.";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error confirming admin full name change");
+            AdminFullNameEditMessage = "Une erreur est survenue.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+    #endregion
 
     #region Password Change
     [RelayCommand]
