@@ -61,8 +61,8 @@
                                             <TextBlock Text="{Binding Quotation.Supplier.CompanyName}" FontSize="16" FontWeight="Bold"/>
                                             <TextBlock Text="{Binding Quotation.ReferenceNumber}" Foreground="Gray"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,5">
-                                                <TextBlock Text="Total TTC: " FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding Quotation.TotalAmountTTC, StringFormat={}{0:C}}" Foreground="#2196F3" FontWeight="Bold"/>
+                                                <TextBlock Text="Total HT: " FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Quotation.TotalAmountHT, StringFormat={}{0:C0}}" Foreground="#2196F3" FontWeight="Bold"/>
                                             </StackPanel>
                                             
                                             <ItemsControl ItemsSource="{Binding Quotation.Details}" Margin="0,5,0,0">

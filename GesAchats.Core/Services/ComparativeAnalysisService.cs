@@ -25,9 +25,9 @@ public class ComparativeAnalysisService : IComparativeAnalysisService
         decimal score = 0;
 
         // 1. Prix (plus c'est bas, mieux c'est)
-        // Pour simplifier, on compare au montant TTC
-        if (quotation.TotalAmountTTC < 1000) score += 5;
-        else if (quotation.TotalAmountTTC < 5000) score += 3;
+        // Pour simplifier, on compare au montant HT (un devis est en HT)
+        if (quotation.TotalAmountHT < 1000) score += 5;
+        else if (quotation.TotalAmountHT < 5000) score += 3;
         else score += 1;
 
         // 2. Délai

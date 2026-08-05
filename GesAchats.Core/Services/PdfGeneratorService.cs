@@ -946,9 +946,7 @@ public class PdfGeneratorService : IPdfGeneratorService
         html.AppendLine("            </div>");
         html.AppendLine("            <div class=\"info-box\">");
         html.AppendLine("                <div class=\"info-label\">Montant Total HT</div>");
-        html.AppendLine($"                <div class=\"info-value\">{quotation.TotalAmountHT:N2} MAD</div>");
-        html.AppendLine("                <div class=\"info-label\">Montant Total TTC</div>");
-        html.AppendLine($"                <div class=\"info-value\">{quotation.TotalAmountTTC:N2} MAD</div>");
+html.AppendLine($"                <div class=\"info-value\">{quotation.TotalAmountHT:N2} MAD</div>");
         html.AppendLine("            </div>");
         if (!string.IsNullOrEmpty(quotation.Observations))
         {

@@ -529,7 +529,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="MONTANT (MAD)" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2}}" Width="160" MinWidth="140">
+                                    <DataGridTextColumn Header="MONTANT HT (MAD)" Binding="{Binding TotalAmountHT, StringFormat={}{0:N2}}" Width="160" MinWidth="140">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="FontWeight" Value="SemiBold"/>

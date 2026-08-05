@@ -131,8 +131,9 @@ public class QuotationPriceEntryViewModel : BaseViewModel, INavigatable
                 _unitOfWork.QuotationDetails.Update(detail);
             }
 
+            // Règle métier : un devis est toujours en HT, la TVA n'intervient qu'à la facturation.
             SelectedQuotation.TotalAmountHT = totalHT;
-            SelectedQuotation.TotalAmountTTC = totalHT * 1.2m;
+            SelectedQuotation.TotalAmountTTC = totalHT;
             SelectedQuotation.Status = QuotationStatus.Validated;
             SelectedQuotation.UpdatedAt = DateTime.UtcNow;
             SelectedQuotation.ResponseDate = DateTime.UtcNow;

@@ -56,6 +56,7 @@ public class QuotationDisplayViewModel : BaseViewModel
     public Supplier? Supplier => Quotation.Supplier;
     public DateTime Date => Quotation.Date;
     public decimal TotalAmountTTC => Quotation.TotalAmountTTC;
+    public decimal TotalAmountHT => Quotation.TotalAmountHT;
     public string Status => NormalizedStatus;
 }
 
@@ -690,7 +691,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             var total = AllQuotationsRaw.Count;
             var enAttente = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending);
             var valides = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
-            var montant = AllQuotationsRaw.Sum(q => q.TotalAmountTTC);
+            var montant = AllQuotationsRaw.Sum(q => q.TotalAmountHT);
             var moyenne = total > 0 ? montant / total : 0;
             
             string fournisseur = "-";
