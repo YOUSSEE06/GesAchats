@@ -1,4 +1,6 @@
 using System;
+using GesAchats.Data.Context;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -7,6 +9,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GesAchats.Data.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(GesAchatsDbContext))]
+    [Migration("20260607000000_AddStockExitTable")]
     public partial class AddStockExitTable : Migration
     {
         /// <inheritdoc />
