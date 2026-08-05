@@ -12,6 +12,7 @@ namespace GesAchats.WPF.ViewModels.Comptable;
 public class FactureDetailsViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFileStorageService _fileStorageService;
     private readonly int _invoiceId;
     private Invoice? _invoice;
 
@@ -27,13 +28,14 @@ public class FactureDetailsViewModel : BaseViewModel
     public ICommand ViewJustificatifCommand { get; }
     public event EventHandler? RequestClose;
 
-    public FactureDetailsViewModel(IUnitOfWork unitOfWork, int invoiceId)
+    public FactureDetailsViewModel(IUnitOfWork unitOfWork, int invoiceId, IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _invoiceId = invoiceId;
+        _fileStorageService = fileStorageService;
 
         CloseCommand = new RelayCommand(_ => RequestClose?.Invoke(this, EventArgs.Empty));
-        ViewJustificatifCommand = new RelayCommand(_ => ExecuteViewJustificatif());
+        ViewJustificatifCommand = new RelayCommand(async _ => await ExecuteViewJustificatifAsync());
 
         _ = LoadDataAsync();
     }
@@ -64,14 +66,20 @@ public class FactureDetailsViewModel : BaseViewModel
         }
     }
 
-    private void ExecuteViewJustificatif()
+    private async Task ExecuteViewJustificatifAsync()
     {
         if (Invoice == null || string.IsNullOrWhiteSpace(Invoice.FilePath))
             return;
 
         try
         {
-            Process.Start(new ProcessStartInfo(Invoice.FilePath) { UseShellExecute = true });
+            string fullPath = await _fileStorageService.GetFullPathAsync(Invoice.FilePath);
+            if (!System.IO.File.Exists(fullPath))
+            {
+                MessageBox.Show($"Fichier introuvable : {fullPath}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            Process.Start(new ProcessStartInfo(fullPath) { UseShellExecute = true });
         }
         catch (Exception ex)
         {

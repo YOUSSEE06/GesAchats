@@ -13,12 +13,14 @@ namespace GesAchats.Core.Services;
 public class PdfGeneratorService : IPdfGeneratorService
 {
     private readonly string _outputPath;
+    private readonly IFileStorageService? _fileStorage;
 
-    public PdfGeneratorService()
+    public PdfGeneratorService(IFileStorageService? fileStorage = null)
     {
         // QuestPDF License configuration
         QuestPDF.Settings.License = LicenseType.Community;
         _outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents");
+        _fileStorage = fileStorage;
         if (!Directory.Exists(_outputPath))
             Directory.CreateDirectory(_outputPath);
     }
@@ -27,8 +29,15 @@ public class PdfGeneratorService : IPdfGeneratorService
     {
         try
         {
-            // 1. Générer le HTML
-            string htmlContent = GenerateBlHtmlContent(bl);
+            // 1. Générer le HTML (télécharge au préalable une pièce jointe distante sb:// si besoin)
+            string? resolvedAttachment = null;
+            if (_fileStorage != null &&
+                !string.IsNullOrWhiteSpace(bl.FilePath) &&
+                bl.FilePath.StartsWith(FileStorageService.RemotePrefix))
+            {
+                resolvedAttachment = await _fileStorage.GetFullPathAsync(bl.FilePath);
+            }
+            string htmlContent = GenerateBlHtmlContent(bl, resolvedAttachment);
 
             // 2. Convertir en PDF avec wkhtmltopdf
             string fileName = $"BL_{bl.DeliveryNumber.Replace("-", "_")}.pdf";
@@ -70,7 +79,7 @@ public class PdfGeneratorService : IPdfGeneratorService
         }
     }
 
-    private string GenerateBlHtmlContent(DeliveryNote bl)
+    private string GenerateBlHtmlContent(DeliveryNote bl, string? resolvedAttachment = null)
     {
         StringBuilder html = new StringBuilder();
 
@@ -158,9 +167,10 @@ public class PdfGeneratorService : IPdfGeneratorService
 
         html.AppendLine("        <div class=\"section-title\">DOCUMENT ORIGINAL</div>");
         html.AppendLine("        <div class=\"scan-placeholder\">");
-        if (!string.IsNullOrEmpty(bl.FilePath) && File.Exists(bl.FilePath))
+        string attachmentPath = resolvedAttachment ?? bl.FilePath;
+        if (!string.IsNullOrEmpty(attachmentPath) && File.Exists(attachmentPath))
         {
-            html.AppendLine($"            <img src=\"file:///{bl.FilePath}\" style=\"max-width: 100%; max-height: 400px;\" />");
+            html.AppendLine($"            <img src=\"file:///{attachmentPath}\" style=\"max-width: 100%; max-height: 400px;\" />");
         }
         else
         {

@@ -51,6 +51,7 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger _logger;
+    private readonly IFileStorageService _fileStorageService;
     private CancellationTokenSource? _searchCts;
     private int _loadVersion;
 
@@ -217,11 +218,12 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
     public ICommand NextPageCommand { get; }
     public ICommand LastPageCommand { get; }
 
-    public AdminDeliveryNotesViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger)
+    public AdminDeliveryNotesViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger, IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _fileStorageService = fileStorageService;
         Title = "Réception des Bons de Livraison (BL)";
 
         RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
@@ -474,7 +476,8 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
             {
                 try
                  {
-                     fullNote.FilePath = dialog.FileName;
+                     // Fichier importé -> envoyé sur Supabase Storage (référence distante)
+                     fullNote.FilePath = await _fileStorageService.UploadImportedFileAsync("bonlivraison", "BL", dialog.FileName);
                      _unitOfWork.DeliveryNotes.Update(fullNote);
                      await _unitOfWork.CompleteAsync();
                      MessageBox.Show("Justificatif associé avec succès.", "Succès", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -490,9 +493,15 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         {
             try
             {
+                string fullPath = await _fileStorageService.GetFullPathAsync(fullNote.FilePath);
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    MessageBox.Show($"Fichier introuvable : {fullPath}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = fullNote.FilePath,
+                    FileName = fullPath,
                     UseShellExecute = true
                 });
             }

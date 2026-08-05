@@ -121,7 +121,7 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "Fichiers images et PDF (*.pdf, *.jpg, *.png)|*.pdf;*.jpg;*.png"
+            Filter = "Fichiers images et PDF (*.pdf, *.jpg, *.jpeg, *.png, *.webp, *.bmp)|*.pdf;*.jpg;*.jpeg;*.png;*.webp;*.bmp"
         };
 
         if (openFileDialog.ShowDialog() == true)

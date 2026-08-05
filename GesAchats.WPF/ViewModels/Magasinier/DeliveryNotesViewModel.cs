@@ -32,6 +32,7 @@ public class DeliveryNotesViewModel : BaseViewModel
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserSession _userSession;
     private readonly INavigationService _navigationService;
+    private readonly IFileStorageService _fileStorageService;
     private Task? _initializationTask;
     
     // View State
@@ -194,11 +195,12 @@ public class DeliveryNotesViewModel : BaseViewModel
     public ICommand ResetFiltersCommand { get; }
     public ICommand AddInvoiceCommand { get; }
 
-    public DeliveryNotesViewModel(IUnitOfWork unitOfWork, IUserSession userSession, INavigationService navigationService)
+    public DeliveryNotesViewModel(IUnitOfWork unitOfWork, IUserSession userSession, INavigationService navigationService, IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _userSession = userSession;
         _navigationService = navigationService;
+        _fileStorageService = fileStorageService;
         Title = "Réception des Bons de Livraison";
         
         SelectFileCommand = new RelayCommand(_ => ExecuteSelectFile());
@@ -207,7 +209,7 @@ public class DeliveryNotesViewModel : BaseViewModel
         ShowAddFormCommand = new RelayCommand(_ => ExecuteShowAddForm());
         BackToListCommand = new RelayCommand(async _ => await ExecuteBackToList());
         InspectCommand = new RelayCommand(async p => await ExecuteInspect((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
-        PrintPdfCommand = new RelayCommand(p => ExecuteOpenOriginalFile((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
+        PrintPdfCommand = new RelayCommand(async p => await ExecuteOpenOriginalFileAsync((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
         AddInvoiceCommand = new RelayCommand(p => ExecuteAddInvoice(p as DeliveryNoteListItemViewModel));
 
@@ -438,7 +440,7 @@ public class DeliveryNotesViewModel : BaseViewModel
         }
     }
 
-    private void ExecuteOpenOriginalFile(DeliveryNote? dn)
+    private async Task ExecuteOpenOriginalFileAsync(DeliveryNote? dn)
     {
         if (dn == null || string.IsNullOrWhiteSpace(dn.FilePath))
         {
@@ -453,11 +455,12 @@ public class DeliveryNotesViewModel : BaseViewModel
 
         try
         {
-            if (!System.IO.File.Exists(dn.FilePath))
+            string fullPath = await _fileStorageService.GetFullPathAsync(dn.FilePath);
+            if (!System.IO.File.Exists(fullPath))
             {
                 var modal = new Views.Components.AlertModalWindow
                 {
-                    Message = $"Le fichier original est introuvable à l'emplacement suivant :\n{dn.FilePath}",
+                    Message = $"Le fichier original est introuvable à l'emplacement suivant :\n{fullPath}",
                     AlertType = Views.Components.AlertType.Error
                 };
                 modal.ShowDialog();
@@ -467,7 +470,7 @@ public class DeliveryNotesViewModel : BaseViewModel
             var process = new System.Diagnostics.Process();
             process.StartInfo = new System.Diagnostics.ProcessStartInfo
             {
-                FileName = dn.FilePath,
+                FileName = fullPath,
                 UseShellExecute = true
             };
             process.Start();
@@ -509,7 +512,7 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "Fichiers images et PDF (*.jpg, *.png, *.pdf)|*.jpg;*.png;*.pdf"
+            Filter = "Fichiers images et PDF (*.jpg, *.jpeg, *.png, *.webp, *.bmp, *.pdf)|*.jpg;*.jpeg;*.png;*.webp;*.bmp;*.pdf"
         };
 
         if (dialog.ShowDialog() == true)
@@ -571,19 +574,15 @@ public class DeliveryNotesViewModel : BaseViewModel
             {
                 try
                 {
-                    string storageDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Documents", "BL");
-                    if (!System.IO.Directory.Exists(storageDir))
-                        System.IO.Directory.CreateDirectory(storageDir);
-
-                    string fileName = $"BL_{DeliveryNoteNumber}_{DateTime.Now:yyyyMMddHHmmss}{System.IO.Path.GetExtension(AttachedFilePath)}";
-                    string destinationPath = System.IO.Path.Combine(storageDir, fileName);
-                    
-                    System.IO.File.Copy(AttachedFilePath, destinationPath, true);
-                    finalFilePath = destinationPath;
+                    // Fichier importé -> envoyé sur Supabase Storage (référence distante)
+                    finalFilePath = await _fileStorageService.UploadImportedFileAsync(
+                        "bonlivraison", "BL", AttachedFilePath);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Erreur lors de la copie du fichier : {ex.Message}");
+                    System.Windows.MessageBox.Show($"Impossible de joindre le fichier : {ex.Message}",
+                        "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
                 }
             }
 

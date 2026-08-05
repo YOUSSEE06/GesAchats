@@ -300,14 +300,14 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         _ = LoadPaymentsAsync();
     }
 
-    private void ViewProof(PaymentListDto? payment)
+    private async void ViewProof(PaymentListDto? payment)
     {
         if (payment == null || string.IsNullOrWhiteSpace(payment.ProofFilePath))
             return;
 
         try
         {
-            string fullPath = _fileStorageService.GetFullPath(payment.ProofFilePath);
+            string fullPath = await _fileStorageService.GetFullPathAsync(payment.ProofFilePath);
             if (!System.IO.File.Exists(fullPath))
             {
                 MessageBox.Show($"Fichier introuvable : {fullPath}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);

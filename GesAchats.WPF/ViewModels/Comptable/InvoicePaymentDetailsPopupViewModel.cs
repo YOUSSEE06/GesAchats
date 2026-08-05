@@ -47,18 +47,18 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
 
         AddPaymentCommand = new RelayCommand(async _ => await AddPaymentAsync(), _ => CanAddPayment());
         DeletePaymentCommand = new RelayCommand(async param => await DeletePaymentAsync(param as Payment));
-        ViewProofCommand = new RelayCommand(param => ViewProof(param as string));
+        ViewProofCommand = new RelayCommand(async param => await ViewProofAsync(param as string));
         CloseCommand = new RelayCommand(_ => Close?.Invoke(this, true));
     }
     
-    private void ViewProof(string? filePath)
+    private async System.Threading.Tasks.Task ViewProofAsync(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
             return;
             
         try
         {
-            string fullPath = _fileStorageService.GetFullPath(filePath);
+            string fullPath = await _fileStorageService.GetFullPathAsync(filePath);
 
             // Verify file exists
             if (!File.Exists(fullPath))

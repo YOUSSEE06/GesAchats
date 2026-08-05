@@ -24,6 +24,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     private readonly IServiceProvider _serviceProvider;
     private readonly IUserSession _userSession;
     private readonly ILogger _logger;
+    private readonly IFileStorageService _fileStorageService;
 
     private bool _isAdmin;
     public bool IsAdmin
@@ -273,13 +274,14 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     private bool _isInitialized;
     private bool _isInitializing;
 
-    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession, ILogger logger)
+    public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession, ILogger logger, IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _serviceProvider = serviceProvider;
         _userSession = userSession;
         _logger = logger;
+        _fileStorageService = fileStorageService;
         Title = "Factures Fournisseurs";
         IsAdmin = _userSession.CurrentUser?.Role?.Code?.ToUpper() == "ADMIN";
 
@@ -331,11 +333,16 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 _navigationService.NavigateTo("DeliveryNoteDetails", blId);
         });
 
-        ViewFileCommand = new RelayCommand(path =>
+        ViewFileCommand = new RelayCommand(async path =>
         {
-            if (path is string filePath && !string.IsNullOrEmpty(filePath))
+            if (path is string storedPath && !string.IsNullOrEmpty(storedPath))
             {
-                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath) { UseShellExecute = true }); }
+                try
+                {
+                    string fullPath = await _fileStorageService.GetFullPathAsync(storedPath);
+                    if (System.IO.File.Exists(fullPath))
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(fullPath) { UseShellExecute = true });
+                }
                 catch { /* Handle error */ }
             }
         });

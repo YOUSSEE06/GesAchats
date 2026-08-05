@@ -14,6 +14,7 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
     private readonly IUserSession _userSession;
+    private readonly IFileStorageService _fileStorageService;
     private Task? _initializationTask;
 
     public async void OnNavigatedTo(object parameter)
@@ -142,16 +143,17 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
     public ICommand CancelCommand { get; }
     public ICommand UploadFileCommand { get; }
 
-    public InvoiceFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IUserSession userSession)
+    public InvoiceFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IUserSession userSession, IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _userSession = userSession;
+        _fileStorageService = fileStorageService;
         Title = "Nouvelle Facture";
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync(), _ => CanSave());
         CancelCommand = new RelayCommand(_ => _navigationService.NavigateTo("Factures"));
-        UploadFileCommand = new RelayCommand(_ => ExecuteUploadFile());
+        UploadFileCommand = new RelayCommand(async _ => await ExecuteUploadFileAsync());
 
         _initializationTask = InitializeAsync();
     }
@@ -221,11 +223,11 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
         OnPropertyChanged(nameof(Invoice));
     }
 
-    private void ExecuteUploadFile()
+    private async Task ExecuteUploadFileAsync()
     {
         var dialog = new OpenFileDialog
         {
-            Filter = "Fichiers PDF et Images (*.pdf;*.jpg;*.jpeg;*.png)|*.pdf;*.jpg;*.jpeg;*.png",
+            Filter = "Fichiers PDF et Images (*.pdf;*.jpg;*.jpeg;*.png;*.webp;*.bmp)|*.pdf;*.jpg;*.jpeg;*.png;*.webp;*.bmp",
             Title = "Sélectionner la facture"
         };
 
@@ -233,7 +235,22 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
         {
             AttachedFilePath = dialog.FileName;
             AttachedFileName = Path.GetFileName(dialog.FileName);
-            Invoice.FilePath = AttachedFilePath;
+            try
+            {
+                // Fichier importé -> envoyé sur Supabase Storage (référence distante)
+                string reference = await _fileStorageService.UploadImportedFileAsync(
+                    "factures", "FACT", dialog.FileName);
+                Invoice.FilePath = reference;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Impossible de joindre le fichier : {ex.Message}",
+                    "Erreur", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                AttachedFilePath = null;
+                AttachedFileName = string.Empty;
+                Invoice.FilePath = null;
+            }
         }
     }
 

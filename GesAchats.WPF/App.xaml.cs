@@ -583,7 +583,8 @@ public partial class App : Application
         services.AddTransient<IEmailService, EmailService>();
         services.AddTransient<IEmailVerificationService, EmailVerificationService>();
         services.AddTransient<IConformityService, ConformityService>();
-        services.AddTransient<IFileStorageService>(s => new FileStorageService(AppDomain.CurrentDomain.BaseDirectory));
+        services.AddSingleton<SupabaseStorageClient>();
+        services.AddTransient<IFileStorageService>(s => new FileStorageService(AppDomain.CurrentDomain.BaseDirectory, s.GetRequiredService<SupabaseStorageClient>()));
         services.AddTransient<IInvoiceRepository, InvoiceRepository>();
         
         // Dashboard services
