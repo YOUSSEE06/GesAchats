@@ -33,6 +33,7 @@ using Serilog;
 using Npgsql;
 
 using GesAchats.WPF.Views.Magasinier.NeedsHistory;
+using GesAchats.WPF.Views;
 
 namespace GesAchats.WPF;
 
@@ -44,6 +45,44 @@ public partial class App : Application
     private static string _resolvedConnectionString = null!;
     private static string _resolvedEndpointLabel = "configuration .env";
     private static string _resolvedEndpointDiagnostic = "(aucun)";
+
+    private ConnectionErrorWindow? _connectionErrorWindow;
+
+    /// <summary>
+    /// Ouvre (ou ramène au premier plan) la fenêtre « Problème de connexion »
+    /// dès que la surveillance détecte une perte de connexion.
+    /// </summary>
+    private void OnConnectionLost()
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            ShowConnectionErrorWindowCore();
+        }
+        else
+        {
+            Dispatcher.Invoke(ShowConnectionErrorWindowCore);
+        }
+    }
+
+    private void ShowConnectionErrorWindowCore()
+    {
+        if (_connectionErrorWindow is not null && _connectionErrorWindow.IsVisible)
+        {
+            _connectionErrorWindow.Activate();
+            return;
+        }
+
+        // Ne pas ouvrir d'alerte si la connexion a déjà été rétablie entre-temps.
+        if (ServiceProvider.GetRequiredService<IDatabaseConnectionMonitor>().IsConnected)
+        {
+            return;
+        }
+
+        _connectionErrorWindow = ServiceProvider.GetRequiredService<ConnectionErrorWindow>();
+        _connectionErrorWindow.Closed += (_, _) => _connectionErrorWindow = null;
+        _connectionErrorWindow.Show();
+        _connectionErrorWindow.Activate();
+    }
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -297,11 +336,16 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Échec de l'initialisation de la base de données à la connexion {Conn}", _resolvedConnectionString);
                 ShowDatabaseStartupError(ex, _resolvedConnectionString, _resolvedEndpointLabel, _resolvedEndpointDiagnostic);
             }
 
             var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
             loginWindow.Show();
+
+            var connectionMonitor = ServiceProvider.GetRequiredService<IDatabaseConnectionMonitor>();
+            connectionMonitor.ConnectionLost += OnConnectionLost;
+            connectionMonitor.Start();
         }
         catch (Exception ex)
         {
@@ -363,7 +407,7 @@ public partial class App : Application
         {
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(12));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
                 await using var conn = new NpgsqlConnection(connStr);
                 await conn.OpenAsync(cts.Token);
                 await using var cmd = conn.CreateCommand();
@@ -496,7 +540,16 @@ public partial class App : Application
     private void ConfigureServices(IServiceCollection services, string connectionString)
     {
         services.AddDbContext<GesAchatsDbContext>(options =>
-            options.UseNpgsql(connectionString),
+            options.UseNpgsql(connectionString, npgsql =>
+            {
+                // Masque les pannes transitoires (DNS / réseau / pooler) : les requêtes
+                // échouées sont rejouées automatiquement au lieu d'afficher une erreur.
+                npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 1,
+                    maxRetryDelay: TimeSpan.FromSeconds(6),
+                    errorCodesToAdd: null);
+                npgsql.CommandTimeout(45);
+            }),
             ServiceLifetime.Transient);
 
         // Configuration Smtp - valeurs issues uniquement du fichier .env
@@ -514,6 +567,8 @@ public partial class App : Application
 
         // Injection des dépendances Data & Services
         services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<IDatabaseConnectionMonitor>(sp => new DatabaseConnectionMonitor(sp));
+        services.AddTransient<ConnectionErrorWindow>();
         services.AddTransient<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IUserSession, UserSession>();
         services.AddSingleton<SupabaseAuthClient>();

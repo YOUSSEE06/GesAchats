@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Acheteur;
 
-public class AcheteurShellViewModel : BaseViewModel
+public class AcheteurShellViewModel : ShellViewModelBase
 {
     private readonly IUserSession _userSession;
     private readonly IServiceProvider _serviceProvider;
@@ -37,7 +37,8 @@ public class AcheteurShellViewModel : BaseViewModel
     public ICommand LogoutCommand { get; }
     public ICommand ToggleSidebarCommand { get; }
 
-    public AcheteurShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService)
+    public AcheteurShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService, GesAchats.WPF.Services.IDatabaseConnectionMonitor connectionMonitor)
+        : base(connectionMonitor)
     {
         _userSession = userSession;
         _serviceProvider = serviceProvider;

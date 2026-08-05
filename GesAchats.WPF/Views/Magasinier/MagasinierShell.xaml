@@ -88,6 +88,30 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <!-- État de connexion base de données -->
+                    <Border Margin="0,12,0,0" Padding="10,8"
+                            CornerRadius="10"
+                            Background="{StaticResource SidebarGlassBackground}"
+                            BorderBrush="{StaticResource SidebarGlassBorder}"
+                            BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Ellipse Width="10" Height="10"
+                                     Fill="{Binding ConnectionDotBrush}"
+                                     Margin="0,0,8,0"
+                                     VerticalAlignment="Center">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.6" Color="#000000"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock Text="{Binding ConnectionStatusText}"
+                                       Foreground="White"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanInverterConverter}}"/>
+                        </StackPanel>
+                    </Border>
                     
                     <Button Margin="0,12,0,0" Padding="12,8" 
                             HorizontalAlignment="Stretch" 

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Magasinier;
 
-public class MagasinierShellViewModel : BaseViewModel
+public class MagasinierShellViewModel : ShellViewModelBase
 {
     private readonly IUserSession _userSession;
     private readonly IServiceProvider _serviceProvider;
@@ -37,7 +37,8 @@ public class MagasinierShellViewModel : BaseViewModel
     public ICommand LogoutCommand { get; }
     public ICommand ToggleSidebarCommand { get; }
 
-    public MagasinierShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService)
+    public MagasinierShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService, GesAchats.WPF.Services.IDatabaseConnectionMonitor connectionMonitor)
+        : base(connectionMonitor)
     {
         _userSession = userSession;
         _serviceProvider = serviceProvider;

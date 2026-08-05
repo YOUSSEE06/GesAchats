@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
-public class ComptableShellViewModel : BaseViewModel
+public class ComptableShellViewModel : ShellViewModelBase
 {
     private readonly IUserSession _userSession;
     private readonly IServiceProvider _serviceProvider;
@@ -37,7 +37,8 @@ public class ComptableShellViewModel : BaseViewModel
     public ICommand LogoutCommand { get; }
     public ICommand ToggleSidebarCommand { get; }
 
-    public ComptableShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService)
+    public ComptableShellViewModel(IUserSession userSession, IServiceProvider serviceProvider, INavigationService navigationService, GesAchats.WPF.Services.IDatabaseConnectionMonitor connectionMonitor)
+        : base(connectionMonitor)
     {
         _userSession = userSession;
         _serviceProvider = serviceProvider;
