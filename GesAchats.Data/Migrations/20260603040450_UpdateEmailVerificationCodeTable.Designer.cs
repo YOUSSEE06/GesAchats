@@ -244,7 +244,7 @@ namespace GesAchats.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CodeHash")
+                    b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");

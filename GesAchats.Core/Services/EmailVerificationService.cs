@@ -92,7 +92,7 @@ public class EmailVerificationService : IEmailVerificationService
             var verificationCode = new EmailVerificationCode
             {
                 UserId = user.Id,
-                CodeHash = codeHash,
+                Code = codeHash,
                 ExpiresAt = expiresAt,
                 IsUsed = false,
                 CreatedAt = DateTime.UtcNow
@@ -115,12 +115,12 @@ public class EmailVerificationService : IEmailVerificationService
                 </html>";
 
             Log.Information("Sending verification code email to {Email}", email);
-            var emailSent = await _emailService.SendEmailAsync(email, "Réinitialisation de votre mot de passe GesAchats", emailBody);
+            var emailResult = await _emailService.SendEmailAsync(email, "Réinitialisation de votre mot de passe GesAchats", emailBody);
             
-            if (!emailSent)
+            if (!emailResult.success)
             {
-                Log.Error("Failed to send verification code email to {Email}", email);
-                return (false, "Échec de l'envoi du code de validation. Veuillez réessayer.");
+                Log.Error("Failed to send verification code email to {Email}: {Error}", email, emailResult.error);
+                return (false, emailResult.error ?? "Échec de l'envoi du code de validation. Veuillez réessayer.");
             }
             
             Log.Information("Verification code email sent successfully to {Email}", email);
@@ -152,7 +152,7 @@ public class EmailVerificationService : IEmailVerificationService
             }
 
             var verificationCode = await GetLatestValidCodeAsync(user.Id);
-            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.Code))
             {
                 Log.Information("Reset code verification failed: invalid or expired code for email: {Email}", email);
                 return (false, "Code invalide ou expiré.");
@@ -189,9 +189,17 @@ public class EmailVerificationService : IEmailVerificationService
             }
 
             var verificationCode = await GetLatestValidCodeAsync(user.Id);
-            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.Code))
             {
                 return (false, "Code invalide ou expiré.");
+            }
+
+            // La connexion est validée par Supabase Auth : le nouveau mot de passe doit être
+            // appliqué chez Supabase (API Admin), pas seulement en base locale.
+            var supabaseReset = await _authClient.AdminResetPasswordAsync(user.Email, newPassword);
+            if (!supabaseReset.success)
+            {
+                return supabaseReset;
             }
 
             user.PasswordHash = BCryptNet.HashPassword(newPassword);
@@ -250,7 +258,7 @@ public class EmailVerificationService : IEmailVerificationService
                 UserId = null,
                 Email = normalizedEmail,
                 Purpose = "CreateUser",
-                CodeHash = codeHash,
+                Code = codeHash,
                 ExpiresAt = expiresAt,
                 IsUsed = false,
                 CreatedAt = DateTime.UtcNow
@@ -274,12 +282,12 @@ public class EmailVerificationService : IEmailVerificationService
                 </html>";
 
             Log.Information("Sending employee creation verification code to {Email}", normalizedEmail);
-            var emailSent = await _emailService.SendEmailAsync(normalizedEmail, "Création de votre compte GesAchats", emailBody);
+            var emailResult = await _emailService.SendEmailAsync(normalizedEmail, "Création de votre compte GesAchats", emailBody);
             
-            if (!emailSent)
+            if (!emailResult.success)
             {
-                Log.Error("Failed to send employee creation verification code email to {Email}", normalizedEmail);
-                return (false, "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
+                Log.Error("Failed to send employee creation verification code email to {Email}: {Error}", normalizedEmail, emailResult.error);
+                return (false, emailResult.error ?? "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
             }
             
             Log.Information("Employee creation verification code email sent successfully to {Email}", normalizedEmail);
@@ -320,7 +328,7 @@ public class EmailVerificationService : IEmailVerificationService
             
             var verificationCode = codes.OrderByDescending(evc => evc.CreatedAt).FirstOrDefault();
             
-            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.Code))
                 return (false, "Code invalide ou expiré.");
             
             verificationCode.IsUsed = true;
@@ -349,7 +357,7 @@ public class EmailVerificationService : IEmailVerificationService
             {
                 Email = normalizedEmail,
                 Purpose = "ChangeEmail",
-                CodeHash = codeHash,
+                Code = codeHash,
                 ExpiresAt = expiresAt,
                 IsUsed = false,
                 CreatedAt = DateTime.UtcNow
@@ -372,12 +380,12 @@ public class EmailVerificationService : IEmailVerificationService
                 </html>";
 
             Log.Information("Sending change email verification code to {Email}", normalizedEmail);
-            var emailSent = await _emailService.SendEmailAsync(normalizedEmail, "Modification de votre email GesAchats", emailBody);
+            var emailResult = await _emailService.SendEmailAsync(normalizedEmail, "Modification de votre email GesAchats", emailBody);
             
-            if (!emailSent)
+            if (!emailResult.success)
             {
-                Log.Error("Failed to send change email verification code to {Email}", normalizedEmail);
-                return (false, "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
+                Log.Error("Failed to send change email verification code to {Email}: {Error}", normalizedEmail, emailResult.error);
+                return (false, emailResult.error ?? "Échec de l'envoi du code de validation. Vérifiez la configuration SMTP.");
             }
             
             return (true, "Code de validation envoyé au nouvel email.");
@@ -416,7 +424,7 @@ public class EmailVerificationService : IEmailVerificationService
             
             var verificationCode = codes.OrderByDescending(evc => evc.CreatedAt).FirstOrDefault();
             
-            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.CodeHash))
+            if (verificationCode == null || !BCryptNet.Verify(code, verificationCode.Code))
                 return (false, "Code invalide ou expiré.");
             
             verificationCode.IsUsed = true;

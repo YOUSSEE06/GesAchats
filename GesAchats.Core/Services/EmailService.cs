@@ -20,7 +20,7 @@ public class EmailService : IEmailService
             smtpSettings.Host, smtpSettings.Port, smtpSettings.Username, smtpSettings.FromEmail, smtpSettings.UseStartTls);
     }
 
-    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? attachmentPath = null)
+    public async Task<(bool success, string? error)> SendEmailAsync(string to, string subject, string body, string? attachmentPath = null)
     {
         try
         {
@@ -63,12 +63,27 @@ public class EmailService : IEmailService
             await smtpClient.DisconnectAsync(true);
 
             Log.Information("Email sent successfully to {To}", to);
-            return true;
+            return (true, null);
+        }
+        catch (MailKit.Security.AuthenticationException ex)
+        {
+            Log.Error(ex, "SMTP authentication failed to {To}", to);
+            return (false, "Authentification SMTP refusée : vérifiez SMTP_USERNAME / SMTP_PASSWORD dans le .env (pour Gmail, utilisez un mot de passe d'application).");
+        }
+        catch (MailKit.Net.Smtp.SmtpCommandException ex)
+        {
+            Log.Error(ex, "SMTP command error sending to {To}", to);
+            return (false, $"Erreur SMTP ({ex.StatusCode}) : {ex.Message}");
+        }
+        catch (System.Net.Sockets.SocketException ex)
+        {
+            Log.Error(ex, "SMTP network error sending to {To}", to);
+            return (false, $"Impossible de joindre le serveur SMTP {_smtpSettings.Host}:{_smtpSettings.Port} : {ex.Message}");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Failed to send email to {To}", to);
-            return false;
+            return (false, $"Erreur d'envoi d'email : {ex.Message}");
         }
     }
 }

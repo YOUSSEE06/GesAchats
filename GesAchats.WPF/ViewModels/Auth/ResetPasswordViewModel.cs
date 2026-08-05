@@ -266,14 +266,13 @@ public class ResetPasswordViewModel : BaseViewModel
 
         try
         {
-            var (success, message) = await _emailVerificationService.SendPasswordRecoveryEmailAsync(Email);
+            var (success, message) = await _emailVerificationService.SendVerificationCodeAsync(Email);
 
             if (success)
             {
                 IsSuccess = true;
-                Message = "Email de réinitialisation envoyé. Consultez votre boîte mail pour définir votre nouveau mot de passe.";
-                await Task.Delay(2000);
-                GoBack();
+                Message = "Code de validation envoyé à votre adresse email. Consultez votre boîte mail.";
+                CurrentStep = ResetPasswordStep.Code;
             }
             else
             {
@@ -282,8 +281,8 @@ public class ResetPasswordViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error sending recovery email to {Email}", Email);
-            Message = "Une erreur est survenue. Veuillez réessayer.";
+            Log.Error(ex, "Error sending verification code to {Email}", Email);
+            Message = "Une erreur est survenue lors de l'envoi du code. Veuillez réessayer.";
         }
         finally
         {

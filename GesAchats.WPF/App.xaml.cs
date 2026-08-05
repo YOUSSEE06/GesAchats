@@ -1,4 +1,5 @@
 using System.Windows;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using GesAchats.Data.Context;
@@ -240,7 +241,18 @@ public partial class App : Application
 
                     var supabaseAuthClient = scope.ServiceProvider.GetRequiredService<SupabaseAuthClient>();
                     await DbInitializer.SeedRolesAsync(context);
-                    await DbInitializer.BootstrapAdminAsync(context, supabaseAuthClient);
+                    var adminLinked = await DbInitializer.BootstrapAdminAsync(context, supabaseAuthClient);
+                    if (!adminLinked)
+                    {
+                        MessageBox.Show(
+                            "Le compte administrateur n'a pas pu être initialisé chez Supabase Auth.\n\n" +
+                            "Vérifiez dans le fichier .env :\n" +
+                            "  • ADMIN_EMAIL / ADMIN_PASSWORD (email et mot de passe admin)\n" +
+                            "  • SUPABASE_SECRET_KEY (clé service_role, Dashboard Supabase → Settings → API)\n" +
+                            "  • SUPABASE_URL / SUPABASE_ANON_KEY\n\n" +
+                            "Vous pouvez aussi utiliser « Mot de passe oublié » sur l'écran de connexion.",
+                            "Compte admin non initialisé", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
 
                     await context.Database.ExecuteSqlRawAsync(@"
                         DO $$
@@ -529,9 +541,25 @@ public partial class App : Application
         // Employee management services
         services.AddTransient<IEmployeeService, EmployeeService>();
         
-        // Serilog - simple logger for now
+        // Serilog - journalisation persistante dans Logs\ (aide au diagnostic des erreurs Auth/SMTP).
+        var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+        try
+        {
+            Directory.CreateDirectory(logDir);
+        }
+        catch
+        {
+            logDir = Path.Combine(Path.GetTempPath(), "GesAchats", "Logs");
+            Directory.CreateDirectory(logDir);
+        }
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
+            .WriteTo.File(
+                Path.Combine(logDir, "gesachats-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14,
+                shared: true)
             .CreateLogger();
         services.AddSingleton<Serilog.ILogger>(Log.Logger);
 

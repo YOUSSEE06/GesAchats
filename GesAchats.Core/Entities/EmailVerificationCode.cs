@@ -18,7 +18,7 @@ public class EmailVerificationCode
 
     [Required]
     [MaxLength(255)]
-    public string CodeHash { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(50)]

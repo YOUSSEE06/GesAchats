@@ -36,16 +36,19 @@ public static class DbInitializer
 
     /// <summary>
     /// Garantit l'existence d'un compte administrateur dans public.Users et crée/relie son compte
-    /// Supabase Auth (mot de passe : ADMIN_PASSWORD du fichier .env). L'email ADMIN_EMAIL n'est
-    /// utilisé que s'il n'existe aucun administrateur en base.
+    /// Supabase Auth avec le mot de passe ADMIN_PASSWORD du fichier .env.
+    /// Priorité 1 : API Admin (service_role) — crée le compte, force le mot de passe et confirme l'email
+    ///              (contourne les restrictions d'inscription et la confirmation d'email).
+    /// Priorité 2 : sign-up anon classique, puis liaison par sign-in si l'email existe déjà.
+    /// Retourne true si le compte admin est lié à Supabase (mot de passe fonctionnel), false sinon.
     /// </summary>
-    public static async Task BootstrapAdminAsync(GesAchatsDbContext context, SupabaseAuthClient authClient)
+    public static async Task<bool> BootstrapAdminAsync(GesAchatsDbContext context, SupabaseAuthClient authClient)
     {
         var adminRoleId = await context.Roles.Where(r => r.Code == "ADMIN").Select(r => r.Id).FirstOrDefaultAsync();
         if (adminRoleId == 0)
         {
             Log.Warning("Rôle ADMIN absent : bootstrap du compte admin ignoré.");
-            return;
+            return false;
         }
 
         var admin = await context.Users.FirstOrDefaultAsync(u => u.RoleId == adminRoleId);
@@ -57,7 +60,7 @@ public static class DbInitializer
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 Log.Warning("ADMIN_EMAIL / ADMIN_PASSWORD absents du .env : compte admin non créé.");
-                return;
+                return false;
             }
 
             admin = new User
@@ -78,16 +81,42 @@ public static class DbInitializer
 
         if (admin.SupabaseAuthId != null)
         {
-            return;
+            return true;
         }
 
         var adminPassword = EnvLoader.AdminPassword;
         if (string.IsNullOrWhiteSpace(adminPassword))
         {
             Log.Warning("ADMIN_PASSWORD absent du .env : compte admin non lié à Supabase.");
-            return;
+            return false;
         }
 
+        // Priorité 1 : API Admin (service_role) — initialise réellement le mot de passe admin.
+        var adminBootstrap = await authClient.AdminBootstrapUserAsync(admin.Email, adminPassword);
+        if (adminBootstrap.success)
+        {
+            if (adminBootstrap.userId.HasValue)
+            {
+                admin.SupabaseAuthId = adminBootstrap.userId;
+                admin.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                Log.Information("Compte admin Supabase initialisé avec ADMIN_PASSWORD pour {Email}", admin.Email);
+                return true;
+            }
+
+            // Mot de passe posé mais identifiant non récupéré : on le retrouve par un sign-in.
+            var signInAfterBootstrap = await authClient.SignInWithPasswordAsync(admin.Email, adminPassword);
+            if (signInAfterBootstrap.success && signInAfterBootstrap.userId.HasValue)
+            {
+                admin.SupabaseAuthId = signInAfterBootstrap.userId;
+                admin.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                Log.Information("Compte admin Supabase lié pour {Email}", admin.Email);
+                return true;
+            }
+        }
+
+        // Priorité 2 : sign-up anon classique (si la clé service_role est absente ou invalide).
         var signUp = await authClient.SignUpAsync(admin.Email, adminPassword);
         if (signUp.success && signUp.userId.HasValue)
         {
@@ -95,7 +124,7 @@ public static class DbInitializer
             admin.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
             Log.Information("Compte admin Supabase créé pour {Email}", admin.Email);
-            return;
+            return true;
         }
 
         if (signUp.alreadyExists)
@@ -107,13 +136,14 @@ public static class DbInitializer
                 admin.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
                 Log.Information("Compte admin Supabase lié pour {Email}", admin.Email);
-                return;
+                return true;
             }
 
-            Log.Warning("Email admin {Email} déjà enregistré chez Supabase avec un autre mot de passe : utilisez « Mot de passe oublié » ou créez-le dans le Dashboard Supabase.", admin.Email);
-            return;
+            Log.Warning("Email admin {Email} déjà enregistré chez Supabase avec un autre mot de passe : utilisez « Mot de passe oublié » ou SUPABASE_SECRET_KEY dans le .env.", admin.Email);
+            return false;
         }
 
-        Log.Warning("Liaison Supabase du compte admin impossible : {Message}", signUp.message);
+        Log.Warning("Initialisation Supabase du compte admin impossible : {Message}", signUp.message);
+        return false;
     }
 }
