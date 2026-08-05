@@ -275,7 +275,14 @@ public class InvoiceFormViewModel : BaseViewModel, INavigatable
             Invoice.Status = "EnAttente";
             Invoice.ConformityStatus = "NonVerifiee";
             Invoice.TaxRate = TaxRate;
-            Invoice.CreatedById = _userSession.CurrentUser?.Id ?? 1; // Fallback to 1 for testing if session is empty
+
+            // cree_par -> Users.Id : toujours depuis la session (jamais de fallback 1 :
+            // aucun utilisateur avec Id=1 n'existe, la FK serait violée).
+            if (_userSession.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Session utilisateur introuvable : veuillez vous reconnecter.");
+            }
+            Invoice.CreatedById = _userSession.CurrentUser.Id;
 
             Invoice.Details.Clear();
             foreach (var detail in InvoiceDetails)

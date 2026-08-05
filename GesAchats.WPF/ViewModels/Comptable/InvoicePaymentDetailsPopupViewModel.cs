@@ -12,6 +12,7 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IUserSession _userSession;
     private readonly InvoiceWithPaymentsViewModel _invoiceVm;
 
     public Invoice Invoice => _invoiceVm.Invoice;
@@ -37,11 +38,12 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
     public ICommand ViewProofCommand { get; }
     public ICommand CloseCommand { get; }
 
-    public InvoicePaymentDetailsPopupViewModel(InvoiceWithPaymentsViewModel invoiceVm, IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+    public InvoicePaymentDetailsPopupViewModel(InvoiceWithPaymentsViewModel invoiceVm, IUnitOfWork unitOfWork, IFileStorageService fileStorageService, IUserSession userSession)
     {
         _invoiceVm = invoiceVm;
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
+        _userSession = userSession;
 
         Title = "Détails Facture et Règlements";
 
@@ -85,6 +87,11 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            if (_userSession.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Session utilisateur introuvable : veuillez vous reconnecter.");
+            }
+
             var payment = new Payment
             {
                 InvoiceId = Invoice.Id,
@@ -95,7 +102,7 @@ public class InvoicePaymentDetailsPopupViewModel : BaseViewModel
                 PaymentMethod = NewPaymentMethod ?? "Virement",
                 ReferenceNumber = NewPaymentReference,
                 Status = "Validé",
-                CreatedById = 1, // TODO: Get current user
+                CreatedById = _userSession.CurrentUser.Id,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };

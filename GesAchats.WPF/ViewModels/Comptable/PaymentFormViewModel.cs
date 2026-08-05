@@ -16,6 +16,7 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
     private readonly INavigationService _navigationService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IPdfGeneratorService _pdfGeneratorService;
+    private readonly IUserSession _userSession;
 
     private ObservableCollection<InvoiceWithPaymentsViewModel> _invoices = new();
     public ObservableCollection<InvoiceWithPaymentsViewModel> Invoices
@@ -61,12 +62,13 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
-    public PaymentFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService, IPdfGeneratorService pdfGeneratorService)
+    public PaymentFormViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IFileStorageService fileStorageService, IPdfGeneratorService pdfGeneratorService, IUserSession userSession)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
         _fileStorageService = fileStorageService;
         _pdfGeneratorService = pdfGeneratorService;
+        _userSession = userSession;
         Title = "Enregistrer un Règlement";
 
         BrowseCommand = new RelayCommand(_ => BrowseFile());
@@ -153,7 +155,14 @@ public class PaymentFormViewModel : BaseViewModel, INavigatable
             Payment.PaymentNumber = $"REG-{DateTime.Now:yyyy}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
             Payment.CreatedAt = DateTime.UtcNow;
             Payment.UpdatedAt = DateTime.UtcNow;
-            Payment.CreatedById = 1; // TODO: Get from current user session
+
+            // cree_par -> Users.Id : l'id vient TOUJOURS de la session (jamais codé en dur,
+            // le fallback 1 n'existe plus car il n'y a aucun utilisateur avec Id=1).
+            if (_userSession.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Session utilisateur introuvable : veuillez vous reconnecter.");
+            }
+            Payment.CreatedById = _userSession.CurrentUser.Id;
             Payment.Status = "Validé"; // Add default status
             
             // Clear navigation properties to avoid EF tracking issues
