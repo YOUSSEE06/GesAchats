@@ -8,40 +8,40 @@
     <Grid Name="MainGrid">
         <Grid.ColumnDefinitions>
             <!-- Bon de Commande -->
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="140"/>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="75"/>
+            <ColumnDefinition Width="95"/>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="75"/>
+            <ColumnDefinition Width="55"/>
             <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="90"/>
             <!-- Bon de Livraison -->
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="75"/>
+            <ColumnDefinition Width="95"/>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="65"/>
+            <ColumnDefinition Width="65"/>
+            <ColumnDefinition Width="55"/>
+            <ColumnDefinition Width="70"/>
             <ColumnDefinition Width="90"/>
             <ColumnDefinition Width="90"/>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="90"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
             <!-- Facture -->
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="80"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
-            <!-- Règlements -->
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="140"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="110"/>
+            <ColumnDefinition Width="75"/>
+            <ColumnDefinition Width="95"/>
+            <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="60"/>
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="90"/>
+            <!-- Règlements -->
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="80"/>
+            <ColumnDefinition Width="115"/>
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="90"/>
+            <ColumnDefinition Width="70"/>
         </Grid.ColumnDefinitions>
     </Grid>
 </UserControl>
