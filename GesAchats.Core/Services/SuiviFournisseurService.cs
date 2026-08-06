@@ -19,40 +19,65 @@ public class SuiviFournisseurService : ISuiviFournisseurService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<int> GetTotalFournisseursAsync()
+    public async Task<SuiviFournisseurKpisDto> GetSuiviKpisAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
+        // Périodes (identique au Dashboard principal) : période actuelle vs période précédente de même durée
+        var now = DateTime.UtcNow;
+        var end = endDate ?? now;
+        var start = startDate ?? end.AddMonths(-1);
+        var duration = end - start;
+        var previousStart = start - duration;
+        var previousEnd = start;
+
+        Log.Information("GetSuiviKpisAsync: Period {Start} -> {End}, previous {PreviousStart} -> {PreviousEnd}", start, end, previousStart, previousEnd);
+
         var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-        Log.Information("GetTotalFournisseursAsync: Found {Count} suppliers", suppliers.Count());
-        return suppliers.Count();
-    }
-
-    public async Task<int> GetCommandesEnCoursAsync()
-    {
-        var orders = await _unitOfWork.PurchaseOrders.GetAllAsync();
-        var count = orders.Count(o => o.Status != PurchaseOrderStatus.Cancelled);
-        Log.Information("GetCommandesEnCoursAsync: Found {Count} active orders", count);
-        return count;
-    }
-
-    public async Task<decimal> GetTotalCommandeAsync()
-    {
-        var orders = await _unitOfWork.PurchaseOrders.GetAllAsync();
-        var total = orders.Sum(o => o.TotalAmountTTC);
-        Log.Information("GetTotalCommandeAsync: Total amount {Total}", total);
-        return total;
-    }
-
-    public async Task<decimal> GetSoldeTotalAsync()
-    {
+        var purchaseOrders = await _unitOfWork.PurchaseOrders.GetAllAsync();
         var invoices = await _unitOfWork.Invoices.GetAllAsync();
         var payments = await _unitOfWork.Payments.GetAllAsync();
 
-        var totalInvoices = invoices.Sum(i => i.AmountTTC);
-        var totalPayments = payments.Sum(p => p.AmountPaid);
+        // Total fournisseurs : total cumulé, précédent = nouveaux fournisseurs créés sur la période précédente
+        var totalSuppliers = suppliers.Count();
+        var previousSuppliersCount = suppliers.Count(s => s.IsActive && s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd);
 
-        var solde = totalInvoices - totalPayments;
-        Log.Information("GetSoldeTotalAsync: Total invoices {Invoices}, Total payments {Payments}, Solde {Solde}", totalInvoices, totalPayments, solde);
-        return solde;
+        // Commandes en cours : commandes non annulées sur la période
+        var activeOrders = purchaseOrders.Where(o => o.Status != PurchaseOrderStatus.Cancelled).ToList();
+        var currentOrders = activeOrders.Where(o => o.OrderDate >= start && o.OrderDate <= end).ToList();
+        var previousOrders = activeOrders.Where(o => o.OrderDate >= previousStart && o.OrderDate <= previousEnd).ToList();
+        var totalCommande = currentOrders.Sum(o => o.TotalAmountTTC);
+        var previousTotalCommande = previousOrders.Sum(o => o.TotalAmountTTC);
+
+        // Solde total : solde cumulé "tous temps" (comme SoldeTotal du dashboard), comparaison au solde à la fin de la période précédente
+        var soldeActuel = invoices.Sum(i => i.AmountTTC) - payments.Sum(p => p.AmountPaid);
+        var soldePrecedent = invoices.Where(i => i.InvoiceDate <= previousEnd).Sum(i => i.AmountTTC)
+                            - payments.Where(p => p.PaymentDate <= previousEnd).Sum(p => p.AmountPaid);
+
+        Log.Information("GetSuiviKpisAsync: Suppliers {Suppliers} (prev {PrevSuppliers}), Orders {Orders} (prev {PrevOrders}), TotalCommande {TotalCommande} (prev {PrevTotalCommande}), Solde {Solde} (prev {PrevSolde})",
+            totalSuppliers, previousSuppliersCount, currentOrders.Count, previousOrders.Count, totalCommande, previousTotalCommande, soldeActuel, soldePrecedent);
+
+        return new SuiviFournisseurKpisDto
+        {
+            TotalFournisseurs = new KpiModel
+            {
+                Current = totalSuppliers,
+                Previous = previousSuppliersCount
+            },
+            CommandesEnCours = new KpiModel
+            {
+                Current = currentOrders.Count,
+                Previous = previousOrders.Count
+            },
+            TotalCommande = new KpiModel
+            {
+                Current = (double)totalCommande,
+                Previous = (double)previousTotalCommande
+            },
+            SoldeTotal = new KpiModel
+            {
+                Current = (double)soldeActuel,
+                Previous = (double)soldePrecedent
+            }
+        };
     }
 
     public async Task<PagedResult<FournisseurSuiviDto>> SearchFournisseursAsync(string searchText, int pageNumber, int pageSize)
@@ -96,7 +121,7 @@ public class SuiviFournisseurService : ISuiviFournisseurService
         };
     }
 
-    public async Task<SituationFournisseurDto> GetSituationFournisseurAsync(int fournisseurId)
+    public async Task<SituationFournisseurDto> GetSituationFournisseurAsync(int fournisseurId, DateTime? startDate = null, DateTime? endDate = null)
     {
         Log.Information("GetSituationFournisseurAsync: Starting for supplier ID {FournisseurId}", fournisseurId);
 
@@ -145,9 +170,30 @@ public class SuiviFournisseurService : ISuiviFournisseurService
         var payments = allPayments.Where(p => p.SupplierId == fournisseurId).ToList();
         Log.Information("GetSituationFournisseurAsync: Found {Count} payments for supplier", payments.Count);
 
-        // Calcul des KPIs
+        // Périodes (identique au Dashboard principal) : période actuelle vs période précédente de même durée
+        var now = DateTime.UtcNow;
+        var endOfPeriod = endDate ?? now;
+        var startOfPeriod = startDate ?? endOfPeriod.AddMonths(-1);
+        var duration = endOfPeriod - startOfPeriod;
+        var previousStart = startOfPeriod - duration;
+        var previousEnd = startOfPeriod;
+
+        // KPIs basés sur la période (current period)
+        var currentCommandes = purchaseOrders.Where(po => po.OrderDate >= startOfPeriod && po.OrderDate <= endOfPeriod).ToList();
+        var previousCommandes = purchaseOrders.Where(po => po.OrderDate >= previousStart && po.OrderDate <= previousEnd).ToList();
+        var currentBls = deliveryNotes.Where(dn => dn.ReceptionDate >= startOfPeriod && dn.ReceptionDate <= endOfPeriod).ToList();
+        var previousBls = deliveryNotes.Where(dn => dn.ReceptionDate >= previousStart && dn.ReceptionDate <= previousEnd).ToList();
+        var currentInvoices = invoices.Where(i => i.InvoiceDate >= startOfPeriod && i.InvoiceDate <= endOfPeriod).ToList();
+        var previousInvoices = invoices.Where(i => i.InvoiceDate >= previousStart && i.InvoiceDate <= previousEnd).ToList();
+        var currentPayments = payments.Where(p => p.PaymentDate >= startOfPeriod && p.PaymentDate <= endOfPeriod).ToList();
+        var previousPayments = payments.Where(p => p.PaymentDate >= previousStart && p.PaymentDate <= previousEnd).ToList();
+
+        // Solde à payer : solde cumulé "tous temps" (comme SoldeTotal du dashboard), comparaison au solde à la fin de la période précédente
         var totalInvoicesAmount = invoices.Sum(i => i.AmountTTC);
         var totalPaymentsAmount = payments.Sum(p => p.AmountPaid);
+        var soldeActuel = totalInvoicesAmount - totalPaymentsAmount;
+        var soldePrecedent = invoices.Where(i => i.InvoiceDate <= previousEnd).Sum(i => i.AmountTTC)
+                            - payments.Where(p => p.PaymentDate <= previousEnd).Sum(p => p.AmountPaid);
 
         var result = new SituationFournisseurDto
         {
@@ -157,11 +203,21 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             Telephone = supplier.Phone,
             Email = supplier.Email,
             Ville = supplier.City,
-            TotalCommandes = purchaseOrders.Count,
-            TotalBls = deliveryNotes.Count,
-            TotalFactures = invoices.Count,
-            TotalReglements = totalPaymentsAmount,
-            SoldeAPayer = totalInvoicesAmount - totalPaymentsAmount,
+            TotalCommandes = currentCommandes.Count,
+            TotalCommandesPrevious = previousCommandes.Count,
+            TotalCommandesVariation = CalculateVariation(currentCommandes.Count, previousCommandes.Count),
+            TotalBls = currentBls.Count,
+            TotalBlsPrevious = previousBls.Count,
+            TotalBlsVariation = CalculateVariation(currentBls.Count, previousBls.Count),
+            TotalFactures = currentInvoices.Count,
+            TotalFacturesPrevious = previousInvoices.Count,
+            TotalFacturesVariation = CalculateVariation(currentInvoices.Count, previousInvoices.Count),
+            TotalReglements = currentPayments.Sum(p => p.AmountPaid),
+            TotalReglementsPrevious = previousPayments.Sum(p => p.AmountPaid),
+            TotalReglementsVariation = CalculateVariation((double)currentPayments.Sum(p => p.AmountPaid), (double)previousPayments.Sum(p => p.AmountPaid)),
+            SoldeAPayer = soldeActuel,
+            SoldeAPayerPrevious = soldePrecedent,
+            SoldeAPayerVariation = CalculateVariation((double)soldeActuel, (double)soldePrecedent),
             Operations = new List<SituationOperationGroupDto>()
         };
 
@@ -339,5 +395,15 @@ public class SuiviFournisseurService : ISuiviFournisseurService
 
         Log.Information("GetSituationFournisseurAsync: Completed, returning {OpCount} operation groups", result.Operations.Count);
         return result;
+    }
+
+    // Même formule que les KPI du Dashboard principal : ((current - previous) / previous) * 100
+    private double CalculateVariation(double current, double previous)
+    {
+        if (previous == 0)
+        {
+            return current > 0 ? 100 : 0;
+        }
+        return Math.Round(((current - previous) / previous) * 100, 1);
     }
 }

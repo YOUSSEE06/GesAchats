@@ -57,6 +57,62 @@
                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
             </Style>
 
+            <Style x:Key="FilterDateStyle" TargetType="DatePicker">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#D0CDE8"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePicker">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DatePickerTextBox 
+                                        x:Name="PART_TextBox" 
+                                        Grid.Column="0" 
+                                        Foreground="{TemplateBinding Foreground}" 
+                                        Background="Transparent" 
+                                        BorderThickness="0" 
+                                        VerticalContentAlignment="Center" 
+                                        Padding="12,0" 
+                                        FontSize="{TemplateBinding FontSize}"/>
+                                    <Button x:Name="PART_Button" 
+                                            Grid.Column="1" 
+                                            Width="32" 
+                                            Background="Transparent" 
+                                            BorderThickness="0" 
+                                            Cursor="Hand" 
+                                            Focusable="False">
+                                        <Path Data="M6 2v2M18 2v2M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" 
+                                              Stroke="#6C5CE7" StrokeThickness="1.5" 
+                                              StrokeLineJoin="Round" 
+                                              StrokeStartLineCap="Round" 
+                                              StrokeEndLineCap="Round" 
+                                              Width="16" Height="16" 
+                                              Stretch="Uniform"/>
+                                    </Button>
+                                    <Popup x:Name="PART_Popup" 
+                                           AllowsTransparency="True" 
+                                           Placement="Bottom" 
+                                           IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <Calendar x:Name="PART_Calendar"/>
+                                    </Popup>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="BtnPrimaryStyle" TargetType="Button">
                 <Setter Property="Background" Value="#FFFFFF"/>
                 <Setter Property="BorderBrush" Value="#6C5CE7"/>
@@ -97,42 +153,67 @@
     <Grid Background="#F8FAFC">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="24">
-                <!-- Header -->
+<!-- Header -->
                 <Grid Margin="0,0,0,24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="{Binding Title}" FontSize="28" FontWeight="Bold" Foreground="#0F172A"/>
-                    </StackPanel>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Command="{Binding RetourCommand}"
-                                Style="{StaticResource BtnPrimaryStyle}"
-                                Margin="0,0,12,0">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="ArrowLeft" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
-                                <TextBlock Text="Retour"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Command="{Binding ExporterPdfCommand}"
-                                Style="{StaticResource BtnPrimaryStyle}"
-                                Margin="0,0,12,0">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="FilePdf" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
-                                <TextBlock Text="Exporter PDF"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Command="{Binding ExporterExcelCommand}"
-                                Style="{StaticResource BtnPrimaryStyle}">
-                            <StackPanel Orientation="Horizontal">
-                                <fa:IconImage Icon="FileExcel" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
-                                <TextBlock Text="Exporter Excel"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding Title}" FontSize="28" FontWeight="Bold" Foreground="#0F172A"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Command="{Binding RetourCommand}"
+                                    Style="{StaticResource BtnPrimaryStyle}"
+                                    Margin="0,0,12,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <fa:IconImage Icon="ArrowLeft" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Retour"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ExporterExcelCommand}"
+                                    Style="{StaticResource BtnPrimaryStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <fa:IconImage Icon="FileExcel" Width="16" Height="16" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Exporter Excel"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <DatePicker SelectedDate="{Binding StartDate}"
+                                        Style="{StaticResource FilterDateStyle}"
+                                        Margin="0,0,12,0"
+                                        Width="160"/>
+                            <DatePicker SelectedDate="{Binding EndDate}"
+                                        Style="{StaticResource FilterDateStyle}"
+                                        Margin="0,0,12,0"
+                                        Width="160"/>
+                            <Button Command="{Binding RefreshCommand}"
+                                    Style="{StaticResource BtnPrimaryStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <fa:IconImage Icon="Sync" Width="14" Height="14" Foreground="#6C5CE7" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Actualiser"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
 
                 <!-- 1. KPI Cards -->
@@ -146,32 +227,42 @@
                     </Grid.ColumnDefinitions>
 
                     <ctrls:KpiCard Grid.Column="0" Margin="0,0,8,0"
-                                   Title="Total des Commandes"
-                                   Value="{Binding TotalCommandes}"
-                                   Icon="CartShopping"
-                                   IconColor="#3B82F6"/>
+                               Title="Total des Commandes"
+                               Value="{Binding TotalCommandes}"
+                               Icon="CartShopping"
+                               IconColor="#3B82F6"
+                               TrendText="{Binding TotalCommandesTrend}"
+                               IsPositiveTrend="{Binding TotalCommandesIsPositive}"/>
                     <ctrls:KpiCard Grid.Column="1" Margin="4,0,8,0"
                                    Title="Total des Bons de Livraison"
                                    Value="{Binding TotalBls}"
                                    Icon="Truck"
-                                   IconColor="#22C55E"/>
+                                   IconColor="#22C55E"
+                                   TrendText="{Binding TotalBlsTrend}"
+                                   IsPositiveTrend="{Binding TotalBlsIsPositive}"/>
                     <ctrls:KpiCard Grid.Column="2" Margin="4,0,8,0"
                                    Title="Total des Factures"
                                    Value="{Binding TotalFactures}"
                                    Icon="FileInvoice"
-                                   IconColor="#F59E0B"/>
+                                   IconColor="#F59E0B"
+                                   TrendText="{Binding TotalFacturesTrend}"
+                                   IsPositiveTrend="{Binding TotalFacturesIsPositive}"/>
                     <ctrls:KpiCard Grid.Column="3" Margin="4,0,8,0"
                                    Title="Total des Règlements"
                                    Value="{Binding TotalReglements}"
                                    Unit="MAD"
                                    Icon="CheckCircle"
-                                   IconColor="#10B981"/>
+                                   IconColor="#10B981"
+                                   TrendText="{Binding TotalReglementsTrend}"
+                                   IsPositiveTrend="{Binding TotalReglementsIsPositive}"/>
                     <ctrls:KpiCard Grid.Column="4" Margin="4,0,0,0"
                                    Title="Solde à Payer"
                                    Value="{Binding SoldeAPayer}"
                                    Unit="MAD"
                                    Icon="CreditCard"
-                                   IconColor="#EF4444"/>
+                                   IconColor="#EF4444"
+                                   TrendText="{Binding SoldeAPayerTrend}"
+                                   IsPositiveTrend="{Binding SoldeAPayerIsPositive}"/>
                 </Grid>
 
                 <!-- Single Table Container -->

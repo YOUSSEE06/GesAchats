@@ -108,6 +108,18 @@ public class SituationFournisseurDto
     public decimal TotalReglements { get; set; }
     public decimal SoldeAPayer { get; set; }
     
+    // KPI Previous-period values + evolution (%) - same formula as main dashboard KPI cards
+    public int TotalCommandesPrevious { get; set; }
+    public double TotalCommandesVariation { get; set; }
+    public int TotalBlsPrevious { get; set; }
+    public double TotalBlsVariation { get; set; }
+    public int TotalFacturesPrevious { get; set; }
+    public double TotalFacturesVariation { get; set; }
+    public decimal TotalReglementsPrevious { get; set; }
+    public double TotalReglementsVariation { get; set; }
+    public decimal SoldeAPayerPrevious { get; set; }
+    public double SoldeAPayerVariation { get; set; }
+    
     // Details (grouped by operation for the new single table)
     public List<SituationOperationGroupDto> Operations { get; set; } = new();
 
@@ -116,6 +128,15 @@ public class SituationFournisseurDto
     public List<BlDetailDto> BonsLivraison { get; set; } = new();
     public List<FactureDetailDto> Factures { get; set; } = new();
     public List<ReglementDetailDto> Reglements { get; set; } = new();
+}
+
+// KPI globaux de la page "Suivi Fournisseurs" (même logique que le Dashboard principal)
+public class SuiviFournisseurKpisDto
+{
+    public KpiModel TotalFournisseurs { get; set; } = new();
+    public KpiModel CommandesEnCours { get; set; } = new();
+    public KpiModel TotalCommande { get; set; } = new();
+    public KpiModel SoldeTotal { get; set; } = new();
 }
 
 // New DTO for grouped operation

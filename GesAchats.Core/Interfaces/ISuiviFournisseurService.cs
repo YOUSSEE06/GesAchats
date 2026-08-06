@@ -4,10 +4,7 @@ namespace GesAchats.Core.Interfaces;
 
 public interface ISuiviFournisseurService
 {
-    Task<int> GetTotalFournisseursAsync();
-    Task<int> GetCommandesEnCoursAsync();
-    Task<decimal> GetTotalCommandeAsync();
-    Task<decimal> GetSoldeTotalAsync();
+    Task<SuiviFournisseurKpisDto> GetSuiviKpisAsync(DateTime? startDate = null, DateTime? endDate = null);
     Task<PagedResult<FournisseurSuiviDto>> SearchFournisseursAsync(string searchText, int pageNumber, int pageSize);
-    Task<SituationFournisseurDto> GetSituationFournisseurAsync(int fournisseurId);
+    Task<SituationFournisseurDto> GetSituationFournisseurAsync(int fournisseurId, DateTime? startDate = null, DateTime? endDate = null);
 }

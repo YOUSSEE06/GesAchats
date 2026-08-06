@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using AsyncRelayCommand = CommunityToolkit.Mvvm.Input.AsyncRelayCommand;
+using IAsyncRelayCommand = CommunityToolkit.Mvvm.Input.IAsyncRelayCommand;
 using GesAchats.Core.DTOs;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.Services;
@@ -51,9 +53,20 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
                 OnPropertyChanged(nameof(TotalReglementsMontant));
                 OnPropertyChanged(nameof(TotalRegle));
                 OnPropertyChanged(nameof(TotalResteAPayer));
+                OnPropertyChanged(nameof(TotalCommandesPrevious));
+                OnPropertyChanged(nameof(TotalCommandesPercentage));
+                OnPropertyChanged(nameof(TotalBlsPrevious));
+                OnPropertyChanged(nameof(TotalBlsPercentage));
+                OnPropertyChanged(nameof(TotalFacturesPrevious));
+                OnPropertyChanged(nameof(TotalFacturesPercentage));
+                OnPropertyChanged(nameof(TotalReglementsPrevious));
+                OnPropertyChanged(nameof(TotalReglementsPercentage));
+                OnPropertyChanged(nameof(SoldeAPayerPrevious));
+                OnPropertyChanged(nameof(SoldeAPayerPercentage));
                 if (value != null)
                 {
                     Title = $"Situation du Fournisseur - {value.NomFournisseur}";
+                    FormatTrends();
                 }
             }
         }
@@ -83,6 +96,60 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
     public decimal TotalRegle => Operations.Where(o => o.HasInvoice).Sum(o => o.TotalRegle ?? 0m);
     public decimal TotalResteAPayer => Operations.Where(o => o.HasInvoice).Sum(o => o.ResteAPayer ?? 0m);
 
+    // Valeurs de la période précédente + pourcentage d'évolution (même logique que le Dashboard principal)
+    public int TotalCommandesPrevious => Situation?.TotalCommandesPrevious ?? 0;
+    public double TotalCommandesPercentage => Situation?.TotalCommandesVariation ?? 0;
+    public int TotalBlsPrevious => Situation?.TotalBlsPrevious ?? 0;
+    public double TotalBlsPercentage => Situation?.TotalBlsVariation ?? 0;
+    public int TotalFacturesPrevious => Situation?.TotalFacturesPrevious ?? 0;
+    public double TotalFacturesPercentage => Situation?.TotalFacturesVariation ?? 0;
+    public decimal TotalReglementsPrevious => Situation?.TotalReglementsPrevious ?? 0m;
+    public double TotalReglementsPercentage => Situation?.TotalReglementsVariation ?? 0;
+    public decimal SoldeAPayerPrevious => Situation?.SoldeAPayerPrevious ?? 0m;
+    public double SoldeAPayerPercentage => Situation?.SoldeAPayerVariation ?? 0;
+
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime _endDate = DateTime.Today;
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Tendances KPI (couple texte + couleur, comme les KpiCard du dashboard)
+    private string _totalCommandesTrend = "";
+    private bool _totalCommandesIsPositive = true;
+    public string TotalCommandesTrend { get => _totalCommandesTrend; set => SetProperty(ref _totalCommandesTrend, value); }
+    public bool TotalCommandesIsPositive { get => _totalCommandesIsPositive; set => SetProperty(ref _totalCommandesIsPositive, value); }
+
+    private string _totalBlsTrend = "";
+    private bool _totalBlsIsPositive = true;
+    public string TotalBlsTrend { get => _totalBlsTrend; set => SetProperty(ref _totalBlsTrend, value); }
+    public bool TotalBlsIsPositive { get => _totalBlsIsPositive; set => SetProperty(ref _totalBlsIsPositive, value); }
+
+    private string _totalFacturesTrend = "";
+    private bool _totalFacturesIsPositive = true;
+    public string TotalFacturesTrend { get => _totalFacturesTrend; set => SetProperty(ref _totalFacturesTrend, value); }
+    public bool TotalFacturesIsPositive { get => _totalFacturesIsPositive; set => SetProperty(ref _totalFacturesIsPositive, value); }
+
+    private string _totalReglementsTrend = "";
+    private bool _totalReglementsIsPositive = true;
+    public string TotalReglementsTrend { get => _totalReglementsTrend; set => SetProperty(ref _totalReglementsTrend, value); }
+    public bool TotalReglementsIsPositive { get => _totalReglementsIsPositive; set => SetProperty(ref _totalReglementsIsPositive, value); }
+
+    private string _soldeAPayerTrend = "";
+    private bool _soldeAPayerIsPositive = true;
+    public string SoldeAPayerTrend { get => _soldeAPayerTrend; set => SetProperty(ref _soldeAPayerTrend, value); }
+    public bool SoldeAPayerIsPositive { get => _soldeAPayerIsPositive; set => SetProperty(ref _soldeAPayerIsPositive, value); }
+
     public bool IsLoading
     {
         get => _isLoading;
@@ -96,8 +163,8 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
     }
 
     public ICommand RetourCommand { get; }
-    public ICommand ExporterPdfCommand { get; }
     public ICommand ExporterExcelCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
 
     public SituationFournisseurViewModel(ISuiviFournisseurService service, INavigationService navigationService)
     {
@@ -106,8 +173,8 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
         Title = "Situation du Fournisseur";
 
         RetourCommand = new RelayCommand(_ => Retour());
-        ExporterPdfCommand = new RelayCommand(_ => ExporterPdf());
         ExporterExcelCommand = new RelayCommand(_ => ExporterExcel());
+        RefreshCommand = new AsyncRelayCommand(() => LoadSituationAsync(_fournisseurId));
     }
 
     public async void OnNavigatedTo(object parameter)
@@ -128,7 +195,7 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
 
         try
         {
-            var result = await _service.GetSituationFournisseurAsync(fournisseurId);
+            var result = await _service.GetSituationFournisseurAsync(fournisseurId, StartDate, EndDate);
             Log.Information("LoadSituationAsync got result: NomFournisseur={Nom}, TotalCommandes={Commandes}, TotalBls={Bls}, TotalFactures={Factures}, TotalReglements={Reglements}, SoldeAPayer={Solde}",
                 result.NomFournisseur, result.TotalCommandes, result.TotalBls, result.TotalFactures, result.TotalReglements, result.SoldeAPayer);
             Situation = result;
@@ -145,16 +212,46 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
         }
     }
 
+    private void FormatTrends()
+    {
+        FormatSingleTrend(TotalCommandesPercentage, out var cmdTrend, out var cmdPos);
+        TotalCommandesTrend = cmdTrend; TotalCommandesIsPositive = cmdPos;
+
+        FormatSingleTrend(TotalBlsPercentage, out var blsTrend, out var blsPos);
+        TotalBlsTrend = blsTrend; TotalBlsIsPositive = blsPos;
+
+        FormatSingleTrend(TotalFacturesPercentage, out var facTrend, out var facPos);
+        TotalFacturesTrend = facTrend; TotalFacturesIsPositive = facPos;
+
+        FormatSingleTrend(TotalReglementsPercentage, out var regTrend, out var regPos);
+        TotalReglementsTrend = regTrend; TotalReglementsIsPositive = regPos;
+
+        FormatSingleTrend(SoldeAPayerPercentage, out var solTrend, out var solPos);
+        SoldeAPayerTrend = solTrend; SoldeAPayerIsPositive = solPos;
+    }
+
+    private void FormatSingleTrend(double percentage, out string trendText, out bool isPositive)
+    {
+        if (percentage > 0)
+        {
+            trendText = $"+{percentage:F1}%";
+            isPositive = true;
+        }
+        else if (percentage < 0)
+        {
+            trendText = $"{percentage:F1}%";
+            isPositive = false;
+        }
+        else
+        {
+            trendText = "0%";
+            isPositive = true;
+        }
+    }
+
     private void Retour()
     {
         _navigationService.NavigateTo("SuiviFournisseurs");
-    }
-
-    private void ExporterPdf()
-    {
-        // TODO: Implement PDF export
-        System.Windows.MessageBox.Show("Export PDF en cours de développement.", "Information",
-            System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
     }
 
     private string BuildExportFileName()
