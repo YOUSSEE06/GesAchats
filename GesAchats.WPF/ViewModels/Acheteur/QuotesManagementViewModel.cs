@@ -95,6 +95,8 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private DateTime? _filterDate;
     private int? _filterSupplierId;
     private string _filterStatus = "Tous";
+    private DateTime _dateDebut = DateTime.Today.AddDays(-30);
+    private DateTime _dateFin = DateTime.Today;
     
     // Debouncing
     private readonly DispatcherTimer? _filterDebounceTimer;
@@ -238,6 +240,33 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             if (SetProperty(ref _filterStatus, value))
             {
                 ApplyFilters();
+            }
+        }
+    }
+
+    // Filtre période (Du → Au)
+    public DateTime DateDebut
+    {
+        get => _dateDebut;
+        set
+        {
+            if (SetProperty(ref _dateDebut, value))
+            {
+                ApplyFilters();
+                _ = CalculateStatisticsAsync();
+            }
+        }
+    }
+
+    public DateTime DateFin
+    {
+        get => _dateFin;
+        set
+        {
+            if (SetProperty(ref _dateFin, value))
+            {
+                ApplyFilters();
+                _ = CalculateStatisticsAsync();
             }
         }
     }
@@ -756,15 +785,15 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private async Task CalculateStatisticsAsync()
     {
         IsLoadingStats = true;
+        // Période sélectionnée (Du → Au) vs période précédente de même durée
+        var start = _dateDebut.Date;
+        var end = _dateFin.Date.AddDays(1);
+        var duration = end - start;
+        var previousStart = start.AddDays(-duration.TotalDays);
+        var previousEnd = start;
+
         await Task.Run(() =>
         {
-            // Période actuelle (30 derniers jours) vs période précédente de même durée
-            var today = DateTime.Today;
-            var start = today.AddDays(-30);
-            var end = today.AddDays(1);
-            var previousStart = start.AddDays(-30);
-            var previousEnd = start;
-
             var current = AllQuotationsRaw.Where(q => q.Date >= start && q.Date < end).ToList();
             var previous = AllQuotationsRaw.Where(q => q.Date >= previousStart && q.Date < previousEnd).ToList();
 
@@ -885,6 +914,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
             var date = FilterDate.Value.Date;
             filtered = filtered.Where(q => q.Date.Date == date);
         }
+
+        // Filtre période (Du → Au)
+        var periodStart = _dateDebut.Date;
+        var periodEnd = _dateFin.Date.AddDays(1);
+        filtered = filtered.Where(q => q.Date >= periodStart && q.Date < periodEnd);
 
         if (FilterSupplierId.HasValue)
         {

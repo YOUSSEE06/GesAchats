@@ -1,0 +1,123 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===================== FILTRE PÉRIODE GLOBAL (Acheteur) ===================== -->
+    <!-- Container : fond blanc, coins arrondis, padding, ombre légère -->
+    <Style x:Key="PeriodFilterContainerStyle" TargetType="Border">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="14,8"/>
+        <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
+    </Style>
+
+    <!-- Label "Période :" -->
+    <Style x:Key="PeriodFilterLabelStyle" TargetType="TextBlock">
+        <Setter Property="Text" Value="Période :"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#334155"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- DatePicker : hauteur uniforme, coins 8px, icône calendrier, bordure grise + focus violet -->
+    <Style x:Key="DatePickerStyleGlobal" TargetType="DatePicker">
+        <Setter Property="Width" Value="150"/>
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="BorderBrush" Value="#D0CDE8"/>
+        <Setter Property="BorderThickness" Value="1.2"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <DatePickerTextBox
+                                x:Name="PART_TextBox"
+                                Grid.Column="0"
+                                Foreground="{TemplateBinding Foreground}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                VerticalContentAlignment="Center"
+                                Padding="12,0"
+                                FontSize="{TemplateBinding FontSize}"/>
+                            <Button x:Name="PART_Button"
+                                    Grid.Column="1"
+                                    Width="32"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Focusable="False">
+                                <Path Data="M6 2v2M18 2v2M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"
+                                      Stroke="#6C5CE7" StrokeThickness="1.5"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Width="16" Height="16"
+                                      Stretch="Uniform"/>
+                            </Button>
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Calendar x:Name="PART_Calendar"/>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#A9A3D7"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#6C5CE7"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Bouton Actualiser : primaire violet, texte blanc, coins 8px, effet hover -->
+    <Style x:Key="ActualiserButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Padding" Value="20,0"/>
+        <Setter Property="Background" Value="#6C5CE7"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}"
+                            Height="{TemplateBinding Height}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#7C6DF0"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#5A4BD1"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

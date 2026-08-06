@@ -257,12 +257,26 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <Button Command="{Binding OpenCreateDialogCommand}" 
-                                    Style="{StaticResource ModernPrimaryButton}">
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="+" FontSize="16" Margin="0,0,8,0"/>
                                     <TextBlock Text="Créer un Devis"/>
                                 </StackPanel>
                             </Button>
+                            <Border Style="{StaticResource PeriodFilterContainerStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource PeriodFilterLabelStyle}"/>
+                                    <DatePicker Style="{StaticResource DatePickerStyleGlobal}" SelectedDate="{Binding DateDebut}"/>
+                                    <DatePicker Style="{StaticResource DatePickerStyleGlobal}" SelectedDate="{Binding DateFin}"/>
+                                    <Button Style="{StaticResource ActualiserButtonStyle}" Command="{Binding RefreshCommand}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Actualiser"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Grid>
                 </Border>
