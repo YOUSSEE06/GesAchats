@@ -675,8 +675,12 @@ public class DashboardService : IDashboardService
         dto.Produits.Value = products.Count(); // Total products, not just current period
         dto.Produits.VariationPercentage = CalculateEvolution(products.Count(), previousProductsCount > 0 ? previousProductsCount : null);
 
-        dto.StockTotal.Value = (double)products.Sum(p => p.CurrentStock); // Total stock, not just current period
-        dto.StockTotal.VariationPercentage = 12.3; // Placeholder for now
+        var currentStockTotal = (double)products.Sum(p => p.CurrentStock);
+        var previousStockTotal = (double)products.Where(p => p.CreatedAt <= previousEnd).Sum(p => p.CurrentStock);
+        dto.StockTotal.Value = currentStockTotal; // Total stock, not just current period
+        dto.StockTotal.VariationPercentage = previousStockTotal > 0 
+            ? Math.Round(((currentStockTotal - previousStockTotal) / previousStockTotal) * 100, 1) 
+            : (currentStockTotal > 0 ? 100 : 0);
 
         dto.Besoins.Value = currentNeeds.Count();
         dto.Besoins.VariationPercentage = CalculateEvolution(currentNeeds.Count(), previousNeedsCount > 0 ? previousNeedsCount : null);
@@ -707,8 +711,12 @@ public class DashboardService : IDashboardService
             : (totalPaid > 0 ? 100 : 0);
 
         // Solde Total: Sum all invoices (total TTC) minus all payments (total paid) - regardless of period, like Comptable
-        dto.SoldeTotal.Value = (double)(invoices.Sum(i => i.AmountTTC) - payments.Sum(p => p.AmountPaid));
-        dto.SoldeTotal.VariationPercentage = -4.2; // Placeholder
+        var currentSolde = (double)(invoices.Sum(i => i.AmountTTC) - payments.Sum(p => p.AmountPaid));
+        var previousSolde = (double)(invoices.Where(i => i.InvoiceDate <= previousEnd).Sum(i => i.AmountTTC) - payments.Where(p => p.PaymentDate <= previousEnd).Sum(p => p.AmountPaid));
+        dto.SoldeTotal.Value = currentSolde;
+        dto.SoldeTotal.VariationPercentage = previousSolde > 0 
+            ? Math.Round(((currentSolde - previousSolde) / previousSolde) * 100, 1) 
+            : (currentSolde > 0 ? 100 : 0);
 
         dto.FournisseursActifs.Value = suppliers.Count(s => s.IsActive); // Total active suppliers
         dto.FournisseursActifs.VariationPercentage = CalculateEvolution(suppliers.Count(s => s.IsActive), previousActiveSuppliersCount > 0 ? previousActiveSuppliersCount : null);
