@@ -404,15 +404,30 @@
                            Margin="0,0,0,0"/>
         </UniformGrid>
 
-        <!-- Zone des filtres et boutons d'action -->
-        <Grid Grid.Row="1" Margin="20,10">
+        <!-- Période (barre dédiée) -->
+        <Border Grid.Row="1" Style="{StaticResource PeriodFilterContainerStyle}" HorizontalAlignment="Right" Margin="20,10,20,0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Style="{StaticResource PeriodFilterLabelStyle}"/>
+                <DatePicker Style="{StaticResource DatePickerStyleGlobal}" SelectedDate="{Binding DateDebut}"/>
+                <DatePicker Style="{StaticResource DatePickerStyleGlobal}" SelectedDate="{Binding DateFin}"/>
+                <Button Style="{StaticResource ActualiserButtonStyle}" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="Actualiser"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Zone des filtres et actions -->
+        <Grid Grid.Row="2" Margin="20,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Filtres -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
+            <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="15" BorderBrush="#E0E0E0" BorderThickness="1">
                 <Grid HorizontalAlignment="Stretch">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -477,26 +492,10 @@
                 </Grid>
             </Border>
 
-            <!-- Boutons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="15,0,0,0">
-                <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                <DatePicker SelectedDate="{Binding StartDate}"
-                            Style="{StaticResource FilterDateStyle}"
-                            Width="150"
-                            Margin="0,0,8,0"/>
-                <DatePicker SelectedDate="{Binding EndDate}"
-                            Style="{StaticResource FilterDateStyle}"
-                            Width="150"
-                            Margin="0,0,8,0"/>
-                <Button Command="{Binding RefreshCommand}"
-                        Style="{StaticResource BtnResetStyle}"
-                        Margin="0,0,12,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
-                        <TextBlock Text="Actualiser"/>
-                    </StackPanel>
-                </Button>
+            <!-- Actions -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
                 <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource BtnPrimaryGreenStyle}"
+                        MinWidth="150" VerticalAlignment="Center"
                         Visibility="{Binding IsAdmin, Converter={StaticResource EnhancedBooleanToVisibilityConverter}, ConverterParameter='Inverse'}"/>
             </StackPanel>
         </Grid>

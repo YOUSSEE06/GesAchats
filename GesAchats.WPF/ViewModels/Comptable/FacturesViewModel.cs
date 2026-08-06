@@ -205,18 +205,18 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     }
 
     // Filtre de période (identique au Dashboard principal)
-    private DateTime _startDate = DateTime.Today.AddMonths(-1);
-    public DateTime StartDate
+    private DateTime _dateDebut = DateTime.Today.AddMonths(-1);
+    public DateTime DateDebut
     {
-        get => _startDate;
-        set => SetProperty(ref _startDate, value);
+        get => _dateDebut;
+        set => SetProperty(ref _dateDebut, value);
     }
 
-    private DateTime _endDate = DateTime.Today;
-    public DateTime EndDate
+    private DateTime _dateFin = DateTime.Today;
+    public DateTime DateFin
     {
-        get => _endDate;
-        set => SetProperty(ref _endDate, value);
+        get => _dateFin;
+        set => SetProperty(ref _dateFin, value);
     }
 
     // Couleurs de tendance KPI (texte + couleur, comme les KpiCard du Dashboard)
@@ -488,8 +488,8 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 SelectedSupplier?.Id,
                 SelectedStatus,
                 SelectedDate,
-                StartDate,
-                EndDate,
+                DateDebut,
+                DateFin,
                 cancellationToken);
 
             if (cancellationToken.IsCancellationRequested)
@@ -549,19 +549,19 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 allInvoiceVms.Add(vm);
             }
 
-            TotalFacturesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate);
-            TotalAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).Sum(f => f.AmountTTC);
-            PaidInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "Payée");
-            PartialInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "Partiellement payée");
-            WaitingInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "En attente");
-            PendingAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).Sum(f => f.Balance);
+            TotalFacturesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin);
+            TotalAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin).Sum(f => f.AmountTTC);
+            PaidInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin && f.StatusCalculated == "Payée");
+            PartialInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin && f.StatusCalculated == "Partiellement payée");
+            WaitingInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin && f.StatusCalculated == "En attente");
+            PendingAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin).Sum(f => f.Balance);
 
             // Période précédente de même durée (comme le Dashboard principal)
-            var duration = EndDate - StartDate;
-            var previousStart = StartDate - duration;
-            var previousEnd = StartDate;
+            var duration = DateFin - DateDebut;
+            var previousStart = DateDebut - duration;
+            var previousEnd = DateDebut;
 
-            var currentInvoices = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).ToList();
+            var currentInvoices = allInvoiceVms.Where(f => f.InvoiceDate.Date >= DateDebut && f.InvoiceDate.Date <= DateFin).ToList();
             var previousInvoices = allInvoiceVms.Where(f => f.InvoiceDate.Date >= previousStart && f.InvoiceDate.Date < previousEnd).ToList();
 
             int previousTotalCount = previousInvoices.Count;
