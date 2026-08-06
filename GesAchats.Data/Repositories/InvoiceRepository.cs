@@ -33,7 +33,7 @@ public class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             .ToListAsync();
     }
 
-    public async Task<PagedResult<InvoiceDto>> GetInvoicesPagedAsync(int pageNumber, int pageSize, string? searchText, int? supplierId, string? status, DateTime? date, CancellationToken cancellationToken)
+    public async Task<PagedResult<InvoiceDto>> GetInvoicesPagedAsync(int pageNumber, int pageSize, string? searchText, int? supplierId, string? status, DateTime? date, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
     {
         var query = _dbSet.AsNoTracking();
 
@@ -56,6 +56,16 @@ public class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
         if (date.HasValue)
         {
             query = query.Where(i => i.InvoiceDate.Date == date.Value.Date);
+        }
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(i => i.InvoiceDate.Date >= startDate.Value.Date);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(i => i.InvoiceDate.Date <= endDate.Value.Date);
         }
 
         // Statut filter: load matching invoice IDs first
@@ -84,6 +94,16 @@ public class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
             if (date.HasValue)
             {
                 filteredInvoicesQuery = filteredInvoicesQuery.Where(i => i.InvoiceDate.Date == date.Value.Date);
+            }
+
+            if (startDate.HasValue)
+            {
+                filteredInvoicesQuery = filteredInvoicesQuery.Where(i => i.InvoiceDate.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                filteredInvoicesQuery = filteredInvoicesQuery.Where(i => i.InvoiceDate.Date <= endDate.Value.Date);
             }
 
             // Get filtered invoices with their total payments

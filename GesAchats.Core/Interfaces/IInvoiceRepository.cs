@@ -5,7 +5,7 @@ namespace GesAchats.Core.Interfaces;
 
 public interface IInvoiceRepository : IRepository<Invoice>
 {
-    Task<PagedResult<InvoiceDto>> GetInvoicesPagedAsync(int pageNumber, int pageSize, string? searchText, int? supplierId, string? status, DateTime? date, CancellationToken cancellationToken);
+    Task<PagedResult<InvoiceDto>> GetInvoicesPagedAsync(int pageNumber, int pageSize, string? searchText, int? supplierId, string? status, DateTime? date, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
     Task<Invoice?> GetByIdWithDetailsAsync(int id);
     Task<IEnumerable<Invoice>> GetInvoicesWithSupplierAndPaymentsAsync();
 }

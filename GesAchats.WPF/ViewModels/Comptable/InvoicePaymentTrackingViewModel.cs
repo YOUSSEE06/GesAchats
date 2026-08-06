@@ -209,18 +209,36 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
     }
 
     // Filtre de période (identique au Dashboard principal)
-    private DateTime _startDate = DateTime.Today.AddMonths(-1);
-    public DateTime StartDate
+    private DateTime _dateDebut = DateTime.Today.AddMonths(-1);
+    public DateTime DateDebut
     {
-        get => _startDate;
-        set => SetProperty(ref _startDate, value);
+        get => _dateDebut;
+        set
+        {
+            if (SetProperty(ref _dateDebut, value))
+            {
+                if (!_isInitializing && !_isLoading)
+                {
+                    _ = RefreshFromPeriodAsync();
+                }
+            }
+        }
     }
 
-    private DateTime _endDate = DateTime.Today;
-    public DateTime EndDate
+    private DateTime _dateFin = DateTime.Today;
+    public DateTime DateFin
     {
-        get => _endDate;
-        set => SetProperty(ref _endDate, value);
+        get => _dateFin;
+        set
+        {
+            if (SetProperty(ref _dateFin, value))
+            {
+                if (!_isInitializing && !_isLoading)
+                {
+                    _ = RefreshFromPeriodAsync();
+                }
+            }
+        }
     }
 
     // Couleurs de tendance KPI
@@ -309,13 +327,25 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         PreviousPageCommand = new RelayCommand(async _ => await GoToPreviousPageAsync(), _ => CanGoToPreviousPage);
         NextPageCommand = new RelayCommand(async _ => await GoToNextPageAsync(), _ => CanGoToNextPage);
         LastPageCommand = new RelayCommand(async _ => await GoToLastPageAsync(), _ => CanGoToLastPage);
-        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        RefreshCommand = new AsyncRelayCommand(RefreshFromPeriodAsync);
 
         _ = LoadDataAsync();
     }
 
     public async void OnNavigatedTo(object parameter)
     {
+        await LoadDataAsync();
+    }
+
+    /// <summary>
+    /// Recharge les données (KPI + liste) avec la période courante Du → Au.
+    /// Utilisé quand l'utilisateur change les dates ou clique sur "Actualiser".
+    /// </summary>
+    private async Task RefreshFromPeriodAsync()
+    {
+        if (_isLoading) return;
+        _isInitialized = false;
+        CurrentPage = 1;
         await LoadDataAsync();
     }
 
@@ -422,11 +452,11 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             Payments = new ObservableCollection<Payment>(_allPaymentsForStats.Where(p => p.InvoiceId == i.Id))
         }).ToList();
 
-        var start = StartDate.Date;
-        var end = EndDate.Date.AddDays(1);
-        var duration = EndDate - StartDate;
-        var previousStart = StartDate - duration;
-        var previousEnd = StartDate;
+        var start = DateDebut.Date;
+        var end = DateFin.Date.AddDays(1);
+        var duration = DateFin.Date - DateDebut.Date;
+        var previousStart = DateDebut.Date - duration;
+        var previousEnd = DateDebut.Date;
 
         var currentInvoices = invoiceVms.Where(i => i.InvoiceDate >= start && i.InvoiceDate < end).ToList();
         var previousInvoices = invoiceVms.Where(i => i.InvoiceDate >= previousStart && i.InvoiceDate < previousEnd).ToList();
@@ -494,6 +524,8 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
                 SelectedSupplier?.Id,
                 SelectedStatus,
                 SelectedDate,
+                DateDebut,
+                DateFin,
                 cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();

@@ -488,6 +488,8 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 SelectedSupplier?.Id,
                 SelectedStatus,
                 SelectedDate,
+                StartDate,
+                EndDate,
                 cancellationToken);
 
             if (cancellationToken.IsCancellationRequested)
