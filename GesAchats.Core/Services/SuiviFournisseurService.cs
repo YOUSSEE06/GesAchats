@@ -153,6 +153,10 @@ public class SuiviFournisseurService : ISuiviFournisseurService
         {
             FournisseurId = fournisseurId,
             NomFournisseur = supplier.CompanyName,
+            NomContact = supplier.ContactName,
+            Telephone = supplier.Phone,
+            Email = supplier.Email,
+            Ville = supplier.City,
             TotalCommandes = purchaseOrders.Count,
             TotalBls = deliveryNotes.Count,
             TotalFactures = invoices.Count,
@@ -171,13 +175,14 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             {
                 NumeroBC = po.OrderNumber,
                 DateCommande = po.OrderDate,
-                TotalCommande = po.TotalAmountTTC,
-                TotalCommandeHT = po.TotalAmountHT,
+                TotalCommande = po.Details?.Sum(d => d.TotalTTC) ?? po.TotalAmountTTC,
+                TotalCommandeHT = po.Details?.Sum(d => d.TotalHT) ?? po.TotalAmountHT,
                 CommandeArticles = po.Details?.Select(d => new CommandeArticleDto
                 {
                     Article = d.Product?.Designation ?? "N/A",
                     PrixUnitaire = d.UnitPriceHT,
                     Quantite = d.Quantity,
+                    TotalHT = d.TotalHT,
                     Total = d.TotalTTC
                 }).ToList() ?? new List<CommandeArticleDto>()
             };
@@ -294,6 +299,7 @@ public class SuiviFournisseurService : ISuiviFournisseurService
                     sousLigne.BcArticle = op.CommandeArticles[i].Article;
                     sousLigne.BcPrixUnitaire = op.CommandeArticles[i].PrixUnitaire;
                     sousLigne.BcQuantite = op.CommandeArticles[i].Quantite;
+                    sousLigne.BcTotalHT = op.CommandeArticles[i].TotalHT;
                     sousLigne.BcTotal = op.CommandeArticles[i].Total;
                 }
 

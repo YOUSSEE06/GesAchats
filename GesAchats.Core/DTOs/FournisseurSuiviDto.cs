@@ -96,6 +96,10 @@ public class SituationFournisseurDto
 {
     public int FournisseurId { get; set; }
     public string NomFournisseur { get; set; } = string.Empty;
+    public string? NomContact { get; set; }
+    public string? Telephone { get; set; }
+    public string? Email { get; set; }
+    public string? Ville { get; set; }
     
     // KPIs
     public int TotalCommandes { get; set; }
@@ -157,6 +161,7 @@ public class CommandeArticleDto
     public string Article { get; set; } = string.Empty;
     public decimal PrixUnitaire { get; set; }
     public decimal Quantite { get; set; }
+    public decimal TotalHT { get; set; }
     public decimal Total { get; set; }
 }
 
@@ -191,6 +196,7 @@ public class SituationSousLigneDto
     public string? BcArticle { get; set; }
     public decimal? BcPrixUnitaire { get; set; }
     public decimal? BcQuantite { get; set; }
+    public decimal? BcTotalHT { get; set; }
     public decimal? BcTotal { get; set; }
     
     // BL

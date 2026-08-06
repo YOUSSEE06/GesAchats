@@ -14,6 +14,7 @@
             <ColumnDefinition Width="131"/>
             <ColumnDefinition Width="96"/>
             <ColumnDefinition Width="140"/>
+            <ColumnDefinition Width="105"/>
             <ColumnDefinition Width="175"/>
             <ColumnDefinition Width="175"/>
             <!-- Bon de Livraison -->

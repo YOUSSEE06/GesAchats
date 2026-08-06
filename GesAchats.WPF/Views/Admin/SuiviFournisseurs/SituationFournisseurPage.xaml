@@ -197,6 +197,7 @@
                                             <ColumnDefinition Width="131"/>
                                             <ColumnDefinition Width="96"/>
                                             <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="105"/>
                                             <ColumnDefinition Width="175"/>
                                             <ColumnDefinition Width="175"/>
 <!-- Bon de Livraison -->
@@ -228,16 +229,16 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Level 1 Headers -->
-                                    <Border Grid.Column="0" Grid.ColumnSpan="8" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="0" Grid.ColumnSpan="9" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="BON DE COMMANDE" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="8" Grid.ColumnSpan="9" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="9" Grid.ColumnSpan="9" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="BON DE LIVRAISON" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="17" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="18" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="FACTURE" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="24" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="25" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="RÈGLEMENTS" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
                                 </Grid>
@@ -252,6 +253,7 @@
                                             <ColumnDefinition Width="131"/>
                                             <ColumnDefinition Width="96"/>
                                             <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="105"/>
                                             <ColumnDefinition Width="175"/>
                                             <ColumnDefinition Width="175"/>
 <!-- Bon de Livraison -->
@@ -299,87 +301,90 @@
                                         <TextBlock Text="Quantité" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="5" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Total" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Total HT" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="6" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Total de commande TTC" TextWrapping="Wrap" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Total TTC" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="7" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total de commande HT" TextWrapping="Wrap" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-
-                                    <!-- BL Columns -->
                                     <Border Grid.Column="8" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="N° BL" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="9" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Date de livraison" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="10" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="11" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Qté Cmd" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="12" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Qté Livrée" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="13" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Écart" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="14" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="État" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total de commande TTC" TextWrapping="Wrap" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
+
+                                    <!-- BL Columns -->
+                                    <Border Grid.Column="9" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="N° BL" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="10" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Date de livraison" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="11" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="12" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Cmd" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="13" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Livrée" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="14" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Écart" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="État" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
                                     <Border Grid.Column="16" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total de commande TTC" TextWrapping="Wrap" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="17" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total de commande HT" TextWrapping="Wrap" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
 
                                     <!-- Facture Columns -->
-                                    <Border Grid.Column="17" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="18" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="N° Facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="18" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="19" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Date de facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="19" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant HT" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="TVA" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant TTC" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="24" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total Facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
 
                                     <!-- Règlements Columns -->
-                                    <Border Grid.Column="24" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="25" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Date" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="25" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="26" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Mode" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="26" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="27" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Référence" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="27" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="28" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="28" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="29" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total Réglé" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="29" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="30" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Reste à Payer" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="30" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="31" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Statut" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                 </Grid>

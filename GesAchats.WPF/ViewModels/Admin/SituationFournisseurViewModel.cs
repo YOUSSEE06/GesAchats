@@ -157,10 +157,45 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
             System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
     }
 
+    private string BuildExportFileName()
+    {
+        var name = (Situation?.NomFournisseur ?? "fournisseur").Trim();
+        var invalid = System.IO.Path.GetInvalidFileNameChars();
+        name = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Replace(' ', '_');
+        if (string.IsNullOrWhiteSpace(name)) name = "fournisseur";
+        return $"Suivi_fournisseur_{name}.xlsx";
+    }
+
     private void ExporterExcel()
     {
-        // TODO: Implement Excel export
-        System.Windows.MessageBox.Show("Export Excel en cours de développement.", "Information",
-            System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        if (Situation == null)
+        {
+            System.Windows.MessageBox.Show("Aucune situation à exporter.", "Information",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exporter la situation en Excel",
+            Filter = "Fichier Excel (*.xlsx)|*.xlsx",
+            FileName = BuildExportFileName()
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                Services.SuiviFournisseurExcelExporter.Export(dialog.FileName, Situation);
+                System.Windows.MessageBox.Show($"Export Excel terminé :\n{dialog.FileName}", "Export réussi",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Erreur lors de l'export Excel de la situation");
+                System.Windows.MessageBox.Show($"Erreur lors de l'export Excel : {ex.Message}", "Erreur",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     }
 }
