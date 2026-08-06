@@ -12,6 +12,8 @@ using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using Microsoft.EntityFrameworkCore;
+using AsyncRelayCommand = CommunityToolkit.Mvvm.Input.AsyncRelayCommand;
+using IAsyncRelayCommand = CommunityToolkit.Mvvm.Input.IAsyncRelayCommand;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -142,6 +144,40 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _totalOperationsReglementCount, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI
+    private bool _totalPaidMonthIsPositiveTrend = true;
+    public bool TotalPaidMonthIsPositiveTrend { get => _totalPaidMonthIsPositiveTrend; set => SetProperty(ref _totalPaidMonthIsPositiveTrend, value); }
+
+    private bool _pendingInvoicesCountIsPositiveTrend = true;
+    public bool PendingInvoicesCountIsPositiveTrend { get => _pendingInvoicesCountIsPositiveTrend; set => SetProperty(ref _pendingInvoicesCountIsPositiveTrend, value); }
+
+    private bool _latePaymentsCountIsPositiveTrend = true;
+    public bool LatePaymentsCountIsPositiveTrend { get => _latePaymentsCountIsPositiveTrend; set => SetProperty(ref _latePaymentsCountIsPositiveTrend, value); }
+
+    private bool _totalAmountRegleIsPositiveTrend = true;
+    public bool TotalAmountRegleIsPositiveTrend { get => _totalAmountRegleIsPositiveTrend; set => SetProperty(ref _totalAmountRegleIsPositiveTrend, value); }
+
+    private bool _fournisseursPayesCountIsPositiveTrend = true;
+    public bool FournisseursPayesCountIsPositiveTrend { get => _fournisseursPayesCountIsPositiveTrend; set => SetProperty(ref _fournisseursPayesCountIsPositiveTrend, value); }
+
+    private bool _totalOperationsReglementCountIsPositiveTrend = true;
+    public bool TotalOperationsReglementCountIsPositiveTrend { get => _totalOperationsReglementCountIsPositiveTrend; set => SetProperty(ref _totalOperationsReglementCountIsPositiveTrend, value); }
+
     // Trend texts
     private string _totalPaidMonthTrendText = string.Empty;
     public string TotalPaidMonthTrendText
@@ -220,6 +256,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     public ICommand ViewProofCommand { get; }
     public ICommand ResetFiltersCommand { get; }
     public ICommand ToggleChartsCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
 
     private bool _showCharts = true;
     public bool ShowCharts
@@ -247,6 +284,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         ViewProofCommand = new RelayCommand(p => ViewProof(p as PaymentListDto));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
         ToggleChartsCommand = new RelayCommand(_ => ShowCharts = !ShowCharts);
+        RefreshCommand = new AsyncRelayCommand(LoadPaymentsAsync);
 
         SelectedPaymentMethod = "Tous";
     }
@@ -363,74 +401,61 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
 
             _allPaymentsCache = await paymentsQuery.ToListAsync(ct);
             
-            // Calculate KPIs using projections (avoid loading all invoices into memory)
-            var now = DateTime.Now;
-            
-            // KPI 1: Total paid this month
-            TotalPaidMonth = await _unitOfWork.Payments.GetQueryable(true)
-                .Where(p => p.PaymentDate.Month == now.Month && p.PaymentDate.Year == now.Year)
-                .SumAsync(p => p.AmountPaid, ct);
-            
-            // KPI 4: Total amount paid ever
-            TotalAmountRegle = await _unitOfWork.Payments.GetQueryable(true)
-                .SumAsync(p => p.AmountPaid, ct);
-            
-            // KPI 5: Number of unique paid suppliers
-            FournisseursPayesCount = await _unitOfWork.Payments.GetQueryable(true)
-                .Select(p => p.SupplierId)
-                .Distinct()
-                .CountAsync(ct);
-            
-            // KPI 6: Total operations
-            TotalOperationsReglementCount = await _unitOfWork.Payments.GetQueryable(true)
-                .CountAsync(ct);
-            
-            // KPI 2: Pending invoices count
+            // Période actuelle vs période précédente de même durée (comme le Dashboard principal)
+            var start = StartDate.Date;
+            var end = EndDate.Date.AddDays(1);
+            var duration = EndDate - StartDate;
+            var previousStart = StartDate - duration;
+            var previousEnd = StartDate;
+
+            var currentPayments = _allPaymentsCache
+                .Where(p => p.PaymentDate >= start && p.PaymentDate < end).ToList();
+            var previousPayments = _allPaymentsCache
+                .Where(p => p.PaymentDate >= previousStart && p.PaymentDate < previousEnd).ToList();
+
+            // KPI 1 : Total payé sur la période
+            TotalPaidMonth = currentPayments.Sum(p => p.AmountPaid);
+            var previousPaidMonth = previousPayments.Sum(p => p.AmountPaid);
+
+            // KPI 4 : Total réglé (cumul tous temps) vs cumul jusqu'à la fin de la période précédente
+            var totalAmountAllTime = _allPaymentsCache.Sum(p => p.AmountPaid);
+            var amountUntilPreviousEnd = _allPaymentsCache
+                .Where(p => p.PaymentDate < previousEnd).Sum(p => p.AmountPaid);
+            TotalAmountRegle = totalAmountAllTime;
+
+            // KPI 5 : Fournisseurs payés sur la période
+            FournisseursPayesCount = currentPayments.Select(p => p.SupplierId).Distinct().Count();
+            var previousFournisseursPayes = previousPayments.Select(p => p.SupplierId).Distinct().Count();
+
+            // KPI 6 : Total opérations sur la période
+            TotalOperationsReglementCount = currentPayments.Count;
+            var previousOperations = previousPayments.Count;
+
+            // KPI 2 : Factures en attente créées sur la période
             PendingInvoicesCount = await _unitOfWork.Invoices.GetQueryable(true)
-                .CountAsync(i => i.Status == "EnAttente", ct);
-            
-            // KPI 3: Late payments (overdue and not paid)
+                .CountAsync(i => i.InvoiceDate >= start && i.InvoiceDate < end && i.Status == "EnAttente", ct);
+            var previousPendingInvoices = await _unitOfWork.Invoices.GetQueryable(true)
+                .CountAsync(i => i.InvoiceDate >= previousStart && i.InvoiceDate < previousEnd && i.Status == "EnAttente", ct);
+
+            // KPI 3 : Retards de paiement (factures de la période échues et non payées)
             LatePaymentsCount = await _unitOfWork.Invoices.GetQueryable(true)
-                .CountAsync(i => i.DueDate.HasValue && i.DueDate.Value < now && i.Status != "Payee" && i.Status != "Rejetee", ct);
+                .CountAsync(i => i.InvoiceDate >= start && i.InvoiceDate < end && i.DueDate.HasValue && i.DueDate.Value < DateTime.Now && i.Status != "Payee" && i.Status != "Rejetee", ct);
+            var previousLatePayments = await _unitOfWork.Invoices.GetQueryable(true)
+                .CountAsync(i => i.InvoiceDate >= previousStart && i.InvoiceDate < previousEnd && i.DueDate.HasValue && i.DueDate.Value < DateTime.Now && i.Status != "Payee" && i.Status != "Rejetee", ct);
 
-            // Calculate yesterday's data for trends using EF
-            var today = DateTime.Today;
-            var yesterday = today.AddDays(-1);
-            
-            var yesterdayPaymentsQuery = _unitOfWork.Payments.GetQueryable(true)
-                .Where(p => p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today);
-            
-            var yesterdayPaidMonth = await yesterdayPaymentsQuery
-                .Where(p => p.PaymentDate.Month == today.Month && p.PaymentDate.Year == today.Year)
-                .SumAsync(p => p.AmountPaid, ct);
-            
-            var yesterdayInvoicesQuery = _unitOfWork.Invoices.GetQueryable(true)
-                .Where(i => i.CreatedAt.Date >= yesterday && i.CreatedAt.Date < today);
-                
-            var yesterdayPendingInvoices = await yesterdayInvoicesQuery
-                .CountAsync(i => i.Status == "EnAttente", ct);
-                
-            var yesterdayLatePayments = await yesterdayInvoicesQuery
-                .CountAsync(i => i.DueDate.HasValue && i.DueDate.Value < today && i.Status != "Payee" && i.Status != "Rejetee", ct);
-                
-            var yesterdayAmountRegle = await yesterdayPaymentsQuery
-                .SumAsync(p => p.AmountPaid, ct);
-                
-            var yesterdayFournisseursPayes = await yesterdayPaymentsQuery
-                .Select(p => p.SupplierId)
-                .Distinct()
-                .CountAsync(ct);
-                
-            var yesterdayOperations = await yesterdayPaymentsQuery
-                .CountAsync(ct);
-
-            // Calculate trend texts
-            TotalPaidMonthTrendText = CalculateTrendText(TotalPaidMonth, yesterdayPaidMonth);
-            PendingInvoicesCountTrendText = CalculateTrendText(PendingInvoicesCount, yesterdayPendingInvoices);
-            LatePaymentsCountTrendText = CalculateTrendText(LatePaymentsCount, yesterdayLatePayments);
-            TotalAmountRegleTrendText = CalculateTrendText(TotalAmountRegle, yesterdayAmountRegle);
-            FournisseursPayesCountTrendText = CalculateTrendText(FournisseursPayesCount, yesterdayFournisseursPayes);
-            TotalOperationsReglementCountTrendText = CalculateTrendText(TotalOperationsReglementCount, yesterdayOperations);
+            // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+            TotalPaidMonthTrendText = FormatTrend(CalculateVariation(TotalPaidMonth, previousPaidMonth), out bool tpPos);
+            TotalPaidMonthIsPositiveTrend = tpPos;
+            PendingInvoicesCountTrendText = FormatTrend(CalculateVariation(PendingInvoicesCount, previousPendingInvoices), out bool piPos);
+            PendingInvoicesCountIsPositiveTrend = piPos;
+            LatePaymentsCountTrendText = FormatTrend(CalculateVariation(LatePaymentsCount, previousLatePayments), out bool lpPos);
+            LatePaymentsCountIsPositiveTrend = lpPos;
+            TotalAmountRegleTrendText = FormatTrend(CalculateVariation(TotalAmountRegle, amountUntilPreviousEnd), out bool arPos);
+            TotalAmountRegleIsPositiveTrend = arPos;
+            FournisseursPayesCountTrendText = FormatTrend(CalculateVariation(FournisseursPayesCount, previousFournisseursPayes), out bool fpPos);
+            FournisseursPayesCountIsPositiveTrend = fpPos;
+            TotalOperationsReglementCountTrendText = FormatTrend(CalculateVariation(TotalOperationsReglementCount, previousOperations), out bool opPos);
+            TotalOperationsReglementCountIsPositiveTrend = opPos;
 
             // Apply initial filters
             ApplyFilters();

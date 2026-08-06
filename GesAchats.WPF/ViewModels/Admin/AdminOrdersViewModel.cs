@@ -227,6 +227,35 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _fournisseursActifsTrendText, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI
+    private bool _totalBcIsPositiveTrend = true;
+    public bool TotalBcIsPositiveTrend { get => _totalBcIsPositiveTrend; set => SetProperty(ref _totalBcIsPositiveTrend, value); }
+    private bool _bcValidesIsPositiveTrend = true;
+    public bool BcValidesIsPositiveTrend { get => _bcValidesIsPositiveTrend; set => SetProperty(ref _bcValidesIsPositiveTrend, value); }
+    private bool _bcEnAttenteIsPositiveTrend = true;
+    public bool BcEnAttenteIsPositiveTrend { get => _bcEnAttenteIsPositiveTrend; set => SetProperty(ref _bcEnAttenteIsPositiveTrend, value); }
+    private bool _bcAnnulesIsPositiveTrend = true;
+    public bool BcAnnulesIsPositiveTrend { get => _bcAnnulesIsPositiveTrend; set => SetProperty(ref _bcAnnulesIsPositiveTrend, value); }
+    private bool _valeurTotaleBcIsPositiveTrend = true;
+    public bool ValeurTotaleBcIsPositiveTrend { get => _valeurTotaleBcIsPositiveTrend; set => SetProperty(ref _valeurTotaleBcIsPositiveTrend, value); }
+    private bool _fournisseursActifsIsPositiveTrend = true;
+    public bool FournisseursActifsIsPositiveTrend { get => _fournisseursActifsIsPositiveTrend; set => SetProperty(ref _fournisseursActifsIsPositiveTrend, value); }
+
     public void OnNavigatedTo(object parameter)
     {
         if (parameter is string status)
@@ -322,33 +351,43 @@ public class AdminOrdersViewModel : BaseViewModel, INavigatable
             ? posList.Where(x => x.Status != PurchaseOrderStatus.Cancelled).ToList() 
             : posList;
 
-        TotalBc = filteredPos.Count;
-        BcValides = filteredPos.Count(x => x.Status == PurchaseOrderStatus.Validated);
-        BcEnAttente = filteredPos.Count(x => x.Status == PurchaseOrderStatus.Pending);
-        BcAnnules = _excludeCancelled ? 0 : posList.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
-        ValeurTotaleBc = filteredPos.Sum(x => x.TotalAmountTTC);
-        FournisseursActifs = filteredPos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
+        // Période actuelle vs période précédente de même durée (comme le Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        // Calculate yesterday's data
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        var yesterdayPos = filteredPos.Where(n =>
-            n.CreatedAt.Date >= yesterday && n.CreatedAt.Date < today).ToList();
+        var currentPos = filteredPos.Where(x => x.OrderDate >= start && x.OrderDate < end).ToList();
+        var previousPos = filteredPos.Where(x => x.OrderDate >= previousStart && x.OrderDate < previousEnd).ToList();
 
-        int yesterdayTotal = yesterdayPos.Count;
-        int yesterdayValides = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Validated);
-        int yesterdayEnAttente = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Pending);
-        int yesterdayAnnules = yesterdayPos.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
-        decimal yesterdayValeur = yesterdayPos.Sum(x => x.TotalAmountTTC);
-        int yesterdayFournisseurs = yesterdayPos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
+        TotalBc = currentPos.Count;
+        BcValides = currentPos.Count(x => x.Status == PurchaseOrderStatus.Validated);
+        BcEnAttente = currentPos.Count(x => x.Status == PurchaseOrderStatus.Pending);
+        BcAnnules = _excludeCancelled ? 0 : currentPos.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
+        ValeurTotaleBc = currentPos.Sum(x => x.TotalAmountTTC);
+        FournisseursActifs = currentPos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
 
-        // Calculate trend texts
-        TotalBcTrendText = CalculateTrendText(TotalBc, yesterdayTotal);
-        BcValidesTrendText = CalculateTrendText(BcValides, yesterdayValides);
-        BcEnAttenteTrendText = CalculateTrendText(BcEnAttente, yesterdayEnAttente);
-        BcAnnulesTrendText = CalculateTrendText(BcAnnules, yesterdayAnnules);
-        ValeurTotaleBcTrendText = CalculateTrendText(ValeurTotaleBc, yesterdayValeur);
-        FournisseursActifsTrendText = CalculateTrendText(FournisseursActifs, yesterdayFournisseurs);
+        int previousTotal = previousPos.Count;
+        int previousValides = previousPos.Count(x => x.Status == PurchaseOrderStatus.Validated);
+        int previousEnAttente = previousPos.Count(x => x.Status == PurchaseOrderStatus.Pending);
+        int previousAnnules = previousPos.Count(x => x.Status == PurchaseOrderStatus.Cancelled);
+        decimal previousValeur = previousPos.Sum(x => x.TotalAmountTTC);
+        int previousFournisseurs = previousPos.Where(x => x.SupplierId > 0).Select(x => x.SupplierId).Distinct().Count();
+
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalBcTrendText = FormatTrend(CalculateVariation(TotalBc, previousTotal), out bool totalPos);
+        TotalBcIsPositiveTrend = totalPos;
+        BcValidesTrendText = FormatTrend(CalculateVariation(BcValides, previousValides), out bool validesPos);
+        BcValidesIsPositiveTrend = validesPos;
+        BcEnAttenteTrendText = FormatTrend(CalculateVariation(BcEnAttente, previousEnAttente), out bool attentePos);
+        BcEnAttenteIsPositiveTrend = attentePos;
+        BcAnnulesTrendText = FormatTrend(CalculateVariation(BcAnnules, previousAnnules), out bool annulesPos);
+        BcAnnulesIsPositiveTrend = annulesPos;
+        ValeurTotaleBcTrendText = FormatTrend(CalculateVariation(ValeurTotaleBc, previousValeur), out bool valeurPos);
+        ValeurTotaleBcIsPositiveTrend = valeurPos;
+        FournisseursActifsTrendText = FormatTrend(CalculateVariation(FournisseursActifs, previousFournisseurs), out bool fournisseursPos);
+        FournisseursActifsIsPositiveTrend = fournisseursPos;
 
         // Populate unique suppliers
         Suppliers.Clear();

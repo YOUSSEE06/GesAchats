@@ -14,6 +14,8 @@ using GesAchats.WPF.Services;
 using GesAchats.WPF.Views.Comptable.Factures;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using AsyncRelayCommand = CommunityToolkit.Mvvm.Input.AsyncRelayCommand;
+using IAsyncRelayCommand = CommunityToolkit.Mvvm.Input.IAsyncRelayCommand;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -202,6 +204,40 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _paymentRate, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI (texte + couleur, comme les KpiCard du Dashboard)
+    private bool _totalFacturesCountIsPositiveTrend = true;
+    public bool TotalFacturesCountIsPositiveTrend { get => _totalFacturesCountIsPositiveTrend; set => SetProperty(ref _totalFacturesCountIsPositiveTrend, value); }
+
+    private bool _totalAmountIsPositiveTrend = true;
+    public bool TotalAmountIsPositiveTrend { get => _totalAmountIsPositiveTrend; set => SetProperty(ref _totalAmountIsPositiveTrend, value); }
+
+    private bool _paidInvoicesCountIsPositiveTrend = true;
+    public bool PaidInvoicesCountIsPositiveTrend { get => _paidInvoicesCountIsPositiveTrend; set => SetProperty(ref _paidInvoicesCountIsPositiveTrend, value); }
+
+    private bool _partialInvoicesCountIsPositiveTrend = true;
+    public bool PartialInvoicesCountIsPositiveTrend { get => _partialInvoicesCountIsPositiveTrend; set => SetProperty(ref _partialInvoicesCountIsPositiveTrend, value); }
+
+    private bool _waitingInvoicesCountIsPositiveTrend = true;
+    public bool WaitingInvoicesCountIsPositiveTrend { get => _waitingInvoicesCountIsPositiveTrend; set => SetProperty(ref _waitingInvoicesCountIsPositiveTrend, value); }
+
+    private bool _pendingAmountIsPositiveTrend = true;
+    public bool PendingAmountIsPositiveTrend { get => _pendingAmountIsPositiveTrend; set => SetProperty(ref _pendingAmountIsPositiveTrend, value); }
+
     // Trend texts
     private string _totalFacturesCountTrendText = string.Empty;
     public string TotalFacturesCountTrendText
@@ -266,6 +302,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     public ICommand PreviousPageCommand { get; }
     public ICommand NextPageCommand { get; }
     public ICommand LastPageCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
 
     // Debounce and cancellation
     private readonly DispatcherTimer _debounceTimer;
@@ -299,6 +336,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         LoadFacturesCommand = new RelayCommand(async _ => await InitializeAsync());
         AddFactureCommand = new RelayCommand(_ => _navigationService.NavigateTo("InvoiceForm"));
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
+        RefreshCommand = new AsyncRelayCommand(RefreshDataAsync);
 
         FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CanGoToFirstPage);
         PreviousPageCommand = new RelayCommand(_ => CurrentPage--, _ => CanGoToPreviousPage);
@@ -509,34 +547,41 @@ public class FacturesViewModel : BaseViewModel, INavigatable
                 allInvoiceVms.Add(vm);
             }
 
-            TotalFacturesCount = allInvoiceVms.Count;
-            TotalAmount = allInvoiceVms.Sum(f => f.AmountTTC);
-            PaidInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Payée");
-            PartialInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Partiellement payée");
-            WaitingInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "En attente");
-            PendingAmount = allInvoiceVms.Sum(f => f.Balance);
+            TotalFacturesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate);
+            TotalAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).Sum(f => f.AmountTTC);
+            PaidInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "Payée");
+            PartialInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "Partiellement payée");
+            WaitingInvoicesCount = allInvoiceVms.Count(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate && f.StatusCalculated == "En attente");
+            PendingAmount = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).Sum(f => f.Balance);
 
-            // Calculate yesterday's data
-            DateTime today = DateTime.Today;
-            DateTime yesterday = today.AddDays(-1);
+            // Période précédente de même durée (comme le Dashboard principal)
+            var duration = EndDate - StartDate;
+            var previousStart = StartDate - duration;
+            var previousEnd = StartDate;
 
-            var yesterdayInvoices = allInvoiceVms.Where(f =>
-                f.InvoiceDate.Date >= yesterday && f.InvoiceDate.Date < today).ToList();
+            var currentInvoices = allInvoiceVms.Where(f => f.InvoiceDate.Date >= StartDate && f.InvoiceDate.Date <= EndDate).ToList();
+            var previousInvoices = allInvoiceVms.Where(f => f.InvoiceDate.Date >= previousStart && f.InvoiceDate.Date < previousEnd).ToList();
 
-            int yesterdayTotalCount = yesterdayInvoices.Count;
-            decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.AmountTTC);
-            int yesterdayPaidCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Payée");
-            int yesterdayPartialCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
-            int yesterdayWaitingCount = yesterdayInvoices.Count(f => f.StatusCalculated == "En attente");
-            decimal yesterdayPendingAmount = yesterdayInvoices.Sum(f => f.Balance);
+            int previousTotalCount = previousInvoices.Count;
+            decimal previousTotalAmount = previousInvoices.Sum(f => f.AmountTTC);
+            int previousPaidCount = previousInvoices.Count(f => f.StatusCalculated == "Payée");
+            int previousPartialCount = previousInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
+            int previousWaitingCount = previousInvoices.Count(f => f.StatusCalculated == "En attente");
+            decimal previousPendingAmount = previousInvoices.Sum(f => f.Balance);
 
-            // Calculate trend texts
-            TotalFacturesCountTrendText = CalculateTrendText(TotalFacturesCount, yesterdayTotalCount);
-            TotalAmountTrendText = CalculateTrendText(TotalAmount, yesterdayTotalAmount);
-            PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
-            PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
-            WaitingInvoicesCountTrendText = CalculateTrendText(WaitingInvoicesCount, yesterdayWaitingCount);
-            PendingAmountTrendText = CalculateTrendText(PendingAmount, yesterdayPendingAmount);
+            // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+            TotalFacturesCountTrendText = FormatTrend(CalculateVariation(TotalFacturesCount, previousTotalCount), out bool totalPos);
+            TotalFacturesCountIsPositiveTrend = totalPos;
+            TotalAmountTrendText = FormatTrend(CalculateVariation(TotalAmount, previousTotalAmount), out bool amountPos);
+            TotalAmountIsPositiveTrend = amountPos;
+            PaidInvoicesCountTrendText = FormatTrend(CalculateVariation(PaidInvoicesCount, previousPaidCount), out bool paidPos);
+            PaidInvoicesCountIsPositiveTrend = paidPos;
+            PartialInvoicesCountTrendText = FormatTrend(CalculateVariation(PartialInvoicesCount, previousPartialCount), out bool partialPos);
+            PartialInvoicesCountIsPositiveTrend = partialPos;
+            WaitingInvoicesCountTrendText = FormatTrend(CalculateVariation(WaitingInvoicesCount, previousWaitingCount), out bool waitingPos);
+            WaitingInvoicesCountIsPositiveTrend = waitingPos;
+            PendingAmountTrendText = FormatTrend(CalculateVariation(PendingAmount, previousPendingAmount), out bool pendingPos);
+            PendingAmountIsPositiveTrend = pendingPos;
         }
         finally
         {

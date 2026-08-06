@@ -219,6 +219,33 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         set => SetProperty(ref _demandeursActifsTrendText, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI
+    private bool _totalBesoinsIsPositiveTrend = true;
+    public bool TotalBesoinsIsPositiveTrend { get => _totalBesoinsIsPositiveTrend; set => SetProperty(ref _totalBesoinsIsPositiveTrend, value); }
+    private bool _besoinsEnCoursIsPositiveTrend = true;
+    public bool BesoinsEnCoursIsPositiveTrend { get => _besoinsEnCoursIsPositiveTrend; set => SetProperty(ref _besoinsEnCoursIsPositiveTrend, value); }
+    private bool _besoinsTransmisIsPositiveTrend = true;
+    public bool BesoinsTransmisIsPositiveTrend { get => _besoinsTransmisIsPositiveTrend; set => SetProperty(ref _besoinsTransmisIsPositiveTrend, value); }
+    private bool _totalArticlesDemandesIsPositiveTrend = true;
+    public bool TotalArticlesDemandesIsPositiveTrend { get => _totalArticlesDemandesIsPositiveTrend; set => SetProperty(ref _totalArticlesDemandesIsPositiveTrend, value); }
+    private bool _demandeursActifsIsPositiveTrend = true;
+    public bool DemandeursActifsIsPositiveTrend { get => _demandeursActifsIsPositiveTrend; set => SetProperty(ref _demandeursActifsIsPositiveTrend, value); }
+
     public ICommand ViewDetailsCommand { get; }
     public ICommand RefreshCommand { get; }
     public ICommand ClearFiltersCommand { get; }
@@ -299,30 +326,39 @@ public class AdminNeedsHistoryViewModel : BaseViewModel
         var allNeeds = await _unitOfWork.Needs.GetAllWithDetailsAsync();
         var needsList = allNeeds.ToList();
 
-        TotalBesoins = needsList.Count;
-        BesoinsEnCours = needsList.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
-        BesoinsTransmis = needsList.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
-        TotalArticlesDemandes = needsList.Sum(n => n.Details?.Count ?? 0);
-        DemandeursActifs = needsList.Select(n => n.RequestedById).Distinct().Count();
+        // Période actuelle vs période précédente de même durée (comme le Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        // Calculate yesterday's data
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        var yesterdayNeeds = needsList.Where(n => 
-            n.RequestedAt.Date >= yesterday && n.RequestedAt.Date < today).ToList();
+        var currentNeeds = needsList.Where(n => n.RequestedAt >= start && n.RequestedAt < end).ToList();
+        var previousNeeds = needsList.Where(n => n.RequestedAt >= previousStart && n.RequestedAt < previousEnd).ToList();
 
-        int yesterdayTotal = yesterdayNeeds.Count;
-        int yesterdayEnCours = yesterdayNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
-        int yesterdayTransmis = yesterdayNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
-        int yesterdayArticles = yesterdayNeeds.Sum(n => n.Details?.Count ?? 0);
-        int yesterdayDemandeurs = yesterdayNeeds.Select(n => n.RequestedById).Distinct().Count();
+        TotalBesoins = currentNeeds.Count;
+        BesoinsEnCours = currentNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
+        BesoinsTransmis = currentNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        TotalArticlesDemandes = currentNeeds.Sum(n => n.Details?.Count ?? 0);
+        DemandeursActifs = currentNeeds.Select(n => n.RequestedById).Distinct().Count();
 
-        // Calculate trend texts
-        TotalBesoinsTrendText = CalculateTrendText(TotalBesoins, yesterdayTotal);
-        BesoinsEnCoursTrendText = CalculateTrendText(BesoinsEnCours, yesterdayEnCours);
-        BesoinsTransmisTrendText = CalculateTrendText(BesoinsTransmis, yesterdayTransmis);
-        TotalArticlesDemandesTrendText = CalculateTrendText(TotalArticlesDemandes, yesterdayArticles);
-        DemandeursActifsTrendText = CalculateTrendText(DemandeursActifs, yesterdayDemandeurs);
+        int previousTotal = previousNeeds.Count;
+        int previousEnCours = previousNeeds.Count(n => n.Status != NeedStatus.TransmittedToPurchasing);
+        int previousTransmis = previousNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
+        int previousArticles = previousNeeds.Sum(n => n.Details?.Count ?? 0);
+        int previousDemandeurs = previousNeeds.Select(n => n.RequestedById).Distinct().Count();
+
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalBesoinsTrendText = FormatTrend(CalculateVariation(TotalBesoins, previousTotal), out bool totalPos);
+        TotalBesoinsIsPositiveTrend = totalPos;
+        BesoinsEnCoursTrendText = FormatTrend(CalculateVariation(BesoinsEnCours, previousEnCours), out bool encoursPos);
+        BesoinsEnCoursIsPositiveTrend = encoursPos;
+        BesoinsTransmisTrendText = FormatTrend(CalculateVariation(BesoinsTransmis, previousTransmis), out bool transmisPos);
+        BesoinsTransmisIsPositiveTrend = transmisPos;
+        TotalArticlesDemandesTrendText = FormatTrend(CalculateVariation(TotalArticlesDemandes, previousArticles), out bool articlesPos);
+        TotalArticlesDemandesIsPositiveTrend = articlesPos;
+        DemandeursActifsTrendText = FormatTrend(CalculateVariation(DemandeursActifs, previousDemandeurs), out bool demandeursPos);
+        DemandeursActifsIsPositiveTrend = demandeursPos;
     }
 
     private async Task ResetAndLoadPageAsync()

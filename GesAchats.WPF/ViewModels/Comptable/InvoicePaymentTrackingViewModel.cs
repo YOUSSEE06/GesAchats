@@ -13,6 +13,8 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using GesAchats.WPF.Views.Comptable.Factures;
 using Serilog;
+using AsyncRelayCommand = CommunityToolkit.Mvvm.Input.AsyncRelayCommand;
+using IAsyncRelayCommand = CommunityToolkit.Mvvm.Input.IAsyncRelayCommand;
 
 namespace GesAchats.WPF.ViewModels.Comptable;
 
@@ -206,6 +208,40 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _billedSuppliersCount, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI
+    private bool _totalTTCIsPositiveTrend = true;
+    public bool TotalTTCIsPositiveTrend { get => _totalTTCIsPositiveTrend; set => SetProperty(ref _totalTTCIsPositiveTrend, value); }
+
+    private bool _totalPaymentsIsPositiveTrend = true;
+    public bool TotalPaymentsIsPositiveTrend { get => _totalPaymentsIsPositiveTrend; set => SetProperty(ref _totalPaymentsIsPositiveTrend, value); }
+
+    private bool _totalBalanceIsPositiveTrend = true;
+    public bool TotalBalanceIsPositiveTrend { get => _totalBalanceIsPositiveTrend; set => SetProperty(ref _totalBalanceIsPositiveTrend, value); }
+
+    private bool _paidInvoicesCountIsPositiveTrend = true;
+    public bool PaidInvoicesCountIsPositiveTrend { get => _paidInvoicesCountIsPositiveTrend; set => SetProperty(ref _paidInvoicesCountIsPositiveTrend, value); }
+
+    private bool _partialInvoicesCountIsPositiveTrend = true;
+    public bool PartialInvoicesCountIsPositiveTrend { get => _partialInvoicesCountIsPositiveTrend; set => SetProperty(ref _partialInvoicesCountIsPositiveTrend, value); }
+
+    private bool _billedSuppliersCountIsPositiveTrend = true;
+    public bool BilledSuppliersCountIsPositiveTrend { get => _billedSuppliersCountIsPositiveTrend; set => SetProperty(ref _billedSuppliersCountIsPositiveTrend, value); }
+
     private string _totalTTCTrendText = string.Empty;
     public string TotalTTCTrendText
     {
@@ -256,6 +292,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
     public ICommand PreviousPageCommand { get; }
     public ICommand NextPageCommand { get; }
     public ICommand LastPageCommand { get; }
+    public IAsyncRelayCommand RefreshCommand { get; }
 
     public InvoicePaymentTrackingViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, ILogger logger)
     {
@@ -272,6 +309,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         PreviousPageCommand = new RelayCommand(async _ => await GoToPreviousPageAsync(), _ => CanGoToPreviousPage);
         NextPageCommand = new RelayCommand(async _ => await GoToNextPageAsync(), _ => CanGoToNextPage);
         LastPageCommand = new RelayCommand(async _ => await GoToLastPageAsync(), _ => CanGoToLastPage);
+        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
 
         _ = LoadDataAsync();
     }
@@ -378,42 +416,50 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
 
     private void CalculateStats()
     {
-        // Calculate KPIs based on all invoices
+        // Calculate KPIs based on the selected period vs the previous period of same duration
         var invoiceVms = _allInvoicesForStats.Select(i => new InvoiceWithPaymentsViewModel(i)
         {
             Payments = new ObservableCollection<Payment>(_allPaymentsForStats.Where(p => p.InvoiceId == i.Id))
         }).ToList();
 
-        TotalTTC = invoiceVms.Sum(i => i.AmountTTC);
-        TotalPayments = invoiceVms.Sum(i => i.TotalPayments);
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
+
+        var currentInvoices = invoiceVms.Where(i => i.InvoiceDate >= start && i.InvoiceDate < end).ToList();
+        var previousInvoices = invoiceVms.Where(i => i.InvoiceDate >= previousStart && i.InvoiceDate < previousEnd).ToList();
+        var currentPayments = _allPaymentsForStats.Where(p => p.PaymentDate >= start && p.PaymentDate < end).ToList();
+        var previousPayments = _allPaymentsForStats.Where(p => p.PaymentDate >= previousStart && p.PaymentDate < previousEnd).ToList();
+
+        TotalTTC = currentInvoices.Sum(i => i.AmountTTC);
+        TotalPayments = currentPayments.Sum(p => p.AmountPaid);
         TotalBalance = TotalTTC - TotalPayments;
-        PaidInvoicesCount = invoiceVms.Count(i => i.StatusCalculated == "Payée");
-        PartialInvoicesCount = invoiceVms.Count(i => i.StatusCalculated == "Partiellement payée");
-        BilledSuppliersCount = invoiceVms.Select(i => i.SupplierId).Distinct().Count();
+        PaidInvoicesCount = currentInvoices.Count(i => i.StatusCalculated == "Payée");
+        PartialInvoicesCount = currentInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
+        BilledSuppliersCount = currentInvoices.Select(i => i.SupplierId).Distinct().Count();
 
-        // Calculate yesterday's data
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
+        decimal previousTTC = previousInvoices.Sum(i => i.AmountTTC);
+        decimal previousPaymentAmount = previousPayments.Sum(p => p.AmountPaid);
+        decimal previousBalance = previousTTC - previousPaymentAmount;
+        int previousPaidCount = previousInvoices.Count(i => i.StatusCalculated == "Payée");
+        int previousPartialCount = previousInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
+        int previousSuppliersCount = previousInvoices.Select(i => i.SupplierId).Distinct().Count();
 
-        var yesterdayInvoices = invoiceVms.Where(i => 
-            i.Invoice != null && i.Invoice.CreatedAt.Date >= yesterday && i.Invoice.CreatedAt.Date < today).ToList();
-        var yesterdayPayments = _allPaymentsForStats.Where(p => 
-            p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
-
-        decimal yesterdayTTC = yesterdayInvoices.Sum(i => i.AmountTTC);
-        decimal yesterdayPaymentAmount = yesterdayPayments.Sum(p => p.AmountPaid);
-        decimal yesterdayBalance = yesterdayTTC - yesterdayPaymentAmount;
-        int yesterdayPaidCount = yesterdayInvoices.Count(i => i.StatusCalculated == "Payée");
-        int yesterdayPartialCount = yesterdayInvoices.Count(i => i.StatusCalculated == "Partiellement payée");
-        int yesterdaySuppliersCount = yesterdayInvoices.Select(i => i.SupplierId).Distinct().Count();
-
-        // Calculate trend texts
-        TotalTTCTrendText = CalculateTrendText(TotalTTC, yesterdayTTC);
-        TotalPaymentsTrendText = CalculateTrendText(TotalPayments, yesterdayPaymentAmount);
-        TotalBalanceTrendText = CalculateTrendText(TotalBalance, yesterdayBalance);
-        PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
-        PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
-        BilledSuppliersCountTrendText = CalculateTrendText(BilledSuppliersCount, yesterdaySuppliersCount);
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalTTCTrendText = FormatTrend(CalculateVariation(TotalTTC, previousTTC), out bool ttcPos);
+        TotalTTCIsPositiveTrend = ttcPos;
+        TotalPaymentsTrendText = FormatTrend(CalculateVariation(TotalPayments, previousPaymentAmount), out bool payPos);
+        TotalPaymentsIsPositiveTrend = payPos;
+        TotalBalanceTrendText = FormatTrend(CalculateVariation(TotalBalance, previousBalance), out bool balPos);
+        TotalBalanceIsPositiveTrend = balPos;
+        PaidInvoicesCountTrendText = FormatTrend(CalculateVariation(PaidInvoicesCount, previousPaidCount), out bool paidPos);
+        PaidInvoicesCountIsPositiveTrend = paidPos;
+        PartialInvoicesCountTrendText = FormatTrend(CalculateVariation(PartialInvoicesCount, previousPartialCount), out bool partPos);
+        PartialInvoicesCountIsPositiveTrend = partPos;
+        BilledSuppliersCountTrendText = FormatTrend(CalculateVariation(BilledSuppliersCount, previousSuppliersCount), out bool supPos);
+        BilledSuppliersCountIsPositiveTrend = supPos;
     }
 
     private async Task ResetAndLoadPageAsync()

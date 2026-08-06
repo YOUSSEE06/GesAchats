@@ -165,6 +165,33 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
         set => SetProperty(ref _fournisseursActifsTrendText, value);
     }
 
+    // Filtre de période (identique au Dashboard principal)
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    // Couleurs de tendance KPI
+    private bool _totalBlIsPositiveTrend = true;
+    public bool TotalBlIsPositiveTrend { get => _totalBlIsPositiveTrend; set => SetProperty(ref _totalBlIsPositiveTrend, value); }
+    private bool _blValidesIsPositiveTrend = true;
+    public bool BlValidesIsPositiveTrend { get => _blValidesIsPositiveTrend; set => SetProperty(ref _blValidesIsPositiveTrend, value); }
+    private bool _blEnAttenteIsPositiveTrend = true;
+    public bool BlEnAttenteIsPositiveTrend { get => _blEnAttenteIsPositiveTrend; set => SetProperty(ref _blEnAttenteIsPositiveTrend, value); }
+    private bool _blAnnulesIsPositiveTrend = true;
+    public bool BlAnnulesIsPositiveTrend { get => _blAnnulesIsPositiveTrend; set => SetProperty(ref _blAnnulesIsPositiveTrend, value); }
+    private bool _fournisseursActifsIsPositiveTrend = true;
+    public bool FournisseursActifsIsPositiveTrend { get => _fournisseursActifsIsPositiveTrend; set => SetProperty(ref _fournisseursActifsIsPositiveTrend, value); }
+
     public string SearchText
     {
         get => _searchText;
@@ -264,31 +291,40 @@ public class AdminDeliveryNotesViewModel : BaseViewModel
             // Calculate KPIs using all delivery notes
             var allNotes = await _unitOfWork.DeliveryNotes.GetAllWithDetailsAsync();
             var allNotesList = allNotes.ToList();
-            
-            TotalBl = allNotesList.Count;
-            BlValides = allNotesList.Count(n => n.Status == "Valide");
-            BlEnAttente = allNotesList.Count(n => n.Status == "EnAttente");
-            BlAnnules = allNotesList.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
-            FournisseursActifs = allNotesList.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
 
-            // Calculate yesterday's data
-            DateTime today = DateTime.Today;
-            DateTime yesterday = today.AddDays(-1);
-            var yesterdayNotes = allNotesList.Where(n =>
-                n.CreatedAt.Date >= yesterday && n.CreatedAt.Date < today).ToList();
+            // Période actuelle vs période précédente de même durée (comme le Dashboard principal)
+            var start = StartDate.Date;
+            var end = EndDate.Date.AddDays(1);
+            var duration = EndDate - StartDate;
+            var previousStart = StartDate - duration;
+            var previousEnd = StartDate;
 
-            int yesterdayTotal = yesterdayNotes.Count;
-            int yesterdayValides = yesterdayNotes.Count(n => n.Status == "Valide");
-            int yesterdayEnAttente = yesterdayNotes.Count(n => n.Status == "EnAttente");
-            int yesterdayAnnules = yesterdayNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
-            int yesterdayFournisseurs = yesterdayNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+            var currentNotes = allNotesList.Where(n => n.ReceptionDate >= start && n.ReceptionDate < end).ToList();
+            var previousNotes = allNotesList.Where(n => n.ReceptionDate >= previousStart && n.ReceptionDate < previousEnd).ToList();
 
-            // Calculate trend texts
-            TotalBlTrendText = CalculateTrendText(TotalBl, yesterdayTotal);
-            BlValidesTrendText = CalculateTrendText(BlValides, yesterdayValides);
-            BlEnAttenteTrendText = CalculateTrendText(BlEnAttente, yesterdayEnAttente);
-            BlAnnulesTrendText = CalculateTrendText(BlAnnules, yesterdayAnnules);
-            FournisseursActifsTrendText = CalculateTrendText(FournisseursActifs, yesterdayFournisseurs);
+            TotalBl = currentNotes.Count;
+            BlValides = currentNotes.Count(n => n.Status == "Valide");
+            BlEnAttente = currentNotes.Count(n => n.Status == "EnAttente");
+            BlAnnules = currentNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
+            FournisseursActifs = currentNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+
+            int previousTotal = previousNotes.Count;
+            int previousValides = previousNotes.Count(n => n.Status == "Valide");
+            int previousEnAttente = previousNotes.Count(n => n.Status == "EnAttente");
+            int previousAnnules = previousNotes.Count(n => n.Status == "Annulé" || n.Status == "Rejeté" || n.Status == "Annule" || n.Status == "Rejete");
+            int previousFournisseurs = previousNotes.Where(n => n.SupplierId > 0).Select(n => n.SupplierId).Distinct().Count();
+
+            // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+            TotalBlTrendText = FormatTrend(CalculateVariation(TotalBl, previousTotal), out bool totalPos);
+            TotalBlIsPositiveTrend = totalPos;
+            BlValidesTrendText = FormatTrend(CalculateVariation(BlValides, previousValides), out bool validesPos);
+            BlValidesIsPositiveTrend = validesPos;
+            BlEnAttenteTrendText = FormatTrend(CalculateVariation(BlEnAttente, previousEnAttente), out bool attentePos);
+            BlEnAttenteIsPositiveTrend = attentePos;
+            BlAnnulesTrendText = FormatTrend(CalculateVariation(BlAnnules, previousAnnules), out bool annulesPos);
+            BlAnnulesIsPositiveTrend = annulesPos;
+            FournisseursActifsTrendText = FormatTrend(CalculateVariation(FournisseursActifs, previousFournisseurs), out bool fournisseursPos);
+            FournisseursActifsIsPositiveTrend = fournisseursPos;
 
             await LoadPageAsync();
         }

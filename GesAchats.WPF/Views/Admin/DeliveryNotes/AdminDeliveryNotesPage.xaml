@@ -437,14 +437,39 @@
         </Grid>
 
         <!-- 3. Zone principale - Titre de la page -->
-        <TextBlock Grid.Row="1" Text="Réception des Bons de Livraison (BL)" FontSize="20" FontWeight="SemiBold" 
-                   Foreground="{StaticResource TextPrimaryBrush}" Margin="25,15,25,10"/>
+        <Grid Grid.Row="1" Margin="25,15,25,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Réception des Bons de Livraison (BL)" FontSize="20" FontWeight="SemiBold" 
+                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding StartDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <DatePicker SelectedDate="{Binding EndDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <Button Command="{Binding RefreshCommand}"
+                        Style="{StaticResource BtnResetStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="Actualiser"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- 3.1 Zone des KPIs -->
         <UniformGrid Grid.Row="2" Rows="1" Columns="5" Margin="25,10">
             <ctrls:KpiCard Title="Total BL" 
                            Value="{Binding TotalBl}" 
                            TrendText="{Binding TotalBlTrendText}"
+                           IsPositiveTrend="{Binding TotalBlIsPositiveTrend}"
                            Icon="Truck" 
                            IconColor="#2563EB" 
                            Margin="0,0,14,0"/>
@@ -452,6 +477,7 @@
             <ctrls:KpiCard Title="BL Validés" 
                            Value="{Binding BlValides}" 
                            TrendText="{Binding BlValidesTrendText}"
+                           IsPositiveTrend="{Binding BlValidesIsPositiveTrend}"
                            Icon="CheckCircle" 
                            IconColor="#10B981" 
                            Margin="0,0,14,0"/>
@@ -459,6 +485,7 @@
             <ctrls:KpiCard Title="BL En attente" 
                            Value="{Binding BlEnAttente}" 
                            TrendText="{Binding BlEnAttenteTrendText}"
+                           IsPositiveTrend="{Binding BlEnAttenteIsPositiveTrend}"
                            Icon="Clock" 
                            IconColor="#F59E0B" 
                            Margin="0,0,14,0"/>
@@ -466,6 +493,7 @@
             <ctrls:KpiCard Title="BL Annulés" 
                            Value="{Binding BlAnnules}" 
                            TrendText="{Binding BlAnnulesTrendText}"
+                           IsPositiveTrend="{Binding BlAnnulesIsPositiveTrend}"
                            Icon="Ban" 
                            IconColor="#EF4444" 
                            Margin="0,0,14,0"/>
@@ -473,6 +501,7 @@
             <ctrls:KpiCard Title="Fournisseurs actifs" 
                            Value="{Binding FournisseursActifs}" 
                            TrendText="{Binding FournisseursActifsTrendText}"
+                           IsPositiveTrend="{Binding FournisseursActifsIsPositiveTrend}"
                            Icon="Users" 
                            IconColor="#6366F1" 
                            Margin="0,0,0,0"/>

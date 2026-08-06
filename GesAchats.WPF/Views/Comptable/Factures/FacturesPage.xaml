@@ -351,6 +351,7 @@
             <ctrls:KpiCard Title="Total Factures" 
                            Value="{Binding TotalFacturesCount}" 
                            TrendText="{Binding TotalFacturesCountTrendText}"
+                           IsPositiveTrend="{Binding TotalFacturesCountIsPositiveTrend}"
                            Icon="FileInvoice" 
                            IconColor="#2196F3" 
                            Margin="0,0,10,0"/>
@@ -359,6 +360,7 @@
             <ctrls:KpiCard Title="Montant Total TTC" 
                            Value="{Binding TotalAmount}" 
                            TrendText="{Binding TotalAmountTrendText}"
+                           IsPositiveTrend="{Binding TotalAmountIsPositiveTrend}"
                            Unit="MAD"
                            Icon="FileInvoiceDollar" 
                            IconColor="#4CAF50" 
@@ -368,6 +370,7 @@
             <ctrls:KpiCard Title="Factures Payées" 
                            Value="{Binding PaidInvoicesCount}" 
                            TrendText="{Binding PaidInvoicesCountTrendText}"
+                           IsPositiveTrend="{Binding PaidInvoicesCountIsPositiveTrend}"
                            Icon="CheckDouble" 
                            IconColor="#2E7D32" 
                            Margin="0,0,10,0"/>
@@ -376,6 +379,7 @@
             <ctrls:KpiCard Title="Factures Part. Payées" 
                            Value="{Binding PartialInvoicesCount}" 
                            TrendText="{Binding PartialInvoicesCountTrendText}"
+                           IsPositiveTrend="{Binding PartialInvoicesCountIsPositiveTrend}"
                            Icon="HourglassHalf" 
                            IconColor="#8B5CF6" 
                            Margin="0,0,10,0"/>
@@ -384,6 +388,7 @@
             <ctrls:KpiCard Title="Factures En Attente" 
                            Value="{Binding WaitingInvoicesCount}" 
                            TrendText="{Binding WaitingInvoicesCountTrendText}"
+                           IsPositiveTrend="{Binding WaitingInvoicesCountIsPositiveTrend}"
                            Icon="Clock" 
                            IconColor="#F44336" 
                            Margin="0,0,10,0"/>
@@ -392,6 +397,7 @@
             <ctrls:KpiCard Title="Solde Total" 
                            Value="{Binding PendingAmount}" 
                            TrendText="{Binding PendingAmountTrendText}"
+                           IsPositiveTrend="{Binding PendingAmountIsPositiveTrend}"
                            Unit="MAD"
                            Icon="ScaleUnbalanced" 
                            IconColor="#673AB7" 
@@ -472,9 +478,26 @@
             </Border>
 
             <!-- Boutons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="15,0,0,0"
-                        Visibility="{Binding IsAdmin, Converter={StaticResource EnhancedBooleanToVisibilityConverter}, ConverterParameter='Inverse'}">
-                <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource BtnPrimaryGreenStyle}"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="15,0,0,0">
+                <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding StartDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <DatePicker SelectedDate="{Binding EndDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <Button Command="{Binding RefreshCommand}"
+                        Style="{StaticResource BtnResetStyle}"
+                        Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="Actualiser"/>
+                    </StackPanel>
+                </Button>
+                <Button Content="Nouvelle Facture" Command="{Binding AddFactureCommand}" Style="{StaticResource BtnPrimaryGreenStyle}"
+                        Visibility="{Binding IsAdmin, Converter={StaticResource EnhancedBooleanToVisibilityConverter}, ConverterParameter='Inverse'}"/>
             </StackPanel>
         </Grid>
 

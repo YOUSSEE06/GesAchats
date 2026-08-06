@@ -331,14 +331,39 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="20,15">
-            <TextBlock Text="💳 Suivi des Règlements &amp; Historique" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="💳 Suivi des Règlements &amp; Historique" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#1A3A52"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <DatePicker SelectedDate="{Binding StartDate}"
+                                Style="{StaticResource FilterDateStyle}"
+                                Width="150"
+                                Margin="0,0,8,0"/>
+                    <DatePicker SelectedDate="{Binding EndDate}"
+                                Style="{StaticResource FilterDateStyle}"
+                                Width="150"
+                                Margin="0,0,8,0"/>
+                    <Button Command="{Binding RefreshCommand}"
+                            Style="{StaticResource BtnResetStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                            <TextBlock Text="Actualiser"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Dashboard KPIs -->
         <UniformGrid Grid.Row="1" Rows="1" Columns="5" Margin="20,10">
-            <ctrls:KpiCard Title="Total payé (Mois)" 
+            <ctrls:KpiCard Title="Total payé (Période)" 
                            Value="{Binding TotalPaidMonth}" 
                            TrendText="{Binding TotalPaidMonthTrendText}"
+                           IsPositiveTrend="{Binding TotalPaidMonthIsPositiveTrend}"
                            Unit="MAD"
                            Icon="MoneyBillWave" 
                            IconColor="#4CAF50" 
@@ -347,6 +372,7 @@
             <ctrls:KpiCard Title="Factures Attente" 
                            Value="{Binding PendingInvoicesCount}" 
                            TrendText="{Binding PendingInvoicesCountTrendText}"
+                           IsPositiveTrend="{Binding PendingInvoicesCountIsPositiveTrend}"
                            Unit="factures"
                            Icon="Clock" 
                            IconColor="#FFC107" 
@@ -355,6 +381,7 @@
             <ctrls:KpiCard Title="Total Réglé" 
                            Value="{Binding TotalAmountRegle}" 
                            TrendText="{Binding TotalAmountRegleTrendText}"
+                           IsPositiveTrend="{Binding TotalAmountRegleIsPositiveTrend}"
                            Unit="MAD"
                            Icon="Wallet" 
                            IconColor="#2196F3" 
@@ -363,6 +390,7 @@
             <ctrls:KpiCard Title="Fourn. Payés" 
                            Value="{Binding FournisseursPayesCount}" 
                            TrendText="{Binding FournisseursPayesCountTrendText}"
+                           IsPositiveTrend="{Binding FournisseursPayesCountIsPositiveTrend}"
                            Unit="fournisseurs"
                            Icon="Users" 
                            IconColor="#9C27B0" 
@@ -371,6 +399,7 @@
             <ctrls:KpiCard Title="Total Opérations" 
                            Value="{Binding TotalOperationsReglementCount}" 
                            TrendText="{Binding TotalOperationsReglementCountTrendText}"
+                           IsPositiveTrend="{Binding TotalOperationsReglementCountIsPositiveTrend}"
                            Unit="règlements"
                            Icon="ListCheck" 
                            IconColor="#607D8B" 
