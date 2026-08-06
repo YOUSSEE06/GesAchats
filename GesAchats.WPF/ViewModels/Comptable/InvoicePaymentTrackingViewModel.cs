@@ -29,6 +29,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
     private bool _isInitialized;
     private bool _isInitializing;
     private bool _isLoading;
+    private readonly SemaphoreSlim _dbGate = new(1, 1);
 
     public ObservableCollection<InvoiceWithPaymentsViewModel> FilteredInvoices { get; set; } = new();
 
@@ -320,7 +321,6 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         if (_isInitialized || _isLoading)
             return;
 
-        _isLoading = true;
         IsBusy = true;
         try
         {
@@ -329,12 +329,13 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
             _isInitializing = false;
             
             _isInitialized = true;
-            
+
+            // Ne PAS laisser _isLoading = true ici : LoadPageAsync() a sa propre garde
+            // `if (_isLoading) return;` et n'aurait jamais exécuté le chargement initial.
             await LoadPageAsync();
         }
         finally
         {
-            _isLoading = false;
             _isInitializing = false;
             IsBusy = false;
         }
@@ -342,29 +343,37 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
 
     private async Task CalculateStatsAsync()
     {
-        // Load all invoices and payments for stats
-        var invoices = await _unitOfWork.Invoices.GetAllIncludingAsync(i => i.Supplier, i => i.Details);
-        var payments = await _unitOfWork.Payments.GetAllAsync();
-        _allInvoicesForStats = invoices.ToList();
-        _allPaymentsForStats = payments.ToList();
-
-        // Load suppliers for filter
-        var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-        Suppliers.Clear();
-        var tousSupplier = new Supplier { Id = 0, CompanyName = "Tous" };
-        Suppliers.Add(tousSupplier);
-        foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
+        await _dbGate.WaitAsync();
+        try
         {
-            Suppliers.Add(supplier);
-        }
-        SelectedSupplier = tousSupplier;
-        SelectedStatus = "Tous";
-        SelectedDate = null;
-        SearchInvoiceNumber = string.Empty;
-        CurrentPage = 1;
+            // Load all invoices and payments for stats
+            var invoices = await _unitOfWork.Invoices.GetAllIncludingAsync(i => i.Supplier, i => i.Details);
+            var payments = await _unitOfWork.Payments.GetAllAsync();
+            _allInvoicesForStats = invoices.ToList();
+            _allPaymentsForStats = payments.ToList();
 
-        // Calculate KPIs
-        CalculateStats();
+            // Load suppliers for filter
+            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
+            Suppliers.Clear();
+            var tousSupplier = new Supplier { Id = 0, CompanyName = "Tous" };
+            Suppliers.Add(tousSupplier);
+            foreach (var supplier in suppliers.OrderBy(s => s.CompanyName))
+            {
+                Suppliers.Add(supplier);
+            }
+            SelectedSupplier = tousSupplier;
+            SelectedStatus = "Tous";
+            SelectedDate = null;
+            SearchInvoiceNumber = string.Empty;
+            CurrentPage = 1;
+
+            // Calculate KPIs
+            CalculateStats();
+        }
+        finally
+        {
+            _dbGate.Release();
+        }
     }
 
     private void CalculateStats()
@@ -416,8 +425,17 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
 
     private async Task LoadPageAsync(CancellationToken cancellationToken = default)
     {
-        if (_isLoading) return;
-        
+        // Sérialise l'accès au DbContext : si une autre opération est en cours
+        // (stats, debounce, setter de filtre...), on attend qu'elle se termine,
+        // au lieu de lancer une seconde opération concurrente sur le même contexte.
+        await _dbGate.WaitAsync();
+
+        if (_isLoading)
+        {
+            _dbGate.Release();
+            return;
+        }
+
         var version = Interlocked.Increment(ref _loadVersion);
         _isLoading = true;
         
@@ -458,6 +476,7 @@ public class InvoicePaymentTrackingViewModel : BaseViewModel, INavigatable
         finally
         {
             _isLoading = false;
+            _dbGate.Release();
         }
     }
 

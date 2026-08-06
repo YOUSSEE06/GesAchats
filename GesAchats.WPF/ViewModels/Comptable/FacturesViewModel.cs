@@ -273,6 +273,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
     private bool _isLoading;
     private bool _isInitialized;
     private bool _isInitializing;
+    private readonly SemaphoreSlim _dbGate = new(1, 1);
 
     public FacturesViewModel(IUnitOfWork unitOfWork, INavigationService navigationService, IServiceProvider serviceProvider, IUserSession userSession, ILogger logger, IFileStorageService fileStorageService)
     {
@@ -372,7 +373,6 @@ public class FacturesViewModel : BaseViewModel, INavigatable
 
         _isInitialized = true;
         _isInitializing = true;
-        _isLoading = true;
         IsBusy = true;
         
         try
@@ -394,17 +394,18 @@ public class FacturesViewModel : BaseViewModel, INavigatable
             CurrentPage = 1;
             
             await CalculateStatsAsync();
+            // Ne PAS laisser _isLoading = true ici : LoadPageAsync() a sa propre garde
+            // `if (_isLoading) return;` et n'aurait jamais exécuté le chargement initial.
             await LoadPageAsync();
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Erreur lors du chargement initial de la page Factures Comptable");
-            MessageBox.Show($"Erreur lors du chargement initial des factures: {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Erreur lors du chargement initial des factures : {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
             _isInitializing = false;
-            _isLoading = false;
             IsBusy = false;
         }
     }
@@ -423,8 +424,16 @@ public class FacturesViewModel : BaseViewModel, INavigatable
 
     private async Task LoadPageAsync()
     {
+        // Sérialise l'accès au DbContext : si une autre opération est en cours
+        // (stats, debounce, setter de filtre...), on attend qu'elle se termine,
+        // au lieu de lancer une seconde opération concurrente sur le même contexte.
+        await _dbGate.WaitAsync();
+
         if (_isLoading)
+        {
+            _dbGate.Release();
             return;
+        }
 
         // Cancel previous operation
         _cancellationTokenSource?.Cancel();
@@ -461,6 +470,7 @@ public class FacturesViewModel : BaseViewModel, INavigatable
         finally
         {
             _isLoading = false;
+            _dbGate.Release();
         }
     }
 
@@ -476,54 +486,62 @@ public class FacturesViewModel : BaseViewModel, INavigatable
 
     protected virtual async Task CalculateStatsAsync()
     {
-        // Load all invoices for stats calculation
-        var allInvoices = await _unitOfWork.Invoices.GetAllIncludingAsync(
-            i => i.Supplier,
-            i => i.PurchaseOrder,
-            i => i.DeliveryNote
-        );
-        var allPayments = await _unitOfWork.Payments.GetAllAsync();
-
-        var allInvoiceVms = new List<InvoiceWithPaymentsViewModel>();
-        foreach (var invoice in allInvoices.OrderByDescending(i => i.InvoiceDate))
+        await _dbGate.WaitAsync();
+        try
         {
-            var vm = new InvoiceWithPaymentsViewModel(invoice);
-            var invoicePayments = allPayments.Where(p => p.InvoiceId == invoice.Id);
-            foreach (var payment in invoicePayments)
+            // Load all invoices for stats calculation
+            var allInvoices = await _unitOfWork.Invoices.GetAllIncludingAsync(
+                i => i.Supplier,
+                i => i.PurchaseOrder,
+                i => i.DeliveryNote
+            );
+            var allPayments = await _unitOfWork.Payments.GetAllAsync();
+
+            var allInvoiceVms = new List<InvoiceWithPaymentsViewModel>();
+            foreach (var invoice in allInvoices.OrderByDescending(i => i.InvoiceDate))
             {
-                vm.Payments.Add(payment);
+                var vm = new InvoiceWithPaymentsViewModel(invoice);
+                var invoicePayments = allPayments.Where(p => p.InvoiceId == invoice.Id);
+                foreach (var payment in invoicePayments)
+                {
+                    vm.Payments.Add(payment);
+                }
+                allInvoiceVms.Add(vm);
             }
-            allInvoiceVms.Add(vm);
+
+            TotalFacturesCount = allInvoiceVms.Count;
+            TotalAmount = allInvoiceVms.Sum(f => f.AmountTTC);
+            PaidInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Payée");
+            PartialInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Partiellement payée");
+            WaitingInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "En attente");
+            PendingAmount = allInvoiceVms.Sum(f => f.Balance);
+
+            // Calculate yesterday's data
+            DateTime today = DateTime.Today;
+            DateTime yesterday = today.AddDays(-1);
+
+            var yesterdayInvoices = allInvoiceVms.Where(f =>
+                f.InvoiceDate.Date >= yesterday && f.InvoiceDate.Date < today).ToList();
+
+            int yesterdayTotalCount = yesterdayInvoices.Count;
+            decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.AmountTTC);
+            int yesterdayPaidCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Payée");
+            int yesterdayPartialCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
+            int yesterdayWaitingCount = yesterdayInvoices.Count(f => f.StatusCalculated == "En attente");
+            decimal yesterdayPendingAmount = yesterdayInvoices.Sum(f => f.Balance);
+
+            // Calculate trend texts
+            TotalFacturesCountTrendText = CalculateTrendText(TotalFacturesCount, yesterdayTotalCount);
+            TotalAmountTrendText = CalculateTrendText(TotalAmount, yesterdayTotalAmount);
+            PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
+            PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
+            WaitingInvoicesCountTrendText = CalculateTrendText(WaitingInvoicesCount, yesterdayWaitingCount);
+            PendingAmountTrendText = CalculateTrendText(PendingAmount, yesterdayPendingAmount);
         }
-
-        TotalFacturesCount = allInvoiceVms.Count;
-        TotalAmount = allInvoiceVms.Sum(f => f.AmountTTC);
-        PaidInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Payée");
-        PartialInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "Partiellement payée");
-        WaitingInvoicesCount = allInvoiceVms.Count(f => f.StatusCalculated == "En attente");
-        PendingAmount = allInvoiceVms.Sum(f => f.Balance);
-
-        // Calculate yesterday's data
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-
-        var yesterdayInvoices = allInvoiceVms.Where(f =>
-            f.InvoiceDate.Date >= yesterday && f.InvoiceDate.Date < today).ToList();
-
-        int yesterdayTotalCount = yesterdayInvoices.Count;
-        decimal yesterdayTotalAmount = yesterdayInvoices.Sum(f => f.AmountTTC);
-        int yesterdayPaidCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Payée");
-        int yesterdayPartialCount = yesterdayInvoices.Count(f => f.StatusCalculated == "Partiellement payée");
-        int yesterdayWaitingCount = yesterdayInvoices.Count(f => f.StatusCalculated == "En attente");
-        decimal yesterdayPendingAmount = yesterdayInvoices.Sum(f => f.Balance);
-
-        // Calculate trend texts
-        TotalFacturesCountTrendText = CalculateTrendText(TotalFacturesCount, yesterdayTotalCount);
-        TotalAmountTrendText = CalculateTrendText(TotalAmount, yesterdayTotalAmount);
-        PaidInvoicesCountTrendText = CalculateTrendText(PaidInvoicesCount, yesterdayPaidCount);
-        PartialInvoicesCountTrendText = CalculateTrendText(PartialInvoicesCount, yesterdayPartialCount);
-        WaitingInvoicesCountTrendText = CalculateTrendText(WaitingInvoicesCount, yesterdayWaitingCount);
-        PendingAmountTrendText = CalculateTrendText(PendingAmount, yesterdayPendingAmount);
+        finally
+        {
+            _dbGate.Release();
+        }
     }
 
     private async void ResetFilters()
@@ -542,23 +560,5 @@ public class FacturesViewModel : BaseViewModel, INavigatable
             _isInitializing = false;
         }
         await ResetAndLoadPageAsync();
-    }
-
-    private new string CalculateTrendText(int current, int previous)
-    {
-        if (previous == 0) return "";
-        int diff = current - previous;
-        if (diff > 0) return $"+{diff}";
-        if (diff < 0) return $"{diff}";
-        return "0";
-    }
-
-    private new string CalculateTrendText(decimal current, decimal previous)
-    {
-        if (previous == 0) return "";
-        decimal diff = current - previous;
-        if (diff > 0) return $"+{diff:N2}";
-        if (diff < 0) return $"{diff:N2}";
-        return "0";
     }
 }

@@ -539,18 +539,22 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<GesAchatsDbContext>(options =>
+        // Options partagées : masque les pannes transitoires (DNS / réseau / pooler),
+        // les requêtes échouées sont rejouées automatiquement.
+        Action<DbContextOptionsBuilder> configure = options =>
             options.UseNpgsql(connectionString, npgsql =>
             {
-                // Masque les pannes transitoires (DNS / réseau / pooler) : les requêtes
-                // échouées sont rejouées automatiquement au lieu d'afficher une erreur.
                 npgsql.EnableRetryOnFailure(
                     maxRetryCount: 1,
                     maxRetryDelay: TimeSpan.FromSeconds(6),
                     errorCodesToAdd: null);
                 npgsql.CommandTimeout(45);
-            }),
-            ServiceLifetime.Transient);
+            });
+
+        // Factory : chaque unité de travail crée SON PROPRE DbContext court (concurrence-safe).
+        // Plus jamais deux opérations simultanées sur la même instance.
+        services.AddDbContextFactory<GesAchatsDbContext>(configure);
+        services.AddDbContext<GesAchatsDbContext>(configure, ServiceLifetime.Transient);
 
         // Configuration Smtp - valeurs issues uniquement du fichier .env
         var smtpSettings = new GesAchats.Core.Helpers.SmtpSettings
@@ -569,7 +573,8 @@ public partial class App : Application
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDatabaseConnectionMonitor>(sp => new DatabaseConnectionMonitor(sp));
         services.AddTransient<ConnectionErrorWindow>();
-        services.AddTransient<IUnitOfWork, UnitOfWork>();
+        services.AddTransient<IUnitOfWork>(sp =>
+            new UnitOfWork(sp.GetRequiredService<IDbContextFactory<GesAchatsDbContext>>().CreateDbContext()));
         services.AddSingleton<IUserSession, UserSession>();
         services.AddSingleton<SupabaseAuthClient>();
         services.AddTransient<IAuthService, AuthService>();
