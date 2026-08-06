@@ -257,9 +257,25 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#x1f6e2; Réception des Bons de Livraison (BL)" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="24,0,8,0" VerticalAlignment="Center"/>
+                    <DatePicker SelectedDate="{Binding StartDate}"
+                                Style="{StaticResource FilterDateStyle}"
+                                Width="150"
+                                Margin="0,0,8,0"/>
+                    <DatePicker SelectedDate="{Binding EndDate}"
+                                Style="{StaticResource FilterDateStyle}"
+                                Width="150"/>
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding RefreshCommand}"
+                            Style="{StaticResource BtnResetStyle}"
+                            Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                            <TextBlock Text="Actualiser"/>
+                        </StackPanel>
+                    </Button>
                     <Button Command="{Binding ShowAddFormCommand}" 
                             Style="{StaticResource BtnResetStyle}"
                             Background="#22C55E"
@@ -306,6 +322,7 @@
                 Title="Total des Bons de Livraison"
                 Value="{Binding TotalDeliveries}"
                 TrendText="{Binding TotalDeliveriesTrendText}"
+                IsPositiveTrend="{Binding TotalDeliveriesIsPositiveTrend}"
                 Icon="Box"
                 IconColor="#3B82F6"
                 Margin="0,0,10,0"/>
@@ -314,6 +331,7 @@
                 Title="Bons de Livraison En attente"
                 Value="{Binding PendingDeliveries}"
                 TrendText="{Binding PendingDeliveriesTrendText}"
+                IsPositiveTrend="{Binding PendingDeliveriesIsPositiveTrend}"
                 Icon="Clock"
                 IconColor="#FFC107"
                 Margin="5,0,5,0"/>
@@ -322,6 +340,7 @@
                 Title="Bons de Livraison Validés"
                 Value="{Binding ValidatedDeliveries}"
                 TrendText="{Binding ValidatedDeliveriesTrendText}"
+                IsPositiveTrend="{Binding ValidatedDeliveriesIsPositiveTrend}"
                 Icon="CheckCircle"
                 IconColor="#4CAF50"
                 Margin="10,0,0,0"/>

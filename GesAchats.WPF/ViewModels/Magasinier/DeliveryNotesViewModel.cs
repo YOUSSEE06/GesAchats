@@ -58,6 +58,11 @@ public class DeliveryNotesViewModel : BaseViewModel
     private string _totalDeliveriesTrendText = string.Empty;
     private string _pendingDeliveriesTrendText = string.Empty;
     private string _validatedDeliveriesTrendText = string.Empty;
+    private bool _totalDeliveriesIsPositiveTrend = true;
+    private bool _pendingDeliveriesIsPositiveTrend = true;
+    private bool _validatedDeliveriesIsPositiveTrend = true;
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime _endDate = DateTime.Today;
 
     public int TotalDeliveries
     {
@@ -93,6 +98,36 @@ public class DeliveryNotesViewModel : BaseViewModel
     {
         get => _validatedDeliveriesTrendText;
         set => SetProperty(ref _validatedDeliveriesTrendText, value);
+    }
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    public bool TotalDeliveriesIsPositiveTrend
+    {
+        get => _totalDeliveriesIsPositiveTrend;
+        set => SetProperty(ref _totalDeliveriesIsPositiveTrend, value);
+    }
+
+    public bool PendingDeliveriesIsPositiveTrend
+    {
+        get => _pendingDeliveriesIsPositiveTrend;
+        set => SetProperty(ref _pendingDeliveriesIsPositiveTrend, value);
+    }
+
+    public bool ValidatedDeliveriesIsPositiveTrend
+    {
+        get => _validatedDeliveriesIsPositiveTrend;
+        set => SetProperty(ref _validatedDeliveriesIsPositiveTrend, value);
     }
 
     // Form properties
@@ -347,21 +382,23 @@ public class DeliveryNotesViewModel : BaseViewModel
         PendingDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "EnAttente");
         ValidatedDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "Valide");
 
-        // Calculate yesterday's counts
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        
-        var yesterdayDeliveries = filteredList.Where(item => 
-            item.DeliveryNote.CreatedAt.Date >= yesterday && item.DeliveryNote.CreatedAt.Date < today).ToList();
+        // Période actuelle vs période précédente de même durée (concept Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        int yesterdayTotal = yesterdayDeliveries.Count;
-        int yesterdayPending = yesterdayDeliveries.Count(item => item.DeliveryNote.Status == "EnAttente");
-        int yesterdayValidated = yesterdayDeliveries.Count(item => item.DeliveryNote.Status == "Valide");
+        var currentDeliveries = filteredList.Where(item => item.DeliveryNote.ReceptionDate >= start && item.DeliveryNote.ReceptionDate < end).ToList();
+        var previousDeliveries = filteredList.Where(item => item.DeliveryNote.ReceptionDate >= previousStart && item.DeliveryNote.ReceptionDate < previousEnd).ToList();
 
-        // Calculate trend texts
-        TotalDeliveriesTrendText = CalculateTrendText(TotalDeliveries, yesterdayTotal);
-        PendingDeliveriesTrendText = CalculateTrendText(PendingDeliveries, yesterdayPending);
-        ValidatedDeliveriesTrendText = CalculateTrendText(ValidatedDeliveries, yesterdayValidated);
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalDeliveriesTrendText = FormatTrend(CalculateVariation(currentDeliveries.Count, previousDeliveries.Count), out bool totalPos);
+        TotalDeliveriesIsPositiveTrend = totalPos;
+        PendingDeliveriesTrendText = FormatTrend(CalculateVariation(currentDeliveries.Count(item => item.DeliveryNote.Status == "EnAttente"), previousDeliveries.Count(item => item.DeliveryNote.Status == "EnAttente")), out bool pendingPos);
+        PendingDeliveriesIsPositiveTrend = pendingPos;
+        ValidatedDeliveriesTrendText = FormatTrend(CalculateVariation(currentDeliveries.Count(item => item.DeliveryNote.Status == "Valide"), previousDeliveries.Count(item => item.DeliveryNote.Status == "Valide")), out bool validPos);
+        ValidatedDeliveriesIsPositiveTrend = validPos;
     }
 
     private async Task LoadPurchaseOrders()

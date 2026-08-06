@@ -27,6 +27,10 @@ public class StockExitViewModel : BaseViewModel, INavigatable
     private decimal _totalQuantityExited;
     private string _totalExitsTrendText = string.Empty;
     private string _totalQuantityExitedTrendText = string.Empty;
+    private bool _totalExitsIsPositiveTrend = true;
+    private bool _totalQuantityExitedIsPositiveTrend = true;
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime _endDate = DateTime.Today;
 
     public ObservableCollection<Product> Products { get; } = new();
     public ObservableCollection<StockExit> StockExits { get; } = new();
@@ -54,6 +58,30 @@ public class StockExitViewModel : BaseViewModel, INavigatable
     {
         get => _totalQuantityExitedTrendText;
         set => SetProperty(ref _totalQuantityExitedTrendText, value);
+    }
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    public bool TotalExitsIsPositiveTrend
+    {
+        get => _totalExitsIsPositiveTrend;
+        set => SetProperty(ref _totalExitsIsPositiveTrend, value);
+    }
+
+    public bool TotalQuantityExitedIsPositiveTrend
+    {
+        get => _totalQuantityExitedIsPositiveTrend;
+        set => SetProperty(ref _totalQuantityExitedIsPositiveTrend, value);
     }
 
     public Product? SelectedProduct
@@ -204,19 +232,21 @@ public class StockExitViewModel : BaseViewModel, INavigatable
         TotalExits = filteredList.Count;
         TotalQuantityExited = filteredList.Sum(e => e.Quantity);
 
-        // Calculate yesterday's values
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        
-        var yesterdayExits = filteredList.Where(e => 
-            e.CreatedAt.Date >= yesterday && e.CreatedAt.Date < today).ToList();
+        // Période actuelle vs période précédente de même durée (concept Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        int yesterdayTotalCount = yesterdayExits.Count;
-        decimal yesterdayTotalQuantity = yesterdayExits.Sum(e => e.Quantity);
+        var currentExits = filteredList.Where(e => e.ExitDate >= start && e.ExitDate < end).ToList();
+        var previousExits = filteredList.Where(e => e.ExitDate >= previousStart && e.ExitDate < previousEnd).ToList();
 
-        // Calculate trend texts
-        TotalExitsTrendText = CalculateTrendText(TotalExits, yesterdayTotalCount);
-        TotalQuantityExitedTrendText = CalculateTrendText(TotalQuantityExited, yesterdayTotalQuantity);
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalExitsTrendText = FormatTrend(CalculateVariation(currentExits.Count, previousExits.Count), out bool exitsPos);
+        TotalExitsIsPositiveTrend = exitsPos;
+        TotalQuantityExitedTrendText = FormatTrend(CalculateVariation(currentExits.Sum(e => e.Quantity), previousExits.Sum(e => e.Quantity)), out bool qtyPos);
+        TotalQuantityExitedIsPositiveTrend = qtyPos;
     }
 
     private async Task SaveExitAsync()

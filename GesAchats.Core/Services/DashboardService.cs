@@ -166,10 +166,14 @@ public class DashboardService : IDashboardService
             .ToList();
     }
 
-    public async Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(int days = 30)
+    public async Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(DateTime startDate, DateTime endDate)
     {
         var stats = new DashboardStatsDto();
-        var startDate = DateTime.UtcNow.AddDays(-days);
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1);
+        var duration = endDate - startDate;
+        var previousStart = startDate - duration;
+        var previousEnd = startDate;
 
         // 1. Statistiques Articles
         var allProducts = await _unitOfWork.Products.GetAllAsync();
@@ -178,20 +182,55 @@ public class DashboardService : IDashboardService
         stats.StockSousMinimumCount = allProducts.Count(p => p.CurrentStock > 0 && p.CurrentStock < p.MinimumStock);
         stats.StockNormalCount = stats.TotalArticles - stats.StockEnRuptureCount - stats.StockSousMinimumCount;
 
+        // Tendances Articles (créés dans la période vs période précédente)
+        int curProducts = allProducts.Count(p => p.CreatedAt >= start && p.CreatedAt < end);
+        int prevProducts = allProducts.Count(p => p.CreatedAt >= previousStart && p.CreatedAt < previousEnd);
+        stats.TotalArticlesVariation = CalculateEvolution(curProducts, prevProducts);
+        int curNormal = allProducts.Count(p => p.CreatedAt >= start && p.CreatedAt < end && p.CurrentStock > 0 && p.CurrentStock >= p.MinimumStock);
+        int prevNormal = allProducts.Count(p => p.CreatedAt >= previousStart && p.CreatedAt < previousEnd && p.CurrentStock > 0 && p.CurrentStock >= p.MinimumStock);
+        stats.StockNormalVariation = CalculateEvolution(curNormal, prevNormal);
+        int curSousMin = allProducts.Count(p => p.CreatedAt >= start && p.CreatedAt < end && p.CurrentStock > 0 && p.CurrentStock < p.MinimumStock);
+        int prevSousMin = allProducts.Count(p => p.CreatedAt >= previousStart && p.CreatedAt < previousEnd && p.CurrentStock > 0 && p.CurrentStock < p.MinimumStock);
+        stats.StockSousMinimumVariation = CalculateEvolution(curSousMin, prevSousMin);
+        int curRupture = allProducts.Count(p => p.CreatedAt >= start && p.CreatedAt < end && p.CurrentStock <= 0);
+        int prevRupture = allProducts.Count(p => p.CreatedAt >= previousStart && p.CreatedAt < previousEnd && p.CurrentStock <= 0);
+        stats.StockEnRuptureVariation = CalculateEvolution(curRupture, prevRupture);
+
         // 2. Statistiques BL
         var allBls = await _unitOfWork.DeliveryNotes.GetAllAsync();
         stats.BlEnAttenteCount = allBls.Count(b => b.Status == "En attente" || b.Status == "EnAttente");
         stats.BlValidesCount = allBls.Count(b => b.Status == "Validé" || b.Status == "Valide");
+
+        stats.BlEnAttenteVariation = CalculateEvolution(
+            allBls.Count(b => b.ReceptionDate >= start && b.ReceptionDate < end && b.Status == "EnAttente"),
+            allBls.Count(b => b.ReceptionDate >= previousStart && b.ReceptionDate < previousEnd && b.Status == "EnAttente"));
+        stats.BlValidesVariation = CalculateEvolution(
+            allBls.Count(b => b.ReceptionDate >= start && b.ReceptionDate < end && b.Status == "Valide"),
+            allBls.Count(b => b.ReceptionDate >= previousStart && b.ReceptionDate < previousEnd && b.Status == "Valide"));
 
         // 3. Statistiques Besoins
         var allNeeds = await _unitOfWork.Needs.GetAllAsync();
         stats.BesoinsEnCoursCount = allNeeds.Count(n => n.Status == NeedStatus.Draft || n.Status == NeedStatus.ToValidate);
         stats.BesoinsTransmisCount = allNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
 
+        stats.BesoinsEnCoursVariation = CalculateEvolution(
+            allNeeds.Count(n => n.RequestedAt >= start && n.RequestedAt < end && (n.Status == NeedStatus.Draft || n.Status == NeedStatus.ToValidate)),
+            allNeeds.Count(n => n.RequestedAt >= previousStart && n.RequestedAt < previousEnd && (n.Status == NeedStatus.Draft || n.Status == NeedStatus.ToValidate)));
+        stats.BesoinsTransmisVariation = CalculateEvolution(
+            allNeeds.Count(n => n.RequestedAt >= start && n.RequestedAt < end && n.Status == NeedStatus.TransmittedToPurchasing),
+            allNeeds.Count(n => n.RequestedAt >= previousStart && n.RequestedAt < previousEnd && n.Status == NeedStatus.TransmittedToPurchasing));
+
         // 4. Statistiques BC
         var allBcs = await _unitOfWork.PurchaseOrders.GetAllAsync();
         stats.BcEnAttenteCount = allBcs.Count(b => b.Status == PurchaseOrderStatus.Pending);
         stats.BcValidesCount = allBcs.Count(b => b.Status == PurchaseOrderStatus.Validated);
+
+        stats.BcEnAttenteVariation = CalculateEvolution(
+            allBcs.Count(b => b.OrderDate >= start && b.OrderDate < end && b.Status == PurchaseOrderStatus.Pending),
+            allBcs.Count(b => b.OrderDate >= previousStart && b.OrderDate < previousEnd && b.Status == PurchaseOrderStatus.Pending));
+        stats.BcValidesVariation = CalculateEvolution(
+            allBcs.Count(b => b.OrderDate >= start && b.OrderDate < end && b.Status == PurchaseOrderStatus.Validated),
+            allBcs.Count(b => b.OrderDate >= previousStart && b.OrderDate < previousEnd && b.Status == PurchaseOrderStatus.Validated));
 
         // 5. Articles Critiques
         stats.CriticalProducts = allProducts

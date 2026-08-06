@@ -292,7 +292,29 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="25,25,25,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
             <TextBlock Text="ESPACE MAGASINIER" FontSize="26" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding StartDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <DatePicker SelectedDate="{Binding EndDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <Button Command="{Binding RefreshCommand}"
+                        Style="{StaticResource BtnResetStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                        <TextBlock Text="Actualiser"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </Grid>
 
         <TextBlock Grid.Row="1" Text="Gestion des Bons de Commande" FontSize="20" FontWeight="SemiBold" 
@@ -309,6 +331,7 @@
                               Title="Total des Bons de Commande" 
                               Value="{Binding TotalOrders}"
                               TrendText="{Binding TotalOrdersTrendText}"
+                              IsPositiveTrend="{Binding TotalOrdersIsPositiveTrend}"
                               Icon="FileAlt"
                               IconColor="#3B82F6"
                               Margin="0,0,12,0"/>
@@ -317,6 +340,7 @@
                               Title="Bons de Commande Validés" 
                               Value="{Binding ValidatedOrders}"
                               TrendText="{Binding ValidatedOrdersTrendText}"
+                              IsPositiveTrend="{Binding ValidatedOrdersIsPositiveTrend}"
                               Icon="CheckCircle"
                               IconColor="#22C55E"
                               Margin="6,0,6,0"/>
@@ -325,6 +349,7 @@
                               Title="Bons de Commande En Attente" 
                               Value="{Binding PendingOrders}"
                               TrendText="{Binding PendingOrdersTrendText}"
+                              IsPositiveTrend="{Binding PendingOrdersIsPositiveTrend}"
                               Icon="Clock"
                               IconColor="#F59E0B"
                               Margin="12,0,0,0"/>

@@ -12,6 +12,7 @@ using GesAchats.Core.Entities;
 using GesAchats.Core.Interfaces;
 using GesAchats.WPF.Services;
 using GesAchats.WPF.ViewModels;
+using GesAchats.WPF.ViewModels.Base;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -30,6 +31,55 @@ public partial class MagasinierDashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private MagasinierDashboardStats _stats = new();
+
+    // Filtre de période (Date début → Date fin)
+    [ObservableProperty]
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+
+    [ObservableProperty]
+    private DateTime _endDate = DateTime.Today;
+
+    // Tendances KPI (texte + couleur)
+    [ObservableProperty]
+    private string _totalArticlesTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _totalArticlesIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _stockNormalTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _stockNormalIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _stockSousMinimumTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _stockSousMinimumIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _stockEnRuptureTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _stockEnRuptureIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _blEnAttenteTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _blEnAttenteIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _blValidesTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _blValidesIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _besoinsEnCoursTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _besoinsEnCoursIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _besoinsTransmisTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _besoinsTransmisIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _bcEnAttenteTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _bcEnAttenteIsPositiveTrend = true;
+    [ObservableProperty]
+    private string _bcValidesTrendText = string.Empty;
+    [ObservableProperty]
+    private bool _bcValidesIsPositiveTrend = true;
 
     [ObservableProperty]
     private PurchaseOrderChartViewModel _purchaseOrderChartViewModel;
@@ -51,31 +101,33 @@ public partial class MagasinierDashboardViewModel : ObservableObject
         
         PurchaseOrderChartViewModel = new PurchaseOrderChartViewModel();
         
-        LoadDataCommand = new AsyncRelayCommand(() => LoadDataAsync(SelectedPeriod));
-        RefreshCommand = new AsyncRelayCommand(() => LoadDataAsync(SelectedPeriod));
+        LoadDataCommand = new AsyncRelayCommand(() => LoadDataAsync());
+        RefreshCommand = new AsyncRelayCommand(() => LoadDataAsync());
         ChangePeriodCommand = new AsyncRelayCommand<string>(async (p) => 
         {
             if (int.TryParse(p, out int days))
             {
                 SelectedPeriod = days;
-                await LoadDataAsync(days);
+                StartDate = EndDate.AddDays(-days);
+                await LoadDataAsync();
             }
         });
         
-        _ = LoadDataAsync(SelectedPeriod);
+        _ = LoadDataAsync();
     }
 
     public IAsyncRelayCommand LoadDataCommand { get; }
     public IAsyncRelayCommand RefreshCommand { get; }
     public IAsyncRelayCommand<string> ChangePeriodCommand { get; }
 
-    private async Task LoadDataAsync(int days)
+    private async Task LoadDataAsync()
     {
         IsBusy = true;
         try
         {
-            var dto = await _dashboardService.GetMagasinierDashboardStatsAsync(days);
+            var dto = await _dashboardService.GetMagasinierDashboardStatsAsync(StartDate, EndDate);
             Stats = MapToViewModelStats(dto);
+            ApplyVariations(dto);
             UpdateCharts();
         }
         catch (Exception)
@@ -86,6 +138,31 @@ public partial class MagasinierDashboardViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    // Applique les pourcentages d'évolution aux KPI (période actuelle vs précédente)
+    private void ApplyVariations(DashboardStatsDto dto)
+    {
+        TotalArticlesTrendText = BaseViewModel.FormatTrend(dto.TotalArticlesVariation, out bool totalPos);
+        TotalArticlesIsPositiveTrend = totalPos;
+        StockNormalTrendText = BaseViewModel.FormatTrend(dto.StockNormalVariation, out bool normalPos);
+        StockNormalIsPositiveTrend = normalPos;
+        StockSousMinimumTrendText = BaseViewModel.FormatTrend(dto.StockSousMinimumVariation, out bool sousMinPos);
+        StockSousMinimumIsPositiveTrend = sousMinPos;
+        StockEnRuptureTrendText = BaseViewModel.FormatTrend(dto.StockEnRuptureVariation, out bool rupturePos);
+        StockEnRuptureIsPositiveTrend = rupturePos;
+        BlEnAttenteTrendText = BaseViewModel.FormatTrend(dto.BlEnAttenteVariation, out bool blAttentePos);
+        BlEnAttenteIsPositiveTrend = blAttentePos;
+        BlValidesTrendText = BaseViewModel.FormatTrend(dto.BlValidesVariation, out bool blValidesPos);
+        BlValidesIsPositiveTrend = blValidesPos;
+        BesoinsEnCoursTrendText = BaseViewModel.FormatTrend(dto.BesoinsEnCoursVariation, out bool besoinsCoursPos);
+        BesoinsEnCoursIsPositiveTrend = besoinsCoursPos;
+        BesoinsTransmisTrendText = BaseViewModel.FormatTrend(dto.BesoinsTransmisVariation, out bool besoinsTransmisPos);
+        BesoinsTransmisIsPositiveTrend = besoinsTransmisPos;
+        BcEnAttenteTrendText = BaseViewModel.FormatTrend(dto.BcEnAttenteVariation, out bool bcAttentePos);
+        BcEnAttenteIsPositiveTrend = bcAttentePos;
+        BcValidesTrendText = BaseViewModel.FormatTrend(dto.BcValidesVariation, out bool bcValidesPos);
+        BcValidesIsPositiveTrend = bcValidesPos;
     }
 
     private MagasinierDashboardStats MapToViewModelStats(DashboardStatsDto dto)

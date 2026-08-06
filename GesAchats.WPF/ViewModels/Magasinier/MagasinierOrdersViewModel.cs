@@ -15,6 +15,9 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
     private string _totalOrdersTrendText = string.Empty;
     private string _validatedOrdersTrendText = string.Empty;
     private string _pendingOrdersTrendText = string.Empty;
+    private bool _totalOrdersIsPositiveTrend = true;
+    private bool _validatedOrdersIsPositiveTrend = true;
+    private bool _pendingOrdersIsPositiveTrend = true;
 
     public int TotalOrders
     {
@@ -52,6 +55,24 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         set => SetProperty(ref _pendingOrdersTrendText, value);
     }
 
+    public bool TotalOrdersIsPositiveTrend
+    {
+        get => _totalOrdersIsPositiveTrend;
+        set => SetProperty(ref _totalOrdersIsPositiveTrend, value);
+    }
+
+    public bool ValidatedOrdersIsPositiveTrend
+    {
+        get => _validatedOrdersIsPositiveTrend;
+        set => SetProperty(ref _validatedOrdersIsPositiveTrend, value);
+    }
+
+    public bool PendingOrdersIsPositiveTrend
+    {
+        get => _pendingOrdersIsPositiveTrend;
+        set => SetProperty(ref _pendingOrdersIsPositiveTrend, value);
+    }
+
     public MagasinierOrdersViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, ILogger logger)
         : base(unitOfWork, serviceProvider, logger, excludeCancelled: true)
     {
@@ -75,5 +96,8 @@ public class MagasinierOrdersViewModel : AdminOrdersViewModel
         TotalOrdersTrendText = TotalBcTrendText;
         ValidatedOrdersTrendText = BcValidesTrendText;
         PendingOrdersTrendText = BcEnAttenteTrendText;
+        TotalOrdersIsPositiveTrend = TotalBcIsPositiveTrend;
+        ValidatedOrdersIsPositiveTrend = BcValidesIsPositiveTrend;
+        PendingOrdersIsPositiveTrend = BcEnAttenteIsPositiveTrend;
     }
 }

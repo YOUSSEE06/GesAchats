@@ -23,6 +23,18 @@ public class DashboardStatsDto
     public int BcEnAttenteCount { get; set; }
     public int BcValidesCount { get; set; }
 
+    // Tendances (%) - période actuelle vs période précédente de même durée
+    public double TotalArticlesVariation { get; set; }
+    public double StockNormalVariation { get; set; }
+    public double StockSousMinimumVariation { get; set; }
+    public double StockEnRuptureVariation { get; set; }
+    public double BlEnAttenteVariation { get; set; }
+    public double BlValidesVariation { get; set; }
+    public double BesoinsEnCoursVariation { get; set; }
+    public double BesoinsTransmisVariation { get; set; }
+    public double BcEnAttenteVariation { get; set; }
+    public double BcValidesVariation { get; set; }
+
     // Listes pour les tableaux
     public List<CriticalProductDto> CriticalProducts { get; set; } = new();
     public List<RecentBlDto> RecentBls { get; set; } = new();

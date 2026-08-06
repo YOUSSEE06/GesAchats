@@ -44,25 +44,25 @@ public abstract class BaseViewModel : INotifyPropertyChanged
     }
 
     // Formule standard du Dashboard principal : ((current - previous) / previous) * 100
-    protected static double CalculateVariation(double current, double previous)
+    public static double CalculateVariation(double current, double previous)
     {
         if (previous == 0)
             return current > 0 ? 100 : 0;
         return Math.Round(((current - previous) / previous) * 100, 1);
     }
 
-    protected static double CalculateVariation(int current, int previous)
+    public static double CalculateVariation(int current, int previous)
     {
         return CalculateVariation((double)current, (double)previous);
     }
 
-    protected static double CalculateVariation(decimal current, decimal previous)
+    public static double CalculateVariation(decimal current, decimal previous)
     {
         return CalculateVariation((double)current, (double)previous);
     }
 
     // Texte + couleur de tendance KPI (même rendu que les KpiCard du Dashboard)
-    protected static string FormatTrend(double percentage, out bool isPositive)
+    public static string FormatTrend(double percentage, out bool isPositive)
     {
         if (percentage > 0)
         {

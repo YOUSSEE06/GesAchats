@@ -20,6 +20,45 @@
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
+
+            <Style x:Key="BtnResetStyle" TargetType="Button">
+                <Setter Property="Height" Value="38"/>
+                <Setter Property="Padding" Value="20,0"/>
+                <Setter Property="Background" Value="#6C5CE7"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="13.5"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderThickness="0" 
+                                    CornerRadius="19" 
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <ContentPresenter HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#5A4BD1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#4A3BBF"/>
+                                    <Setter TargetName="Bd" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             
             <Style x:Key="FilterInputStyle" TargetType="TextBox">
                 <Setter Property="BorderBrush" Value="#D0CDE8"/>
@@ -272,9 +311,30 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="HISTORIQUE DES BESOINS" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
-        </DockPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="HISTORIQUE DES BESOINS" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="Période :" FontSize="13" Foreground="#334155" Margin="24,0,8,0" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding StartDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"
+                            Margin="0,0,8,0"/>
+                <DatePicker SelectedDate="{Binding EndDate}"
+                            Style="{StaticResource FilterDateStyle}"
+                            Width="150"/>
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding RefreshCommand}"
+                    Style="{StaticResource BtnResetStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⟳" FontSize="14" Margin="0,0,8,0"/>
+                    <TextBlock Text="Actualiser"/>
+                </StackPanel>
+            </Button>
+        </Grid>
 
         <!-- Statistics Cards -->
         <Grid Grid.Row="1" Margin="0,0,0,20">
@@ -289,6 +349,7 @@
                 Title="Total des Besoins"
                 Value="{Binding TotalNeeds}"
                 TrendText="{Binding TotalNeedsTrendText}"
+                IsPositiveTrend="{Binding TotalNeedsIsPositiveTrend}"
                 Icon="Box"
                 IconColor="#3B82F6"
                 Margin="0,0,10,0"/>
@@ -297,6 +358,7 @@
                 Title="Besoins Transmis"
                 Value="{Binding TransmittedNeeds}"
                 TrendText="{Binding TransmittedNeedsTrendText}"
+                IsPositiveTrend="{Binding TransmittedNeedsIsPositiveTrend}"
                 Icon="PaperPlane"
                 IconColor="#2196F3"
                 Margin="5,0,5,0"/>
@@ -305,6 +367,7 @@
                 Title="Besoins En cours"
                 Value="{Binding InProgressNeeds}"
                 TrendText="{Binding InProgressNeedsTrendText}"
+                IsPositiveTrend="{Binding InProgressNeedsIsPositiveTrend}"
                 Icon="Clock"
                 IconColor="#FFC107"
                 Margin="5,0,5,0"/>
@@ -313,6 +376,7 @@
                 Title="Besoins Annulés"
                 Value="{Binding CancelledNeeds}"
                 TrendText="{Binding CancelledNeedsTrendText}"
+                IsPositiveTrend="{Binding CancelledNeedsIsPositiveTrend}"
                 Icon="TimesCircle"
                 IconColor="#F44336"
                 Margin="10,0,0,0"/>

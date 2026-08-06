@@ -47,6 +47,13 @@ public class StockAnalysisViewModel : BaseViewModel
     private string _lowStockArticlesTrendText = string.Empty;
     private string _outOfStockArticlesTrendText = string.Empty;
 
+    private bool _totalArticlesIsPositiveTrend = true;
+    private bool _normalArticlesIsPositiveTrend = true;
+    private bool _lowStockArticlesIsPositiveTrend = true;
+    private bool _outOfStockArticlesIsPositiveTrend = true;
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime _endDate = DateTime.Today;
+
     public ObservableCollection<StockProductViewModel> Products { get; } = new ObservableCollection<StockProductViewModel>();
     
     public int TotalArticles
@@ -109,6 +116,42 @@ public class StockAnalysisViewModel : BaseViewModel
     {
         get => _selectedFilter;
         set { if (SetProperty(ref _selectedFilter, value)) FilterProducts(); }
+    }
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    public bool TotalArticlesIsPositiveTrend
+    {
+        get => _totalArticlesIsPositiveTrend;
+        set => SetProperty(ref _totalArticlesIsPositiveTrend, value);
+    }
+
+    public bool NormalArticlesIsPositiveTrend
+    {
+        get => _normalArticlesIsPositiveTrend;
+        set => SetProperty(ref _normalArticlesIsPositiveTrend, value);
+    }
+
+    public bool LowStockArticlesIsPositiveTrend
+    {
+        get => _lowStockArticlesIsPositiveTrend;
+        set => SetProperty(ref _lowStockArticlesIsPositiveTrend, value);
+    }
+
+    public bool OutOfStockArticlesIsPositiveTrend
+    {
+        get => _outOfStockArticlesIsPositiveTrend;
+        set => SetProperty(ref _outOfStockArticlesIsPositiveTrend, value);
     }
 
     public ICommand RefreshCommand { get; }
@@ -177,23 +220,25 @@ public class StockAnalysisViewModel : BaseViewModel
         LowStockArticles = filteredList.Count(p => p.Etat == StockState.Alert);
         OutOfStockArticles = filteredList.Count(p => p.Etat == StockState.OutOfStock);
 
-        // Calculate yesterday's counts
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        
-        var yesterdayProducts = filteredList.Where(p => 
-            p.CreatedAt.Date >= yesterday && p.CreatedAt.Date < today).ToList();
+        // Période actuelle vs période précédente de même durée (concept Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        int yesterdayTotal = yesterdayProducts.Count;
-        int yesterdayNormal = yesterdayProducts.Count(p => p.Etat == StockState.Ok);
-        int yesterdayLowStock = yesterdayProducts.Count(p => p.Etat == StockState.Alert);
-        int yesterdayOutOfStock = yesterdayProducts.Count(p => p.Etat == StockState.OutOfStock);
+        var currentProducts = filteredList.Where(p => p.CreatedAt >= start && p.CreatedAt < end).ToList();
+        var previousProducts = filteredList.Where(p => p.CreatedAt >= previousStart && p.CreatedAt < previousEnd).ToList();
 
-        // Calculate trend texts
-        TotalArticlesTrendText = CalculateTrendText(TotalArticles, yesterdayTotal);
-        NormalArticlesTrendText = CalculateTrendText(NormalArticles, yesterdayNormal);
-        LowStockArticlesTrendText = CalculateTrendText(LowStockArticles, yesterdayLowStock);
-        OutOfStockArticlesTrendText = CalculateTrendText(OutOfStockArticles, yesterdayOutOfStock);
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalArticlesTrendText = FormatTrend(CalculateVariation(currentProducts.Count, previousProducts.Count), out bool totalPos);
+        TotalArticlesIsPositiveTrend = totalPos;
+        NormalArticlesTrendText = FormatTrend(CalculateVariation(currentProducts.Count(p => p.Etat == StockState.Ok), previousProducts.Count(p => p.Etat == StockState.Ok)), out bool normalPos);
+        NormalArticlesIsPositiveTrend = normalPos;
+        LowStockArticlesTrendText = FormatTrend(CalculateVariation(currentProducts.Count(p => p.Etat == StockState.Alert), previousProducts.Count(p => p.Etat == StockState.Alert)), out bool lowPos);
+        LowStockArticlesIsPositiveTrend = lowPos;
+        OutOfStockArticlesTrendText = FormatTrend(CalculateVariation(currentProducts.Count(p => p.Etat == StockState.OutOfStock), previousProducts.Count(p => p.Etat == StockState.OutOfStock)), out bool outPos);
+        OutOfStockArticlesIsPositiveTrend = outPos;
     }
 
     private void NavigateToNeeds()

@@ -7,7 +7,7 @@ namespace GesAchats.Core.Interfaces;
 
 public interface IDashboardService
 {
-    Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(int days = 30);
+    Task<DashboardStatsDto> GetMagasinierDashboardStatsAsync(DateTime startDate, DateTime endDate);
     Task<ComptableDashboardDto> GetComptableDashboardStatsAsync(DateTime? startDate = null, DateTime? endDate = null);
     Task<List<DashboardOperationDto>> GetRecentOperationsAsync(int count = 6);
     Task<List<DashboardAlertDto>> GetDashboardAlertsAsync();

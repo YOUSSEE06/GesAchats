@@ -99,6 +99,12 @@ public class NeedsHistoryViewModel : BaseViewModel
     private string _transmittedNeedsTrendText = string.Empty;
     private string _inProgressNeedsTrendText = string.Empty;
     private string _cancelledNeedsTrendText = string.Empty;
+    private bool _totalNeedsIsPositiveTrend = true;
+    private bool _transmittedNeedsIsPositiveTrend = true;
+    private bool _inProgressNeedsIsPositiveTrend = true;
+    private bool _cancelledNeedsIsPositiveTrend = true;
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime _endDate = DateTime.Today;
 
     public int TotalNeeds
     {
@@ -146,6 +152,42 @@ public class NeedsHistoryViewModel : BaseViewModel
     {
         get => _cancelledNeedsTrendText;
         set => SetProperty(ref _cancelledNeedsTrendText, value);
+    }
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set => SetProperty(ref _startDate, value);
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set => SetProperty(ref _endDate, value);
+    }
+
+    public bool TotalNeedsIsPositiveTrend
+    {
+        get => _totalNeedsIsPositiveTrend;
+        set => SetProperty(ref _totalNeedsIsPositiveTrend, value);
+    }
+
+    public bool TransmittedNeedsIsPositiveTrend
+    {
+        get => _transmittedNeedsIsPositiveTrend;
+        set => SetProperty(ref _transmittedNeedsIsPositiveTrend, value);
+    }
+
+    public bool InProgressNeedsIsPositiveTrend
+    {
+        get => _inProgressNeedsIsPositiveTrend;
+        set => SetProperty(ref _inProgressNeedsIsPositiveTrend, value);
+    }
+
+    public bool CancelledNeedsIsPositiveTrend
+    {
+        get => _cancelledNeedsIsPositiveTrend;
+        set => SetProperty(ref _cancelledNeedsIsPositiveTrend, value);
     }
 
     public string SearchText { get => _searchText; set { if (SetProperty(ref _searchText, value)) FilterNeeds(); } }
@@ -233,23 +275,25 @@ public class NeedsHistoryViewModel : BaseViewModel
         InProgressNeeds = filteredList.Count(n => n.Status == NeedStatus.InPurchase);
         CancelledNeeds = filteredList.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
 
-        // Calculate yesterday's counts
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
-        
-        var yesterdayNeeds = filteredList.Where(n => 
-            n.RequestedAt.Date >= yesterday && n.RequestedAt.Date < today).ToList();
+        // Période actuelle vs période précédente de même durée (concept Dashboard principal)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
 
-        int yesterdayTotal = yesterdayNeeds.Count;
-        int yesterdayTransmitted = yesterdayNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing);
-        int yesterdayInProgress = yesterdayNeeds.Count(n => n.Status == NeedStatus.InPurchase);
-        int yesterdayCancelled = yesterdayNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected);
+        var currentNeeds = filteredList.Where(n => n.RequestedAt >= start && n.RequestedAt < end).ToList();
+        var previousNeeds = filteredList.Where(n => n.RequestedAt >= previousStart && n.RequestedAt < previousEnd).ToList();
 
-        // Calculate trend texts
-        TotalNeedsTrendText = CalculateTrendText(TotalNeeds, yesterdayTotal);
-        TransmittedNeedsTrendText = CalculateTrendText(TransmittedNeeds, yesterdayTransmitted);
-        InProgressNeedsTrendText = CalculateTrendText(InProgressNeeds, yesterdayInProgress);
-        CancelledNeedsTrendText = CalculateTrendText(CancelledNeeds, yesterdayCancelled);
+        // Tendances (texte + couleur), formule ((current - previous) / previous) * 100
+        TotalNeedsTrendText = FormatTrend(CalculateVariation(currentNeeds.Count, previousNeeds.Count), out bool totalPos);
+        TotalNeedsIsPositiveTrend = totalPos;
+        TransmittedNeedsTrendText = FormatTrend(CalculateVariation(currentNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing), previousNeeds.Count(n => n.Status == NeedStatus.TransmittedToPurchasing)), out bool transPos);
+        TransmittedNeedsIsPositiveTrend = transPos;
+        InProgressNeedsTrendText = FormatTrend(CalculateVariation(currentNeeds.Count(n => n.Status == NeedStatus.InPurchase), previousNeeds.Count(n => n.Status == NeedStatus.InPurchase)), out bool progPos);
+        InProgressNeedsIsPositiveTrend = progPos;
+        CancelledNeedsTrendText = FormatTrend(CalculateVariation(currentNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected), previousNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected)), out bool cancelledPos);
+        CancelledNeedsIsPositiveTrend = cancelledPos;
     }
 
     private void ExecuteViewDetails(NeedHistoryItemViewModel? item)
