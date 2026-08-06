@@ -26,6 +26,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         // KPI Properties
         private int _demandesEnCours;
+        private int _besTransmis;
         private int _devisEnAttente;
         private int _devisValides;
         private int _bonsCommandeEnAttente;
@@ -34,6 +35,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         // Comparaisons périodes précédentes (%)
         private double _demandesProgression;
+        private double _besTransmisProgression;
         private double _devisAttentProgression;
         private double _devisValidesProgression;
         private double _bonsCommandeProgression;
@@ -43,6 +45,8 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         // Trend texts and positive flags
         private string _demandesTrendText = string.Empty;
         private bool _demandesIsPositiveTrend = true;
+        private string _besTransmisTrendText = string.Empty;
+        private bool _besTransmisIsPositiveTrend = true;
         private string _devisAttentTrendText = string.Empty;
         private bool _devisAttentIsPositiveTrend = true;
         private string _devisValidesTrendText = string.Empty;
@@ -68,8 +72,8 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         // Filtres
         private int _selectedPeriodDays = 30;
-        private DateTime _periodStartDate;
-        private DateTime _periodEndDate;
+        private DateTime _startDate = DateTime.Today.AddMonths(-1);
+        private DateTime _endDate = DateTime.Today;
 
         public AcheteurDashboardViewModel(
             IPurchaseOrderService purchaseOrderService,
@@ -122,6 +126,12 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _demandesEnCours, value);
         }
 
+        public int BesTransmis
+        {
+            get => _besTransmis;
+            set => SetProperty(ref _besTransmis, value);
+        }
+
         public int DevisEnAttente
         {
             get => _devisEnAttente;
@@ -158,6 +168,12 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             get => _demandesProgression;
             set => SetProperty(ref _demandesProgression, value);
+        }
+
+        public double BesTransmisProgression
+        {
+            get => _besTransmisProgression;
+            set => SetProperty(ref _besTransmisProgression, value);
         }
 
         public double DevisAttentProgression
@@ -200,6 +216,18 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         {
             get => _demandesIsPositiveTrend;
             set => SetProperty(ref _demandesIsPositiveTrend, value);
+        }
+
+        public string BesTransmisTrendText
+        {
+            get => _besTransmisTrendText;
+            set => SetProperty(ref _besTransmisTrendText, value);
+        }
+
+        public bool BesTransmisIsPositiveTrend
+        {
+            get => _besTransmisIsPositiveTrend;
+            set => SetProperty(ref _besTransmisIsPositiveTrend, value);
         }
 
         public string DevisAttentTrendText
@@ -330,16 +358,22 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             set => SetProperty(ref _selectedPeriodDays, value);
         }
 
-        public DateTime PeriodStartDate
+        public DateTime StartDate
         {
-            get => _periodStartDate;
-            set => SetProperty(ref _periodStartDate, value);
+            get => _startDate;
+            set
+            {
+                if (SetProperty(ref _startDate, value)) { _ = LoadKPIs(); }
+            }
         }
 
-        public DateTime PeriodEndDate
+        public DateTime EndDate
         {
-            get => _periodEndDate;
-            set => SetProperty(ref _periodEndDate, value);
+            get => _endDate;
+            set
+            {
+                if (SetProperty(ref _endDate, value)) { _ = LoadKPIs(); }
+            }
         }
 
         // ===================== COMMANDES =====================
@@ -355,10 +389,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             {
                 IsBusy = true;
 
-                // Calculer les dates
-                PeriodEndDate = DateTime.Now;
-                PeriodStartDate = PeriodEndDate.AddDays(-SelectedPeriodDays);
-
+                // Période pilotée par les DatePickers StartDate / EndDate
                 // Charger les KPIs
                 await LoadKPIs();
 
@@ -385,44 +416,40 @@ namespace GesAchats.WPF.ViewModels.Acheteur
 
         private async Task LoadKPIs()
         {
-            var kpis = await _dashboardService.GetAcheteurKpisAsync();
-            
+            var kpis = await _dashboardService.GetAcheteurKpisAsync(StartDate, EndDate);
+
             DemandesEnCours = kpis.BesEnCoursCount;
+            BesTransmis = kpis.BesTransmisCount;
             DevisEnAttente = kpis.DevEnAttenteCount;
             DevisValides = kpis.DevValideCount;
             BonsCommandeEnAttente = kpis.TotalBcCount;
+            TotalPurchaseOrders = kpis.TotalBcCount;
             FournisseursActifs = kpis.FournisseursActifsCount;
-            // Keep ArticlesSuivis as is or calculate if needed
-            ArticlesSuivis = 156;
 
+            // Evolutions / tendances (formule standard : ((current - previous) / previous) * 100)
             DemandesProgression = kpis.BesEnCoursEvolution;
+            DemandesTrendText = FormatTrend(DemandesProgression, out var trending);
+            DemandesIsPositiveTrend = trending;
+
+            BesTransmisProgression = kpis.BesTransmisEvolution;
+            BesTransmisTrendText = FormatTrend(BesTransmisProgression, out trending);
+            BesTransmisIsPositiveTrend = trending;
+
             DevisAttentProgression = kpis.DevEnAttenteEvolution;
+            DevisAttentTrendText = FormatTrend(DevisAttentProgression, out trending);
+            DevisAttentIsPositiveTrend = trending;
+
             DevisValidesProgression = kpis.DevValideEvolution;
+            DevisValidesTrendText = FormatTrend(DevisValidesProgression, out trending);
+            DevisValidesIsPositiveTrend = trending;
+
             BonsCommandeProgression = kpis.TotalBcEvolution;
+            BonsCommandeTrendText = FormatTrend(BonsCommandeProgression, out trending);
+            BonsCommandeIsPositiveTrend = trending;
+
             FournisseursProgression = kpis.FournisseursActifsEvolution;
-            ArticlesSuivisProgression = 0;
-
-            // Update trend texts and IsPositiveTrend flags
-            DemandesTrendText = FormatTrendText(DemandesProgression);
-            DemandesIsPositiveTrend = DemandesProgression >= 0;
-            DevisAttentTrendText = FormatTrendText(DevisAttentProgression);
-            DevisAttentIsPositiveTrend = DevisAttentProgression >= 0;
-            DevisValidesTrendText = FormatTrendText(DevisValidesProgression);
-            DevisValidesIsPositiveTrend = DevisValidesProgression >= 0;
-            BonsCommandeTrendText = FormatTrendText(BonsCommandeProgression);
-            BonsCommandeIsPositiveTrend = BonsCommandeProgression >= 0;
-            FournisseursTrendText = FormatTrendText(FournisseursProgression);
-            FournisseursIsPositiveTrend = FournisseursProgression >= 0;
-        }
-
-        private string FormatTrendText(double percentage)
-        {
-            if (percentage > 0)
-                return $"+{percentage}% cette semaine";
-            else if (percentage < 0)
-                return $"{percentage}% cette semaine";
-            else
-                return "0% cette semaine";
+            FournisseursTrendText = FormatTrend(FournisseursProgression, out trending);
+            FournisseursIsPositiveTrend = trending;
         }
 
         private async Task LoadChartData()
@@ -590,7 +617,7 @@ namespace GesAchats.WPF.ViewModels.Acheteur
             try
             {
                 // Charger les articles avec l'analyse des prix
-                var data = await _stockService.GetProductPriceAnalysisAsync(PeriodStartDate, PeriodEndDate, 10);
+                var data = await _stockService.GetProductPriceAnalysisAsync(StartDate, EndDate, 10);
 
                 PriceAnalysisData.Clear();
                 foreach (var item in data)
@@ -718,6 +745,8 @@ namespace GesAchats.WPF.ViewModels.Acheteur
         private async Task ChangePeriod(int days)
         {
             SelectedPeriodDays = days;
+            EndDate = DateTime.Today;
+            StartDate = EndDate.AddDays(-days);
             await LoadData();
         }
     }

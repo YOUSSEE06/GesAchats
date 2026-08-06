@@ -291,6 +291,77 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         get => _isLoadingStats;
         set => SetProperty(ref _isLoadingStats, value);
     }
+
+    // ===================== TENDANCES KPI (GESTION DES DEVIS) =====================
+    private string _totalDevisTrendText = string.Empty;
+    public string TotalDevisTrendText
+    {
+        get => _totalDevisTrendText;
+        set => SetProperty(ref _totalDevisTrendText, value);
+    }
+
+    private bool _totalDevisIsPositive = true;
+    public bool TotalDevisIsPositive
+    {
+        get => _totalDevisIsPositive;
+        set => SetProperty(ref _totalDevisIsPositive, value);
+    }
+
+    private string _trendDevisEnAttente = string.Empty;
+    public string DevisEnAttenteTrendText
+    {
+        get => _trendDevisEnAttente;
+        set => SetProperty(ref _trendDevisEnAttente, value);
+    }
+
+    private bool _devisEnAttenteIsPositive = true;
+    public bool DevisEnAttenteIsPositive
+    {
+        get => _devisEnAttenteIsPositive;
+        set => SetProperty(ref _devisEnAttenteIsPositive, value);
+    }
+
+    private string _trendDevisValides = string.Empty;
+    public string DevisValidesTrendText
+    {
+        get => _trendDevisValides;
+        set => SetProperty(ref _trendDevisValides, value);
+    }
+
+    private bool _devisValidesIsPositive = true;
+    public bool DevisValidesIsPositive
+    {
+        get => _devisValidesIsPositive;
+        set => SetProperty(ref _devisValidesIsPositive, value);
+    }
+
+    private string _trendMontantTotal = string.Empty;
+    public string MontantTotalTrendText
+    {
+        get => _trendMontantTotal;
+        set => SetProperty(ref _trendMontantTotal, value);
+    }
+
+    private bool _montantTotalIsPositive = true;
+    public bool MontantTotalIsPositive
+    {
+        get => _montantTotalIsPositive;
+        set => SetProperty(ref _montantTotalIsPositive, value);
+    }
+
+    private string _trendMoyenne = string.Empty;
+    public string MoyenneParDevisTrendText
+    {
+        get => _trendMoyenne;
+        set => SetProperty(ref _trendMoyenne, value);
+    }
+
+    private bool _moyenneParDevisIsPositive = true;
+    public bool MoyenneParDevisIsPositive
+    {
+        get => _moyenneParDevisIsPositive;
+        set => SetProperty(ref _moyenneParDevisIsPositive, value);
+    }
     
     public int CurrentPage
     {
@@ -687,26 +758,43 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         IsLoadingStats = true;
         await Task.Run(() =>
         {
-            // Calculate statistics on background thread
-            var total = AllQuotationsRaw.Count;
-            var enAttente = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending);
-            var valides = AllQuotationsRaw.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
-            var montant = AllQuotationsRaw.Sum(q => q.TotalAmountHT);
+            // Période actuelle (30 derniers jours) vs période précédente de même durée
+            var today = DateTime.Today;
+            var start = today.AddDays(-30);
+            var end = today.AddDays(1);
+            var previousStart = start.AddDays(-30);
+            var previousEnd = start;
+
+            var current = AllQuotationsRaw.Where(q => q.Date >= start && q.Date < end).ToList();
+            var previous = AllQuotationsRaw.Where(q => q.Date >= previousStart && q.Date < previousEnd).ToList();
+
+            var total = current.Count;
+            var enAttente = current.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending);
+            var valides = current.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated);
+            var montant = current.Sum(q => q.TotalAmountHT);
             var moyenne = total > 0 ? montant / total : 0;
-            
+
             string fournisseur = "-";
-            if (AllQuotationsRaw.Any())
+            if (current.Any())
             {
-                var supplierStats = AllQuotationsRaw
+                var supplierStats = current
                     .Where(q => q.Supplier != null)
                     .GroupBy(q => q.Supplier.CompanyName)
                     .OrderByDescending(g => g.Count())
                     .FirstOrDefault();
-                
-                fournisseur = supplierStats != null 
-                    ? $"{supplierStats.Key} ({supplierStats.Count()} devis)" 
+
+                fournisseur = supplierStats != null
+                    ? $"{supplierStats.Key} ({supplierStats.Count()} devis)"
                     : "-";
             }
+
+            // Evolutions vs période précédente (formule Dashboard standardisée)
+            double totalVariation = CalculateVariation(total, previous.Count);
+            double pendingVariation = CalculateVariation(enAttente, previous.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Pending));
+            double validatedVariation = CalculateVariation(valides, previous.Count(q => NormalizeQuotationStatus(q.Status) == QuotationStatus.Validated));
+            double montantVariation = CalculateVariation(montant, previous.Sum(q => q.TotalAmountHT));
+            decimal prevMoyenne = previous.Count > 0 ? previous.Sum(q => q.TotalAmountHT) / previous.Count : 0m;
+            double moyenneVariation = CalculateVariation(moyenne, prevMoyenne);
 
             // Update on UI thread
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -717,9 +805,27 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
                 MontantTotal = montant;
                 MoyenneParDevis = moyenne;
                 FournisseurPlusSollicite = fournisseur;
+
+                TotalDevisTrendText = BuildTrendText(totalVariation);
+                TotalDevisIsPositive = totalVariation >= 0;
+                DevisEnAttenteTrendText = BuildTrendText(pendingVariation);
+                DevisEnAttenteIsPositive = pendingVariation >= 0;
+                DevisValidesTrendText = BuildTrendText(validatedVariation);
+                DevisValidesIsPositive = validatedVariation >= 0;
+                MontantTotalTrendText = BuildTrendText(montantVariation);
+                MontantTotalIsPositive = montantVariation >= 0;
+                MoyenneParDevisTrendText = BuildTrendText(moyenneVariation);
+                MoyenneParDevisIsPositive = moyenneVariation >= 0;
+
                 IsLoadingStats = false;
             });
         });
+    }
+
+    private static string BuildTrendText(double variation)
+    {
+        var text = FormatTrend(variation, out _);
+        return variation >= 0 ? $"▲ {text}" : $"▼ {text}";
     }
 
     /// <summary>

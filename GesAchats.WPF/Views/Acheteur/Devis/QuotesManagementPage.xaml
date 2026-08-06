@@ -276,12 +276,26 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#E3F2FD" CornerRadius="10" Padding="10" Width="48" Height="48">
                                     <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding TotalDevis}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#1565C0" Margin="0,16,0,4"/>
                                 <TextBlock Text="Total Devis" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="13" FontWeight="SemiBold"
+                                           Text="{Binding TotalDevisTrendText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TotalDevisIsPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
 
@@ -291,12 +305,26 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#FFF3E0" CornerRadius="10" Padding="10" Width="48" Height="48">
                                     <TextBlock Text="⏳" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding DevisEnAttente}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#F57C00" Margin="0,16,0,4"/>
                                 <TextBlock Text="Devis en attente" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="13" FontWeight="SemiBold"
+                                           Text="{Binding DevisEnAttenteTrendText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DevisEnAttenteIsPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
 
@@ -306,18 +334,33 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#E8F5E9" CornerRadius="10" Padding="10" Width="48" Height="48">
                                     <TextBlock Text="✓" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding DevisValides}" Grid.Row="1" FontSize="32" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
                                 <TextBlock Text="Devis validés" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="13" FontWeight="SemiBold"
+                                           Text="{Binding DevisValidesTrendText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DevisValidesIsPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
 
                         <Border Style="{StaticResource ModernCard}" Padding="20" Margin="0,0,12,0">
                             <Grid>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -327,6 +370,19 @@
                                 </Border>
                                 <TextBlock Text="{Binding MontantTotal, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#2E7D32" Margin="0,16,0,4"/>
                                 <TextBlock Text="Montant total (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="13" FontWeight="SemiBold"
+                                           Text="{Binding MontantTotalTrendText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MontantTotalIsPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
 
@@ -336,12 +392,26 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Background="#F3E5F5" CornerRadius="10" Padding="10" Width="48" Height="48">
                                     <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="{Binding MoyenneParDevis, StringFormat={}{0:N2} MAD}" Grid.Row="1" FontSize="26" FontWeight="Bold" Foreground="#7B1FA2" Margin="0,16,0,4"/>
                                 <TextBlock Text="Moyenne par devis (MAD)" Grid.Row="2" FontSize="14" Foreground="#616161" FontWeight="Medium"/>
+                                <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="13" FontWeight="SemiBold"
+                                           Text="{Binding MoyenneParDevisTrendText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MoyenneParDevisIsPositive}" Value="False">
+                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
                         </Border>
 

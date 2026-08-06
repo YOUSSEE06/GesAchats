@@ -382,6 +382,56 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _cancelledOrdersTrendText, value);
     }
 
+    // ===================== FILTRE PÉRIODE =====================
+    private DateTime _startDate = DateTime.Today.AddMonths(-1);
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set
+        {
+            if (SetProperty(ref _startDate, value)) { RecomputePeriodStats(); }
+        }
+    }
+
+    private DateTime _endDate = DateTime.Today;
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set
+        {
+            if (SetProperty(ref _endDate, value)) { RecomputePeriodStats(); }
+        }
+    }
+
+    // ===================== TENDANCES KPI =====================
+    private bool _totalOrdersIsPositive = true;
+    public bool TotalOrdersIsPositive
+    {
+        get => _totalOrdersIsPositive;
+        set => SetProperty(ref _totalOrdersIsPositive, value);
+    }
+
+    private bool _pendingOrdersIsPositive = true;
+    public bool PendingOrdersIsPositive
+    {
+        get => _pendingOrdersIsPositive;
+        set => SetProperty(ref _pendingOrdersIsPositive, value);
+    }
+
+    private bool _validatedOrdersIsPositive = true;
+    public bool ValidatedOrdersIsPositive
+    {
+        get => _validatedOrdersIsPositive;
+        set => SetProperty(ref _validatedOrdersIsPositive, value);
+    }
+
+    private bool _cancelledOrdersIsPositive = true;
+    public bool CancelledOrdersIsPositive
+    {
+        get => _cancelledOrdersIsPositive;
+        set => SetProperty(ref _cancelledOrdersIsPositive, value);
+    }
+
     // Commands
     public ICommand CreateOrderCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -587,29 +637,44 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         foreach (var o in filteredList) 
             OrdersHistory.Add(o);
 
-        UpdateStatistics(filteredList);
+        RecomputePeriodStats();
     }
 
-    private void UpdateStatistics(List<PurchaseOrder> currentOrders)
+    private void RecomputePeriodStats()
     {
+        // Période actuelle vs période précédente de même durée (formule Dashboard standardisée)
+        var start = StartDate.Date;
+        var end = EndDate.Date.AddDays(1);
+        var duration = EndDate - StartDate;
+        var previousStart = StartDate - duration;
+        var previousEnd = StartDate;
+
+        var currentOrders = _allOrders.Where(o => o.OrderDate >= start && o.OrderDate < end).ToList();
+        var previousOrders = _allOrders.Where(o => o.OrderDate >= previousStart && o.OrderDate < previousEnd).ToList();
+
         TotalOrders = currentOrders.Count;
         PendingOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
         ValidatedOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Validated);
         CancelledOrders = currentOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled);
 
-        DateTime today = DateTime.Today;
-        DateTime yesterday = today.AddDays(-1);
+        TotalOrdersIsPositive = ApplyTrend(TotalOrders, previousOrders.Count, out var totalTrend);
+        TotalOrdersTrendText = totalTrend;
+        PendingOrdersIsPositive = ApplyTrend(PendingOrders,
+            previousOrders.Count(o => o.Status == PurchaseOrderStatus.Pending), out var pendingTrend);
+        PendingOrdersTrendText = pendingTrend;
+        ValidatedOrdersIsPositive = ApplyTrend(ValidatedOrders,
+            previousOrders.Count(o => o.Status == PurchaseOrderStatus.Validated), out var validatedTrend);
+        ValidatedOrdersTrendText = validatedTrend;
+        CancelledOrdersIsPositive = ApplyTrend(CancelledOrders,
+            previousOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled), out var cancelledTrend);
+        CancelledOrdersTrendText = cancelledTrend;
+    }
 
-        var yesterdayOrders = currentOrders.Where(o => o.OrderDate.Date >= yesterday && o.OrderDate.Date < today).ToList();
-        int yesterdayTotal = yesterdayOrders.Count;
-        int yesterdayPending = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
-        int yesterdayValidated = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Validated);
-        int yesterdayCancelled = yesterdayOrders.Count(o => o.Status == PurchaseOrderStatus.Cancelled);
-
-        TotalOrdersTrendText = CalculateTrendText(TotalOrders, yesterdayTotal);
-        PendingOrdersTrendText = CalculateTrendText(PendingOrders, yesterdayPending);
-        ValidatedOrdersTrendText = CalculateTrendText(ValidatedOrders, yesterdayValidated);
-        CancelledOrdersTrendText = CalculateTrendText(CancelledOrders, yesterdayCancelled);
+    private static bool ApplyTrend(int current, int previous, out string trendText)
+    {
+        var variation = CalculateVariation(current, previous);
+        trendText = FormatTrend(variation, out var isPositive);
+        return isPositive;
     }
 
     private void ExecuteResetFilters()
