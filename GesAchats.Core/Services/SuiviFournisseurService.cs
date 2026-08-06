@@ -170,7 +170,9 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             var op = new SituationOperationGroupDto
             {
                 NumeroBC = po.OrderNumber,
+                DateCommande = po.OrderDate,
                 TotalCommande = po.TotalAmountTTC,
+                TotalCommandeHT = po.TotalAmountHT,
                 CommandeArticles = po.Details?.Select(d => new CommandeArticleDto
                 {
                     Article = d.Product?.Designation ?? "N/A",
@@ -186,6 +188,7 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             {
                 op.HasDeliveryNote = true;
                 op.NumeroBL = relatedDn.DeliveryNumber;
+                op.DateLivraison = relatedDn.ReceptionDate;
                 op.BlArticles = relatedDn.Details?.Select(d => new BlArticleDto
                 {
                     Article = d.Product?.Designation ?? "N/A",
@@ -193,6 +196,8 @@ public class SuiviFournisseurService : ISuiviFournisseurService
                     QtLivree = d.QuantityReceived,
                     Ecart = d.QuantityOrdered - d.QuantityReceived
                 }).ToList() ?? new List<BlArticleDto>();
+                op.TotalBlTTC = relatedDn.Details?.Sum(d => d.QuantityReceived * d.UnitPriceTTC) ?? 0m;
+                op.TotalBlHT = relatedDn.Details?.Sum(d => d.QuantityReceived * d.UnitPriceHT) ?? 0m;
 
                 // Calculer l'état du BL
                 if (!string.IsNullOrWhiteSpace(relatedDn.Status))
@@ -230,6 +235,7 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             {
                 op.HasInvoice = true;
                 op.NumeroFacture = relatedInvoice.InvoiceNumber;
+                op.DateFacture = relatedInvoice.InvoiceDate;
                 op.TotalFacture = relatedInvoice.AmountTTC;
                 op.FactureArticles = relatedInvoice.Details?.Select(d => new FactureArticleDto
                 {

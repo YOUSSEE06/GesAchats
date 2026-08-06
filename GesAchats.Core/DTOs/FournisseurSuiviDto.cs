@@ -119,17 +119,23 @@ public class SituationOperationGroupDto
 {
     // BC
     public string NumeroBC { get; set; } = string.Empty;
+    public DateTime? DateCommande { get; set; }
     public List<CommandeArticleDto> CommandeArticles { get; set; } = new();
     public decimal TotalCommande { get; set; }
+    public decimal TotalCommandeHT { get; set; }
     
     // BL
     public string NumeroBL { get; set; } = string.Empty;
+    public DateTime? DateLivraison { get; set; }
     public List<BlArticleDto> BlArticles { get; set; } = new();
     public string BlEtat { get; set; } = string.Empty;
+    public decimal TotalBlTTC { get; set; }
+    public decimal TotalBlHT { get; set; }
     public bool HasDeliveryNote { get; set; }
     
     // Facture
     public string NumeroFacture { get; set; } = string.Empty;
+    public DateTime? DateFacture { get; set; }
     public List<FactureArticleDto> FactureArticles { get; set; } = new();
     public decimal? TotalFacture { get; set; }
     public bool HasInvoice { get; set; }

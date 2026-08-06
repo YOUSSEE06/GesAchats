@@ -40,6 +40,17 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
                 OnPropertyChanged(nameof(TotalFactures));
                 OnPropertyChanged(nameof(TotalReglements));
                 OnPropertyChanged(nameof(SoldeAPayer));
+                OnPropertyChanged(nameof(TotalCommandeTTC));
+                OnPropertyChanged(nameof(TotalCommandeHT));
+                OnPropertyChanged(nameof(TotalBlTTC));
+                OnPropertyChanged(nameof(TotalBlHT));
+                OnPropertyChanged(nameof(TotalFactureHT));
+                OnPropertyChanged(nameof(TotalFactureTVA));
+                OnPropertyChanged(nameof(TotalFactureTTC));
+                OnPropertyChanged(nameof(TotalFacturesMontant));
+                OnPropertyChanged(nameof(TotalReglementsMontant));
+                OnPropertyChanged(nameof(TotalRegle));
+                OnPropertyChanged(nameof(TotalResteAPayer));
                 if (value != null)
                 {
                     Title = $"Situation du Fournisseur - {value.NomFournisseur}";
@@ -59,6 +70,18 @@ public class SituationFournisseurViewModel : BaseViewModel, INavigatable
     public int TotalFactures => Situation?.TotalFactures ?? 0;
     public decimal TotalReglements => Situation?.TotalReglements ?? 0m;
     public decimal SoldeAPayer => Situation?.SoldeAPayer ?? 0m;
+
+    public decimal TotalCommandeTTC => Operations.Sum(o => o.TotalCommande);
+    public decimal TotalCommandeHT => Operations.Sum(o => o.TotalCommandeHT);
+    public decimal TotalBlTTC => Operations.Where(o => o.HasDeliveryNote).Sum(o => o.TotalBlTTC);
+    public decimal TotalBlHT => Operations.Where(o => o.HasDeliveryNote).Sum(o => o.TotalBlHT);
+    public decimal TotalFactureHT => Operations.Where(o => o.HasInvoice).SelectMany(o => o.FactureArticles).Sum(a => a.MontantHT);
+    public decimal TotalFactureTVA => Operations.Where(o => o.HasInvoice).SelectMany(o => o.FactureArticles).Sum(a => a.TVA);
+    public decimal TotalFactureTTC => Operations.Where(o => o.HasInvoice).SelectMany(o => o.FactureArticles).Sum(a => a.MontantTTC);
+    public decimal TotalFacturesMontant => Operations.Where(o => o.HasInvoice && o.TotalFacture.HasValue).Sum(o => o.TotalFacture!.Value);
+    public decimal TotalReglementsMontant => Operations.Where(o => o.HasPayments).SelectMany(o => o.Reglements).Sum(r => r.Montant);
+    public decimal TotalRegle => Operations.Where(o => o.HasInvoice).Sum(o => o.TotalRegle ?? 0m);
+    public decimal TotalResteAPayer => Operations.Where(o => o.HasInvoice).Sum(o => o.ResteAPayer ?? 0m);
 
     public bool IsLoading
     {

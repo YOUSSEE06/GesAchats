@@ -135,46 +135,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- 1. KPI Cards -->
-                <Grid Margin="0,0,0,24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <ctrls:KpiCard Grid.Column="0" Margin="0,0,8,0"
-                                   Title="Total des Commandes"
-                                   Value="{Binding TotalCommandes}"
-                                   Icon="CartShopping"
-                                   IconColor="#3B82F6"/>
-                    <ctrls:KpiCard Grid.Column="1" Margin="4,0,8,0"
-                                   Title="Total des Bons de Livraison"
-                                   Value="{Binding TotalBls}"
-                                   Icon="Truck"
-                                   IconColor="#22C55E"/>
-                    <ctrls:KpiCard Grid.Column="2" Margin="4,0,8,0"
-                                   Title="Total des Factures"
-                                   Value="{Binding TotalFactures}"
-                                   Icon="FileInvoice"
-                                   IconColor="#F59E0B"/>
-                    <ctrls:KpiCard Grid.Column="3" Margin="4,0,8,0"
-                                   Title="Total des Règlements"
-                                   Value="{Binding TotalReglements}"
-                                   Unit="MAD"
-                                   Icon="CheckCircle"
-                                   IconColor="#10B981"/>
-                    <ctrls:KpiCard Grid.Column="4" Margin="4,0,0,0"
-                                   Title="Solde à Payer"
-                                   Value="{Binding SoldeAPayer}"
-                                   Unit="MAD"
-                                   Icon="CreditCard"
-                                   IconColor="#EF4444"/>
-                </Grid>
-
-                <!-- 2. Single Table Container -->
+                <!-- Single Table Container -->
                 <Border Style="{StaticResource MetricCardStyle}">
                     <StackPanel>
                         <TextBlock Text="Tableau détaillé de situation"
@@ -182,6 +143,50 @@
                                    FontWeight="Bold"
                                    FontSize="16"
                                    Margin="0,0,0,16"/>
+
+                        <!-- Summary band (Excel row "SOLDE A PAYE" style) -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="1.4*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Total Commandes : " FontSize="12" Foreground="#64748B"/>
+                                    <TextBlock Text="{Binding TotalCommandes}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Total Bons de Livraison : " FontSize="12" Foreground="#64748B"/>
+                                    <TextBlock Text="{Binding TotalBls}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Total Factures : " FontSize="12" Foreground="#64748B"/>
+                                    <TextBlock Text="{Binding TotalFactures}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="3" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Total Règlements : " FontSize="12" Foreground="#64748B"/>
+                                    <TextBlock Text="{Binding TotalReglements, StringFormat={}{0:N2}}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Text=" MAD" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="4" Background="#F1F0FA" BorderBrush="#6C5CE7" BorderThickness="2" Padding="8,6">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="SOLDE À PAYER : " FontSize="14" FontWeight="Bold" Foreground="#6C5CE7"/>
+                                    <TextBlock Text="{Binding SoldeAPayer, StringFormat={}{0:N2}}" FontSize="14" FontWeight="Bold" Foreground="#EF4444"/>
+                                    <TextBlock Text=" MAD" FontSize="14" FontWeight="Bold" Foreground="#EF4444"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                         
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" 
                                       VerticalScrollBarVisibility="Auto"
@@ -191,47 +196,53 @@
                                 <Grid Background="#F8FAFC">
                                     <Grid.ColumnDefinitions>
                                         <!-- Bon de Commande -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="80"/>
                                         <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Bon de Livraison -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
                                         <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Facture -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Règlements -->
+                                        <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="90"/>
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Level 1 Headers -->
-                                    <Border Grid.Column="0" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="0" Grid.ColumnSpan="8" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="BON DE COMMANDE" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="6" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="8" Grid.ColumnSpan="9" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="BON DE LIVRAISON" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="12" Grid.ColumnSpan="6" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="17" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="FACTURE" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
-                                    <Border Grid.Column="18" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="24" Grid.ColumnSpan="7" Background="#F1F0FA" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="RÈGLEMENTS" Style="{StaticResource TableHeaderLevel1}"/>
                                     </Border>
                                 </Grid>
@@ -240,34 +251,40 @@
                                 <Grid Background="#F8FAFC">
                                     <Grid.ColumnDefinitions>
                                         <!-- Bon de Commande -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="80"/>
                                         <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Bon de Livraison -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
                                         <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Facture -->
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
                                         <!-- Règlements -->
+                                        <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="90"/>
                                     </Grid.ColumnDefinitions>
 
                                     <!-- BC Columns -->
@@ -275,81 +292,99 @@
                                         <TextBlock Text="N° BC" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="1" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Date de commande" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="2" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Prix Unitaire" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="3" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Quantité" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Prix Unitaire" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="4" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Total" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Quantité" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="5" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Total Commande" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Total" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="6" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total TTC" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="7" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total HT" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
 
                                     <!-- BL Columns -->
-                                    <Border Grid.Column="6" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="8" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="N° BL" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="7" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
-                                    <Border Grid.Column="8" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Qté Cmd" Style="{StaticResource TableHeaderLevel2}"/>
-                                    </Border>
                                     <Border Grid.Column="9" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Qté Livrée" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Date de livraison" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="10" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Écart" Style="{StaticResource TableHeaderLevel2}"/>
+                                        <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                     <Border Grid.Column="11" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Cmd" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="12" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Qté Livrée" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="13" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Écart" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="14" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="État" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total TTC" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="16" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Total HT" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
 
                                     <!-- Facture Columns -->
-                                    <Border Grid.Column="12" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="17" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="N° Facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="13" BorderBrush="#E2E8F0" BorderThickness="1">
-                                        <TextBlock Text="Article" Style="{StaticResource TableHeaderLevel2}"/>
+                                    <Border Grid.Column="18" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Date de facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="14" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="19" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <TextBlock Text="Désignation" Style="{StaticResource TableHeaderLevel2}"/>
+                                    </Border>
+                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant HT" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="TVA" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="16" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant TTC" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="17" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total Facture" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
 
                                     <!-- Règlements Columns -->
-                                    <Border Grid.Column="18" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="24" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Date" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="19" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="25" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Mode" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="26" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Référence" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="27" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Montant" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="28" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Total Réglé" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="29" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Reste à Payer" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
-                                    <Border Grid.Column="24" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Grid.Column="30" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <TextBlock Text="Statut" Style="{StaticResource TableHeaderLevel2}"/>
                                     </Border>
                                 </Grid>
@@ -362,6 +397,94 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                            <!-- Totals Row -->
+                                <Grid Background="#F1F0FA">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Bon de Commande -->
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <!-- Bon de Livraison -->
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <!-- Facture -->
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <!-- Règlements -->
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="90"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Grid.ColumnSpan="5" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="TOTAL" FontSize="13" FontWeight="Bold" Foreground="#0F172A"/>
+                                    </Border>
+                                    <Border Grid.Column="5" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6"/>
+                                    <Border Grid.Column="6" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalCommandeTTC, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="7" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalCommandeHT, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="10" Grid.ColumnSpan="5" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="Total BL" FontSize="12" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="15" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalBlTTC, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="16" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalBlHT, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="17" Grid.ColumnSpan="3" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="Total Facture" FontSize="12" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="20" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalFactureHT, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="21" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalFactureTVA, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="22" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalFactureTTC, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="23" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalFacturesMontant, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="24" Grid.ColumnSpan="3" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="Total Règlements" FontSize="12" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="27" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalReglementsMontant, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="28" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalRegle, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="29" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6">
+                                        <TextBlock Text="{Binding TotalResteAPayer, StringFormat={}{0:N2}}" FontSize="13" FontWeight="Bold" Foreground="#EF4444" HorizontalAlignment="Right"/>
+                                    </Border>
+                                    <Border Grid.Column="30" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8,6"/>
+                                </Grid>
                             </StackPanel>
                         </ScrollViewer>
                     </StackPanel>
