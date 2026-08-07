@@ -296,6 +296,7 @@ public class SuiviFournisseurService : ISuiviFournisseurService
             {
                 op.HasInvoice = true;
                 op.NumeroFacture = relatedInvoice.InvoiceNumber;
+                op.NumeroFactureFournisseur = relatedInvoice.ExternalInvoiceNumber ?? string.Empty;
                 op.DateFacture = relatedInvoice.InvoiceDate;
                 op.TotalFacture = relatedInvoice.AmountTTC;
                 op.FactureArticles = relatedInvoice.Details?.Select(d => new FactureArticleDto

@@ -160,6 +160,9 @@ public class SituationOperationGroupDto
     
     // Facture
     public string NumeroFacture { get; set; } = string.Empty;
+    public string NumeroFactureFournisseur { get; set; } = string.Empty;
+    public string NumeroFactureDisplay =>
+        !string.IsNullOrWhiteSpace(NumeroFactureFournisseur) ? NumeroFactureFournisseur : NumeroFacture;
     public DateTime? DateFacture { get; set; }
     public List<FactureArticleDto> FactureArticles { get; set; } = new();
     public decimal? TotalFacture { get; set; }

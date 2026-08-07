@@ -82,8 +82,8 @@ public partial class SituationOperationGroupControl : UserControl
         // --- FACTURE ---
         if (group.HasInvoice)
         {
-            // N° Facture (merged)
-            AddMergedCell(18, 0, group.NombreSousLignes, group.NumeroFacture);
+            // N° Facture (merged) — affiche le numéro fournisseur (fallback interne)
+            AddMergedCell(18, 0, group.NombreSousLignes, group.NumeroFactureDisplay);
             // Date de facture (merged)
             if (group.DateFacture.HasValue)
             {
