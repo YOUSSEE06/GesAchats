@@ -378,6 +378,7 @@
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           Background="White" BorderThickness="1"
                           RowHeight="44" GridLinesVisibility="None"
+                          MaxHeight="430"
                           AlternatingRowBackground="#FDFCFF"
                           HeadersVisibility="Column"
                           EnableRowVirtualization="True"
@@ -402,37 +403,15 @@
         </Border>
 
         <!-- Pagination -->
-        <Grid Grid.Row="5" Margin="0,16,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <TextBlock Grid.Column="0" 
-                       Text="{Binding PaginationInfo}" 
-                       Foreground="#666666" 
-                       FontSize="13"
-                       VerticalAlignment="Center"/>
-
-            <StackPanel Grid.Column="1" 
-                        Orientation="Horizontal" 
-                        HorizontalAlignment="Right">
-                <Button Style="{StaticResource PaginationButtonStyle}"
-                        Command="{Binding FirstPageCommand}"
-                        Content="«"
-                        Margin="0,0,8,0"/>
-                <Button Style="{StaticResource PaginationButtonStyle}"
-                        Command="{Binding PreviousPageCommand}"
-                        Content="‹"
-                        Margin="0,0,8,0"/>
-                <Button Style="{StaticResource PaginationButtonStyle}"
-                        Command="{Binding NextPageCommand}"
-                        Content="›"
-                        Margin="0,0,8,0"/>
-                <Button Style="{StaticResource PaginationButtonStyle}"
-                        Command="{Binding LastPageCommand}"
-                        Content="»"/>
-            </StackPanel>
-        </Grid>
+        <!-- Pagination standardisée -->
+        <controls:PaginationBar Grid.Row="5"
+                                Margin="0,16,0,0"
+                                PaginationText="{Binding PaginationInfo}"
+                                CurrentPage="{Binding CurrentPage}"
+                                TotalPages="{Binding TotalPages}"
+                                FirstPageCommand="{Binding FirstPageCommand}"
+                                PreviousPageCommand="{Binding PreviousPageCommand}"
+                                NextPageCommand="{Binding NextPageCommand}"
+                                LastPageCommand="{Binding LastPageCommand}"/>
     </Grid>
 </Page>

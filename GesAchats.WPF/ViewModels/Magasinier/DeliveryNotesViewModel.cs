@@ -141,6 +141,62 @@ public class DeliveryNotesViewModel : BaseViewModel
 
     private List<DeliveryNoteListItemViewModel> _allDeliveries = new List<DeliveryNoteListItemViewModel>();
 
+    // Pagination (identique à "Historique des Besoins")
+    private const int PageSize = 20;
+    private int _currentPage = 1;
+    private int _totalItems;
+
+    public ObservableCollection<DeliveryNoteListItemViewModel> PagedDeliveries { get; } = new();
+
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+                OnPropertyChanged(nameof(PaginationText));
+        }
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int TotalPages => TotalItems == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / PageSize);
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * PageSize, TotalItems);
+
+    public bool CanGoToFirstPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToPreviousPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToNextPage => CurrentPage < TotalPages && TotalItems > 0;
+    public bool CanGoToLastPage => CurrentPage < TotalPages && TotalItems > 0;
+
+    public string PaginationText => TotalItems == 0
+        ? "Affichage de 0 à 0 sur 0 bons de livraison"
+        : $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} bons de livraison";
+
+    public ICommand FirstPageCommand { get; private set; }
+    public ICommand PreviousPageCommand { get; private set; }
+    public ICommand NextPageCommand { get; private set; }
+    public ICommand LastPageCommand { get; private set; }
+
     // State Accessors
     public bool IsHistoryView 
     { 
@@ -247,6 +303,10 @@ public class DeliveryNotesViewModel : BaseViewModel
         PrintPdfCommand = new RelayCommand(async p => await ExecuteOpenOriginalFileAsync((p as DeliveryNoteListItemViewModel)?.DeliveryNote));
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
         AddInvoiceCommand = new RelayCommand(p => ExecuteAddInvoice(p as DeliveryNoteListItemViewModel));
+        FirstPageCommand = new RelayCommand(_ => GoToPage(1), _ => CanGoToFirstPage);
+        PreviousPageCommand = new RelayCommand(_ => GoToPage(CurrentPage - 1), _ => CanGoToPreviousPage);
+        NextPageCommand = new RelayCommand(_ => GoToPage(CurrentPage + 1), _ => CanGoToNextPage);
+        LastPageCommand = new RelayCommand(_ => GoToPage(TotalPages), _ => CanGoToLastPage);
 
         _initializationTask = LoadInitialData();
     }
@@ -377,6 +437,10 @@ public class DeliveryNotesViewModel : BaseViewModel
             DeliveriesHistory.Add(d);
         }
 
+        // Pagination après filtrage (toujours revenir à la page 1)
+        CurrentPage = 1;
+        UpdatePagedDeliveries();
+
         // Calculate statistics
         TotalDeliveries = filteredList.Count;
         PendingDeliveries = filteredList.Count(item => item.DeliveryNote.Status == "EnAttente");
@@ -399,6 +463,33 @@ public class DeliveryNotesViewModel : BaseViewModel
         PendingDeliveriesIsPositiveTrend = pendingPos;
         ValidatedDeliveriesTrendText = FormatTrend(CalculateVariation(currentDeliveries.Count(item => item.DeliveryNote.Status == "Valide"), previousDeliveries.Count(item => item.DeliveryNote.Status == "Valide")), out bool validPos);
         ValidatedDeliveriesIsPositiveTrend = validPos;
+    }
+
+    private void UpdatePagedDeliveries()
+    {
+        TotalItems = DeliveriesHistory.Count;
+
+        if (TotalPages == 0)
+            CurrentPage = 1;
+        else if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        PagedDeliveries.Clear();
+        foreach (var item in DeliveriesHistory.Skip((CurrentPage - 1) * PageSize).Take(PageSize))
+        {
+            PagedDeliveries.Add(item);
+        }
+
+        OnPropertyChanged(nameof(PaginationText));
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > TotalPages || page == CurrentPage)
+            return;
+
+        CurrentPage = page;
+        UpdatePagedDeliveries();
     }
 
     private async Task LoadPurchaseOrders()

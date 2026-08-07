@@ -140,6 +140,82 @@
                 </Style.Triggers>
             </Style>
 
+            <Style x:Key="PaginationButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="#64748B"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="MinWidth" Value="36"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="PageNumberButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Foreground" Value="#475569"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="MinWidth" Value="36"/>
+                <Setter Property="Padding" Value="8,0"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Background" Value="#6C5CE7"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#6C5CE7"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="FilterInputStyle" TargetType="TextBox">
                 <Setter Property="BorderBrush" Value="#D0CDE8"/>
                 <Setter Property="BorderThickness" Value="1.5"/>
@@ -327,6 +403,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -529,7 +606,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Border Padding="24,15" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
@@ -537,7 +614,7 @@
                 </Border>
 
                 <DataGrid Grid.Row="1" 
-                          ItemsSource="{Binding Payments}" 
+                          ItemsSource="{Binding PagedReglements}" 
                           AutoGenerateColumns="False" 
                           CanUserAddRows="False" 
                           IsReadOnly="True"
@@ -546,6 +623,7 @@
                           RowHeaderWidth="0"
                           GridLinesVisibility="Horizontal"
                           MinWidth="1300"
+                          MaxHeight="430"
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
                           EnableRowVirtualization="True"
@@ -667,5 +745,16 @@
                 </DataGrid>
             </Grid>
         </Border>
+
+        <!-- Pagination standardisée -->
+        <ctrls:PaginationBar Grid.Row="5"
+                             Margin="20,0,20,20"
+                             PaginationText="{Binding PaginationText}"
+                             CurrentPage="{Binding CurrentPage}"
+                             TotalPages="{Binding TotalPages}"
+                             FirstPageCommand="{Binding FirstPageCommand}"
+                             PreviousPageCommand="{Binding PreviousPageCommand}"
+                             NextPageCommand="{Binding NextPageCommand}"
+                             LastPageCommand="{Binding LastPageCommand}"/>
     </Grid>
 </Page>

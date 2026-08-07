@@ -308,6 +308,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Statistics Cards -->
@@ -421,7 +422,7 @@
                         </Border>
 
                         <DataGrid Grid.Row="1"
-                                  ItemsSource="{Binding DeliveriesHistory}" 
+                                  ItemsSource="{Binding PagedDeliveries}" 
                                   AutoGenerateColumns="False" 
                                   IsReadOnly="True"
                                   Background="Transparent" 
@@ -429,8 +430,10 @@
                                   RowHeaderWidth="0"
                                   GridLinesVisibility="Horizontal"
                                   MinWidth="1300"
+                                  MaxHeight="430"
                                   HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Auto">
+                                  VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.CanContentScroll="True">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#F8FAFC"/>
@@ -661,6 +664,17 @@
                         </DataGrid>
                     </Grid>
                 </Border>
+
+                <!-- Pagination standardisée -->
+                <controls:PaginationBar Grid.Row="3"
+                                        Margin="0,15,0,0"
+                                        PaginationText="{Binding PaginationText}"
+                                        CurrentPage="{Binding CurrentPage}"
+                                        TotalPages="{Binding TotalPages}"
+                                        FirstPageCommand="{Binding FirstPageCommand}"
+                                        PreviousPageCommand="{Binding PreviousPageCommand}"
+                                        NextPageCommand="{Binding NextPageCommand}"
+                                        LastPageCommand="{Binding LastPageCommand}"/>
             </Grid>
 
             <!-- 2. ADD/INSPECT VIEW -->

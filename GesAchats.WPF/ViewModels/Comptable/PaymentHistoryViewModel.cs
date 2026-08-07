@@ -28,12 +28,78 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     private CancellationTokenSource? _loadCts;
     private System.Windows.Threading.DispatcherTimer? _searchDebounceTimer;
     
-    private ObservableCollection<PaymentListDto> _payments = new();
-    public ObservableCollection<PaymentListDto> Payments
+    // Pagination (identique à "Historique des Besoins")
+    private const int PageSize = 20;
+
+    private ObservableCollection<PaymentListDto> _allReglements = new();
+    public ObservableCollection<PaymentListDto> AllReglements
     {
-        get => _payments;
-        set => SetProperty(ref _payments, value);
+        get => _allReglements;
+        set => SetProperty(ref _allReglements, value);
     }
+
+    private ObservableCollection<PaymentListDto> _pagedReglements = new();
+    public ObservableCollection<PaymentListDto> PagedReglements
+    {
+        get => _pagedReglements;
+        set => SetProperty(ref _pagedReglements, value);
+    }
+
+    private int _currentPage = 1;
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    private int _totalItems;
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int TotalPages => TotalItems == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / PageSize);
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * PageSize, TotalItems);
+
+    public bool CanGoToFirstPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToPreviousPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToNextPage => CurrentPage < TotalPages && TotalItems > 0;
+    public bool CanGoToLastPage => CurrentPage < TotalPages && TotalItems > 0;
+
+    public string PaginationText => TotalItems == 0
+        ? "Affichage de 0 à 0 sur 0 règlements"
+        : $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} règlements";
+
+    public ObservableCollection<PageNumberItem> PageNumbers { get; } = new();
 
     private ObservableCollection<Supplier> _suppliers = new();
     public ObservableCollection<Supplier> Suppliers
@@ -257,6 +323,11 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     public ICommand ResetFiltersCommand { get; }
     public ICommand ToggleChartsCommand { get; }
     public IAsyncRelayCommand RefreshCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand LastPageCommand { get; }
+    public ICommand GoToPageCommand { get; }
 
     private bool _showCharts = true;
     public bool ShowCharts
@@ -285,6 +356,11 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         ResetFiltersCommand = new RelayCommand(_ => ResetFilters());
         ToggleChartsCommand = new RelayCommand(_ => ShowCharts = !ShowCharts);
         RefreshCommand = new AsyncRelayCommand(LoadPaymentsAsync);
+        FirstPageCommand = new RelayCommand(_ => GoToPage(1), _ => CanGoToFirstPage);
+        PreviousPageCommand = new RelayCommand(_ => GoToPage(CurrentPage - 1), _ => CanGoToPreviousPage);
+        NextPageCommand = new RelayCommand(_ => GoToPage(CurrentPage + 1), _ => CanGoToNextPage);
+        LastPageCommand = new RelayCommand(_ => GoToPage(TotalPages), _ => CanGoToLastPage);
+        GoToPageCommand = new RelayCommand(p => { if (p is int page) GoToPage(page); });
 
         SelectedPaymentMethod = "Tous";
     }
@@ -501,14 +577,68 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
             );
         }
 
-        // Update Payments collection in one go
-        Payments = new ObservableCollection<PaymentListDto>(filtered);
+        // Update the full collection, then apply pagination
+        AllReglements = new ObservableCollection<PaymentListDto>(filtered);
+        CurrentPage = 1;
+        UpdatePagedItems();
         UpdateCharts();
+    }
+
+    private void UpdatePagedItems()
+    {
+        TotalItems = AllReglements.Count;
+
+        if (TotalPages == 0)
+            CurrentPage = 1;
+        else if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        PagedReglements = new ObservableCollection<PaymentListDto>(
+            AllReglements
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize));
+
+        OnPropertyChanged(nameof(PaginationText));
+        UpdatePageNumbers();
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > TotalPages || page == CurrentPage)
+            return;
+
+        CurrentPage = page;
+        UpdatePagedItems();
+    }
+
+    private void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        int total = TotalPages;
+        int current = CurrentPage;
+        if (total <= 0)
+            return;
+
+        // Fenêtre de pages autour de la page courante (1 ... p-1 p p+1 ... N)
+        var window = new[] { 1, current - 1, current, current + 1, total }
+            .Where(p => p >= 1 && p <= total)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+
+        int? previous = null;
+        foreach (var page in window)
+        {
+            if (previous.HasValue && page - previous > 1)
+                PageNumbers.Add(new PageNumberItem(-1));
+            PageNumbers.Add(new PageNumberItem(page, isCurrent: page == current));
+            previous = page;
+        }
     }
 
     private void UpdateCharts()
     {
-        if (Payments == null || !Payments.Any())
+        if (AllReglements == null || !AllReglements.Any())
         {
             PaymentMethodSeries.Clear();
             PaymentsByDate.Clear();
@@ -517,7 +647,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         }
 
         // 1. Répartition par mode de paiement (Doughnut Chart)
-        var methodData = Payments
+        var methodData = AllReglements
             .GroupBy(p => NormalizePaymentMode(p.PaymentMethod))
             .Select(g => new { Method = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
             .ToList();
@@ -548,7 +678,7 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
         }
 
         // 2. Évolution des paiements par date (Line Chart)
-        var dateData = Payments
+        var dateData = AllReglements
             .GroupBy(p => p.PaymentDate.Date)
             .Select(g => new { Date = g.Key, Total = (double)g.Sum(p => p.AmountPaid) })
             .OrderBy(x => x.Date)
@@ -597,4 +727,20 @@ public class PaymentHistoryViewModel : BaseViewModel, INavigatable
     {
         // TODO: Implémenter ExportService
     }
+}
+
+public class PageNumberItem
+{
+    public PageNumberItem(int pageNumber, bool isCurrent = false)
+    {
+        Current = pageNumber;
+        IsCurrent = isCurrent;
+    }
+
+    public int Current { get; }
+    public bool IsCurrent { get; }
+    public bool IsEllipsis => Current < 0;
+    public bool IsEnabledButton => !IsEllipsis && !IsCurrent;
+    public System.Windows.Visibility NumberVisibility => IsEllipsis ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+    public System.Windows.Visibility EllipsisVisibility => IsEllipsis ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 }
