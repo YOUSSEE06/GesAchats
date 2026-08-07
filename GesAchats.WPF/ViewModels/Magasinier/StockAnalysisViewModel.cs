@@ -162,6 +162,107 @@ public class StockAnalysisViewModel : BaseViewModel
 
     private List<Product> _allProducts = new List<Product>();
 
+    // Pagination
+    public List<int> PageSizeOptions { get; } = new List<int> { 10, 20, 50 };
+
+    private int _currentPage = 1;
+    private int _totalItems;
+    private int _selectedPageSize = 20;
+
+    public ObservableCollection<StockProductViewModel> PagedProducts { get; } = new ObservableCollection<StockProductViewModel>();
+
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(PaginationText));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+            }
+        }
+    }
+
+    public int SelectedPageSize
+    {
+        get => _selectedPageSize;
+        set
+        {
+            if (SetProperty(ref _selectedPageSize, value) && value > 0)
+            {
+                CurrentPage = 1;
+                UpdatePagedProducts();
+            }
+        }
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int TotalPages => TotalItems == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / SelectedPageSize);
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * SelectedPageSize) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * SelectedPageSize, TotalItems);
+
+    public bool CanGoToFirstPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToPreviousPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToNextPage => CurrentPage < TotalPages && TotalItems > 0;
+    public bool CanGoToLastPage => CurrentPage < TotalPages && TotalItems > 0;
+
+    public string PaginationText => TotalItems == 0
+        ? "Affichage de 0 à 0 sur 0 article(s)"
+        : $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} article(s)";
+
+    public ICommand FirstPageCommand { get; private set; }
+    public ICommand PreviousPageCommand { get; private set; }
+    public ICommand NextPageCommand { get; private set; }
+    public ICommand LastPageCommand { get; private set; }
+
+    private void UpdatePagedProducts()
+    {
+        TotalItems = Products.Count;
+        if (TotalItems == 0)
+        {
+            PagedProducts.Clear();
+            return;
+        }
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        PagedProducts.Clear();
+        foreach (var item in Products.Skip((CurrentPage - 1) * SelectedPageSize).Take(SelectedPageSize))
+            PagedProducts.Add(item);
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > TotalPages || page == CurrentPage)
+            return;
+        CurrentPage = page;
+        UpdatePagedProducts();
+    }
+
     public StockAnalysisViewModel(IStockService stockService)
     {
         _stockService = stockService;
@@ -170,6 +271,11 @@ public class StockAnalysisViewModel : BaseViewModel
         RefreshCommand = new RelayCommand(async _ => await LoadData());
         CreateNeedCommand = new RelayCommand(_ => OnCreateNeedRequested?.Invoke());
         AddProductCommand = new RelayCommand(_ => { }); // Sera injecté par la vue
+
+        FirstPageCommand = new RelayCommand(_ => GoToPage(1), _ => CanGoToFirstPage);
+        PreviousPageCommand = new RelayCommand(_ => GoToPage(CurrentPage - 1), _ => CanGoToPreviousPage);
+        NextPageCommand = new RelayCommand(_ => GoToPage(CurrentPage + 1), _ => CanGoToNextPage);
+        LastPageCommand = new RelayCommand(_ => GoToPage(TotalPages), _ => CanGoToLastPage);
 
         _ = LoadData();
     }
@@ -239,6 +345,9 @@ public class StockAnalysisViewModel : BaseViewModel
         LowStockArticlesIsPositiveTrend = lowPos;
         OutOfStockArticlesTrendText = FormatTrend(CalculateVariation(currentProducts.Count(p => p.Etat == StockState.OutOfStock), previousProducts.Count(p => p.Etat == StockState.OutOfStock)), out bool outPos);
         OutOfStockArticlesIsPositiveTrend = outPos;
+
+        CurrentPage = 1;
+        UpdatePagedProducts();
     }
 
     private void NavigateToNeeds()

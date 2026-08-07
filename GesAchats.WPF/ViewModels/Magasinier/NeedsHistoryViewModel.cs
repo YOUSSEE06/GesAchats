@@ -204,6 +204,107 @@ public class NeedsHistoryViewModel : BaseViewModel
 
     private List<Need> _allNeeds = new List<Need>();
 
+    // Pagination
+    public List<int> PageSizeOptions { get; } = new List<int> { 10, 20, 50 };
+
+    private int _currentPage = 1;
+    private int _totalItems;
+    private int _selectedPageSize = 20;
+
+    public ObservableCollection<NeedHistoryItemViewModel> PagedNeeds { get; } = new();
+
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(PaginationText));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+            }
+        }
+    }
+
+    public int SelectedPageSize
+    {
+        get => _selectedPageSize;
+        set
+        {
+            if (SetProperty(ref _selectedPageSize, value) && value > 0)
+            {
+                CurrentPage = 1;
+                UpdatePagedNeeds();
+            }
+        }
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(CanGoToFirstPage));
+                OnPropertyChanged(nameof(CanGoToPreviousPage));
+                OnPropertyChanged(nameof(CanGoToNextPage));
+                OnPropertyChanged(nameof(CanGoToLastPage));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int TotalPages => TotalItems == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / SelectedPageSize);
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * SelectedPageSize) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * SelectedPageSize, TotalItems);
+
+    public bool CanGoToFirstPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToPreviousPage => CurrentPage > 1 && TotalItems > 0;
+    public bool CanGoToNextPage => CurrentPage < TotalPages && TotalItems > 0;
+    public bool CanGoToLastPage => CurrentPage < TotalPages && TotalItems > 0;
+
+    public string PaginationText => TotalItems == 0
+        ? "Affichage de 0 à 0 sur 0 besoin(s)"
+        : $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} besoin(s)";
+
+    public ICommand FirstPageCommand { get; private set; }
+    public ICommand PreviousPageCommand { get; private set; }
+    public ICommand NextPageCommand { get; private set; }
+    public ICommand LastPageCommand { get; private set; }
+
+    private void UpdatePagedNeeds()
+    {
+        TotalItems = Needs.Count;
+        if (TotalItems == 0)
+        {
+            PagedNeeds.Clear();
+            return;
+        }
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        PagedNeeds.Clear();
+        foreach (var item in Needs.Skip((CurrentPage - 1) * SelectedPageSize).Take(SelectedPageSize))
+            PagedNeeds.Add(item);
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > TotalPages || page == CurrentPage)
+            return;
+        CurrentPage = page;
+        UpdatePagedNeeds();
+    }
+
     public NeedsHistoryViewModel(IUnitOfWork unitOfWork, IUserSession userSession, INeedsAnalyticsService analyticsService, IServiceProvider serviceProvider)
     {
         _unitOfWork = unitOfWork;
@@ -219,6 +320,11 @@ public class NeedsHistoryViewModel : BaseViewModel
         AnnulerCommand = new RelayCommand(async p => await ExecuteAnnuler(p as NeedHistoryItemViewModel));
         ReactiverCommand = new RelayCommand(async p => await ExecuteReactiver(p as NeedHistoryItemViewModel));
         SupprimerCommand = new RelayCommand(async p => await ExecuteSupprimer(p as NeedHistoryItemViewModel));
+
+        FirstPageCommand = new RelayCommand(_ => GoToPage(1), _ => CanGoToFirstPage);
+        PreviousPageCommand = new RelayCommand(_ => GoToPage(CurrentPage - 1), _ => CanGoToPreviousPage);
+        NextPageCommand = new RelayCommand(_ => GoToPage(CurrentPage + 1), _ => CanGoToNextPage);
+        LastPageCommand = new RelayCommand(_ => GoToPage(TotalPages), _ => CanGoToLastPage);
 
         _ = LoadData();
     }
@@ -294,6 +400,9 @@ public class NeedsHistoryViewModel : BaseViewModel
         InProgressNeedsIsPositiveTrend = progPos;
         CancelledNeedsTrendText = FormatTrend(CalculateVariation(currentNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected), previousNeeds.Count(n => n.Status == NeedStatus.Cancelled || n.Status == NeedStatus.Rejected)), out bool cancelledPos);
         CancelledNeedsIsPositiveTrend = cancelledPos;
+
+        CurrentPage = 1;
+        UpdatePagedNeeds();
     }
 
     private void ExecuteViewDetails(NeedHistoryItemViewModel? item)
@@ -378,6 +487,7 @@ public class NeedsHistoryViewModel : BaseViewModel
                     
                     Needs.Remove(item);
                     _allNeeds.Remove(need);
+                    UpdatePagedNeeds();
                 }
             }
             catch (Exception ex)
