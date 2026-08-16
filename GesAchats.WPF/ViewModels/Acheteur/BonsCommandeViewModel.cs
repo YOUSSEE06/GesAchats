@@ -149,6 +149,13 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     private PurchaseOrder? _selectedOrder;
 
     private List<PurchaseOrder> _allOrders = new List<PurchaseOrder>();
+    private List<PurchaseOrder> _allFilteredOrders = new List<PurchaseOrder>();
+
+    // Pagination
+    private int _currentPage = 1;
+    private int _itemsPerPage = 20;
+    private int _totalPages = 1;
+    private int _totalItems;
 
     public ObservableCollection<Supplier> Suppliers { get; } = new ObservableCollection<Supplier>();
     public ObservableCollection<Quotation> AvailableQuotations { get; } = new ObservableCollection<Quotation>();
@@ -432,6 +439,68 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         set => SetProperty(ref _cancelledOrdersIsPositive, value);
     }
 
+    // ===================== PAGINATION =====================
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                UpdatePagedOrders();
+            }
+        }
+    }
+
+    public int ItemsPerPage
+    {
+        get => _itemsPerPage;
+        set
+        {
+            if (SetProperty(ref _itemsPerPage, value) && value > 0)
+            {
+                CalculateTotalPages();
+                if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+                UpdatePagedOrders();
+            }
+        }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        set => SetProperty(ref _totalPages, value);
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                CalculateTotalPages();
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * ItemsPerPage) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * ItemsPerPage, TotalItems);
+
+    public string PaginationText
+    {
+        get
+        {
+            if (TotalItems == 0) return "Aucun bon de commande";
+            var unit = TotalItems > 1 ? "bons de commande" : "bon de commande";
+            return $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} {unit}";
+        }
+    }
+
     // Commands
     public ICommand CreateOrderCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -442,6 +511,10 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
     public ICommand CancelCommand { get; }
     public ICommand ReactivateCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand LastPageCommand { get; }
 
     public BonsCommandeViewModel(IUnitOfWork unitOfWork, IUserSession userSession, IPdfGeneratorService pdfService)
     {
@@ -459,6 +532,10 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
         CancelCommand = new RelayCommand(async p => await ExecuteCancel(p as PurchaseOrder));
         ReactivateCommand = new RelayCommand(async p => await ExecuteReactivate(p as PurchaseOrder));
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
+        FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
+        PreviousPageCommand = new RelayCommand(_ => { if (CurrentPage > 1) CurrentPage--; }, _ => CurrentPage > 1);
+        NextPageCommand = new RelayCommand(_ => { if (CurrentPage < TotalPages) CurrentPage++; }, _ => CurrentPage < TotalPages);
+        LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
 
         _ = LoadInitialData();
     }
@@ -632,12 +709,38 @@ public class BonsCommandeViewModel : BaseViewModel, INavigatable
             filtered = filtered.Where(o => o.Status == SelectedStatusFilter);
         }
 
-        OrdersHistory.Clear();
         var filteredList = filtered.OrderByDescending(x => x.OrderDate).ToList();
-        foreach (var o in filteredList) 
-            OrdersHistory.Add(o);
+        _allFilteredOrders = filteredList;
+
+        // Réinitialise la pagination (recalcul du total + retour page 1)
+        TotalItems = _allFilteredOrders.Count;
+        CurrentPage = 1;
+        UpdatePagedOrders();
 
         RecomputePeriodStats();
+    }
+
+    private void CalculateTotalPages()
+    {
+        TotalPages = (int)Math.Ceiling((double)_allFilteredOrders.Count / ItemsPerPage);
+        if (TotalPages < 1) TotalPages = 1;
+    }
+
+    private void UpdatePagedOrders()
+    {
+        OrdersHistory.Clear();
+        var start = (CurrentPage - 1) * ItemsPerPage;
+        foreach (var o in _allFilteredOrders.Skip(start).Take(ItemsPerPage))
+        {
+            OrdersHistory.Add(o);
+        }
+
+        OnPropertyChanged(nameof(FirstDisplayedItem));
+        OnPropertyChanged(nameof(LastDisplayedItem));
+        OnPropertyChanged(nameof(PaginationText));
+
+        // Notifie les commandes de pagination (états désactivés des boutons)
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private void RecomputePeriodStats()

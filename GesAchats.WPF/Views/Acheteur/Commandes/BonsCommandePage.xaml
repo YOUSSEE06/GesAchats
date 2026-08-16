@@ -234,10 +234,12 @@
         </Style>
     </Page.Resources>
     <Grid Background="#F5F5F5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
         <!-- Header -->
         <Border Background="White" Padding="20" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
@@ -401,28 +403,33 @@
                 </Border>
 
                 <!-- History Table -->
-                <Border Grid.Row="3" Style="{StaticResource ModernCard}" Padding="0">
+                <Border Grid.Row="3" Margin="24" Padding="0">
+                    <Border Style="{StaticResource ModernCard}" Padding="0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
-                            <TextBlock Text="Liste des Bons de Commande" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
+                            <TextBlock Text="Liste des Bons de Commande" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </Border>
 
                         <DataGrid Grid.Row="1"
                                   ItemsSource="{Binding OrdersHistory}" 
-                                  AutoGenerateColumns="False" 
-                                  IsReadOnly="True" 
-                                  Background="Transparent" 
-                                  BorderThickness="0" 
-                                  RowHeaderWidth="0"
+                                  Style="{StaticResource ModernDataGrid}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  IsReadOnly="True"
                                   GridLinesVisibility="Horizontal"
-                                  MinWidth="1300"
+                                  MinWidth="1100"
+                                  MaxHeight="430"
                                   HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Auto">
+                                  VerticalScrollBarVisibility="Auto"
+                                  EnableRowVirtualization="True"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#F8FAFC"/>
@@ -449,14 +456,14 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="DATE" Binding="{Binding OrderDate, StringFormat=d}" Width="Auto" MinWidth="100">
+                                <DataGridTextColumn Header="DATE" Binding="{Binding OrderDate, StringFormat='dd/MM/yyyy'}" Width="130" MinWidth="110">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="N° BC" Binding="{Binding OrderNumber}" Width="*" MinWidth="140">
+                                <DataGridTextColumn Header="N° BC" Binding="{Binding OrderNumber}" Width="180" MinWidth="150">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -465,21 +472,21 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier.CompanyName}" Width="1.5*" MinWidth="200">
+                                <DataGridTextColumn Header="FOURNISSEUR" Binding="{Binding Supplier.CompanyName}" Width="220" MinWidth="180">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="RÉF. DEVIS" Binding="{Binding Quotation.ReferenceNumber}" Width="*" MinWidth="140">
+                                <DataGridTextColumn Header="RÉF. DEVIS" Binding="{Binding Quotation.ReferenceNumber}" Width="180" MinWidth="150">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Padding" Value="12,8"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn Header="STATUT" Width="130" MinWidth="130">
+                                <DataGridTemplateColumn Header="STATUT" Width="140" MinWidth="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border Padding="10,4" CornerRadius="20" HorizontalAlignment="Left" Margin="12,8">
@@ -519,7 +526,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="TOTAL TTC" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2} MAD}" Width="Auto" MinWidth="140">
+                                <DataGridTextColumn Header="TOTAL TTC" Binding="{Binding TotalAmountTTC, StringFormat={}{0:N2} MAD}" Width="160" MinWidth="140">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="FontWeight" Value="Bold"/>
@@ -528,7 +535,7 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn Header="ACTIONS" Width="Auto" MinWidth="320">
+                                <DataGridTemplateColumn Header="ACTIONS" Width="Auto" MinWidth="350">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="12,8">
@@ -696,7 +703,24 @@
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
+
+                        <Grid Grid.Row="2" Margin="14,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ctrls:PaginationBar Grid.Column="0"
+                                                PaginationText="{Binding PaginationText}"
+                                                CurrentPage="{Binding CurrentPage}"
+                                                TotalPages="{Binding TotalPages}"
+                                                FirstPageCommand="{Binding FirstPageCommand}"
+                                                PreviousPageCommand="{Binding PreviousPageCommand}"
+                                                NextPageCommand="{Binding NextPageCommand}"
+                                                LastPageCommand="{Binding LastPageCommand}"/>
+                        </Grid>
                     </Grid>
+                    </Border>
                 </Border>
             </Grid>
 
@@ -880,12 +904,14 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Command="{Binding CreateOrderCommand}" 
-                            Visibility="{Binding IsEditView, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Content="&#x1f4be; Enregistrer le BC" 
-                            Padding="20,15" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"/>
-                </StackPanel>
+<Button Command="{Binding CreateOrderCommand}" 
+                        Visibility="{Binding IsEditView, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Content="&#x1f4be; Enregistrer le BC" 
+                        Padding="20,15" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0"/>
+</StackPanel>
             </Grid>
         </Grid>
+        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>
