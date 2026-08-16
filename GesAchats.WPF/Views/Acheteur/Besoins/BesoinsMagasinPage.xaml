@@ -250,6 +250,8 @@
     </Page.Resources>
 
     <Grid Background="#F8FAFC">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -381,6 +383,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <Border Padding="24,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -389,14 +392,17 @@
 
                     <DataGrid Grid.Row="1" 
                               ItemsSource="{Binding Needs}" 
-                              AutoGenerateColumns="False" 
+                              AutoGenerateColumns="False"
                               CanUserAddRows="False"
+                              GridLinesVisibility="Horizontal"
                               Style="{StaticResource ModernDataGrid}"
                               MinWidth="1100"
-                              EnableRowVirtualization="True"
-                              EnableColumnVirtualization="True"
+                              MaxHeight="430"
                               HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto">
+                              VerticalScrollBarVisibility="Auto"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="#F8FAFC"/>
@@ -438,7 +444,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="DEMANDEUR" Binding="{Binding Need.RequestedBy.FullName}" Width="*" MinWidth="200">
+                            <DataGridTextColumn Header="DEMANDEUR" Binding="{Binding Need.RequestedBy.FullName}" Width="220" MinWidth="180">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Padding" Value="16,12"/>
@@ -546,8 +552,26 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <Grid Grid.Row="2" Margin="14,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ctrls:PaginationBar Grid.Column="0"
+                                            PaginationText="{Binding PaginationText}"
+                                            CurrentPage="{Binding CurrentPage}"
+                                            TotalPages="{Binding TotalPages}"
+                                            FirstPageCommand="{Binding FirstPageCommand}"
+                                            PreviousPageCommand="{Binding PreviousPageCommand}"
+                                            NextPageCommand="{Binding NextPageCommand}"
+                                            LastPageCommand="{Binding LastPageCommand}"/>
+                    </Grid>
                 </Grid>
             </Border>
         </Border>
+        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>

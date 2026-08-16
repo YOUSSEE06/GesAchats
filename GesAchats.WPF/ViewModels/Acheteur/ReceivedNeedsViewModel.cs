@@ -57,6 +57,12 @@ public class ReceivedNeedsViewModel : BaseViewModel
     private readonly INavigationService _navigationService;
 
     private List<ReceivedNeedItemViewModel> _allNeeds = new List<ReceivedNeedItemViewModel>();
+    private List<ReceivedNeedItemViewModel> _allFilteredNeeds = new List<ReceivedNeedItemViewModel>();
+
+    private int _currentPage = 1;
+    private int _itemsPerPage = 20;
+    private int _totalPages = 1;
+    private int _totalItems;
 
     public ObservableCollection<ReceivedNeedItemViewModel> Needs { get; } = new ObservableCollection<ReceivedNeedItemViewModel>();
     public ObservableCollection<string> StatusOptions { get; } = new ObservableCollection<string> { "Tous", "encours", "transmit", "Annulé" };
@@ -104,6 +110,10 @@ public class ReceivedNeedsViewModel : BaseViewModel
     public ICommand ViewDetailsCommand { get; }
     public ICommand CreateQuoteCommand { get; }
     public ICommand ResetFiltersCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand LastPageCommand { get; }
 
     private int _totalNeeds;
     public int TotalNeeds
@@ -211,6 +221,68 @@ public class ReceivedNeedsViewModel : BaseViewModel
         set => SetProperty(ref _cancelledNeedsIsPositive, value);
     }
 
+    // ===================== PAGINATION =====================
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                UpdatePagedNeeds();
+            }
+        }
+    }
+
+    public int ItemsPerPage
+    {
+        get => _itemsPerPage;
+        set
+        {
+            if (SetProperty(ref _itemsPerPage, value) && value > 0)
+            {
+                CalculateTotalPages();
+                if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+                UpdatePagedNeeds();
+            }
+        }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        set => SetProperty(ref _totalPages, value);
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                CalculateTotalPages();
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * ItemsPerPage) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * ItemsPerPage, TotalItems);
+
+    public string PaginationText
+    {
+        get
+        {
+            if (TotalItems == 0) return "Aucune demande";
+            var unit = TotalItems > 1 ? "demandes" : "demande";
+            return $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} {unit}";
+        }
+    }
+
     public ReceivedNeedsViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider, INavigationService navigationService)
     {
         _unitOfWork = unitOfWork;
@@ -222,6 +294,10 @@ public class ReceivedNeedsViewModel : BaseViewModel
         ViewDetailsCommand = new RelayCommand(p => ExecuteViewDetails(p as ReceivedNeedItemViewModel));
         CreateQuoteCommand = new RelayCommand(p => ExecuteCreateQuote(p as ReceivedNeedItemViewModel));
         ResetFiltersCommand = new RelayCommand(_ => ExecuteResetFilters());
+        FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
+        PreviousPageCommand = new RelayCommand(_ => { if (CurrentPage > 1) CurrentPage--; }, _ => CurrentPage > 1);
+        NextPageCommand = new RelayCommand(_ => { if (CurrentPage < TotalPages) CurrentPage++; }, _ => CurrentPage < TotalPages);
+        LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
 
         _ = LoadData();
     }
@@ -275,11 +351,36 @@ public class ReceivedNeedsViewModel : BaseViewModel
                 (SelectedStatus == "Annulé" && (n.Need.Status == NeedStatus.Cancelled || n.Need.Status == NeedStatus.Rejected)));
         }
         
+        var filteredList = filtered.ToList();
+        _allFilteredNeeds = filteredList;
+
+        // Réinitialise la pagination (recalcul du total + retour page 1)
+        TotalItems = _allFilteredNeeds.Count;
+        CurrentPage = 1;
+        UpdatePagedNeeds();
+    }
+
+    private void CalculateTotalPages()
+    {
+        TotalPages = (int)Math.Ceiling((double)_allFilteredNeeds.Count / ItemsPerPage);
+        if (TotalPages < 1) TotalPages = 1;
+    }
+
+    private void UpdatePagedNeeds()
+    {
         Needs.Clear();
-        foreach (var n in filtered)
+        var start = (CurrentPage - 1) * ItemsPerPage;
+        foreach (var n in _allFilteredNeeds.Skip(start).Take(ItemsPerPage))
         {
             Needs.Add(n);
         }
+
+        OnPropertyChanged(nameof(FirstDisplayedItem));
+        OnPropertyChanged(nameof(LastDisplayedItem));
+        OnPropertyChanged(nameof(PaginationText));
+
+        // Notifie les commandes de pagination (états désactivés des boutons)
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private void RecomputePeriodStats()
