@@ -108,6 +108,7 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
     private int _currentPage = 1;
     private int _itemsPerPage = 20;
     private int _totalPages = 1;
+    private int _totalItems;
     
     // Statistics loading
     private bool _isLoadingStats = false;
@@ -409,10 +410,11 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         get => _itemsPerPage;
         set
         {
-            if (SetProperty(ref _itemsPerPage, value))
+            if (SetProperty(ref _itemsPerPage, value) && value > 0)
             {
                 CalculateTotalPages();
-                CurrentPage = 1;
+                if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+                UpdatePagedQuotations();
             }
         }
     }
@@ -422,7 +424,30 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         get => _totalPages;
         set => SetProperty(ref _totalPages, value);
     }
-    
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                CalculateTotalPages();
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * ItemsPerPage) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * ItemsPerPage, TotalItems);
+
+    public string PaginationText => TotalItems == 0
+        ? "Affichage de 0 à 0 sur 0 devis"
+        : $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} devis";
+
     public ObservableCollection<int> ItemsPerPageOptions { get; } = new ObservableCollection<int> {10, 20, 50, 100};
 
     // Commands
@@ -933,9 +958,9 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         // Convert to display view models
         _allFilteredQuotations = filtered.Select(q => new QuotationDisplayViewModel(q, NormalizeQuotationStatus)).ToList();
         
-        // Reset to first page
+        // Reset to first page (TotalItems recalcule TotalPages et notifie les compteurs)
+        TotalItems = _allFilteredQuotations.Count;
         CurrentPage = 1;
-        CalculateTotalPages();
         UpdatePagedQuotations();
     }
     
@@ -955,6 +980,10 @@ public class QuotesManagementViewModel : BaseViewModel, INavigatable
         {
             FilteredQuotations.Add(q);
         }
+        
+        OnPropertyChanged(nameof(FirstDisplayedItem));
+        OnPropertyChanged(nameof(LastDisplayedItem));
+        OnPropertyChanged(nameof(PaginationText));
         
         // Notify command can execute changes
         CommandManager.InvalidateRequerySuggested();

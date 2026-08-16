@@ -3,8 +3,9 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Devis"
-      xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
+xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Devis"
+       xmlns:controls="clr-namespace:GesAchats.WPF.Controls"
+       xmlns:conv="clr-namespace:GesAchats.WPF.Converters"
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1400"
@@ -549,6 +550,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
@@ -563,8 +565,12 @@
                                       CanUserAddRows="False"
                                       GridLinesVisibility="Horizontal"
                                       MinWidth="1100"
+                                      MaxHeight="430"
                                       HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto">
+                                      VerticalScrollBarVisibility="Auto"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Resources>
                                     <Style TargetType="DataGridColumnHeader">
                                         <Setter Property="Background" Value="#F8FAFC"/>
@@ -807,6 +813,22 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
+
+                            <Grid Grid.Row="2" Margin="14,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <controls:PaginationBar Grid.Column="0"
+                                                        PaginationText="{Binding PaginationText}"
+                                                        CurrentPage="{Binding CurrentPage}"
+                                                        TotalPages="{Binding TotalPages}"
+                                                        FirstPageCommand="{Binding FirstPageCommand}"
+                                                        PreviousPageCommand="{Binding PreviousPageCommand}"
+                                                        NextPageCommand="{Binding NextPageCommand}"
+                                                        LastPageCommand="{Binding LastPageCommand}"/>
+                            </Grid>
                         </Grid>
                     </Border>
                 </Border>
