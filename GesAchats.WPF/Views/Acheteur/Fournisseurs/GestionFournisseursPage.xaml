@@ -4,11 +4,14 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Fournisseurs"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Gestion des Fournisseurs">
 
     <Grid Background="#F5F5F5">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -71,6 +74,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <Border Padding="24,20" BorderBrush="#EEEEEE" BorderThickness="0,0,0,1">
@@ -81,15 +85,14 @@
                               Grid.Row="1"
                               ItemsSource="{Binding Suppliers}" 
                               SelectedItem="{Binding SelectedSupplier}"
-                              AutoGenerateColumns="False" 
-                              IsReadOnly="True" 
-                              Background="Transparent" 
-                              BorderThickness="0"
-                              GridLinesVisibility="Horizontal"
+                              Style="{StaticResource ModernDataGrid}"
                               MinWidth="1100"
+                              MaxHeight="430"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto"
-                              HeadersVisibility="Column"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
                               MouseDoubleClick="SuppliersDataGrid_MouseDoubleClick">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader">
@@ -156,8 +159,26 @@
                             </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <Grid Grid.Row="2" Margin="14,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ctrls:PaginationBar Grid.Column="0"
+                                            PaginationText="{Binding PaginationText}"
+                                            CurrentPage="{Binding CurrentPage}"
+                                            TotalPages="{Binding TotalPages}"
+                                            FirstPageCommand="{Binding FirstPageCommand}"
+                                            PreviousPageCommand="{Binding PreviousPageCommand}"
+                                            NextPageCommand="{Binding NextPageCommand}"
+                                            LastPageCommand="{Binding LastPageCommand}"/>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>
+        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>

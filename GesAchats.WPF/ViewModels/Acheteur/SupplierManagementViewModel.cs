@@ -14,7 +14,13 @@ public class SupplierManagementViewModel : BaseViewModel
     private readonly IServiceProvider _serviceProvider;
     private Supplier? _selectedSupplier;
     private List<Supplier> _allSuppliers = new();
+    private List<Supplier> _allFilteredSuppliers = new();
     private string _searchText = string.Empty;
+
+    private int _currentPage = 1;
+    private int _itemsPerPage = 20;
+    private int _totalPages = 1;
+    private int _totalItems;
 
     public ObservableCollection<Supplier> Suppliers { get; } = new();
 
@@ -39,6 +45,95 @@ public class SupplierManagementViewModel : BaseViewModel
     public ICommand AddSupplierCommand { get; }
     public ICommand EditSupplierCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand FirstPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand LastPageCommand { get; }
+
+    public string PaginationText
+    {
+        get
+        {
+            if (TotalItems == 0) return "Aucun fournisseur";
+            var unit = TotalItems > 1 ? "fournisseurs" : "fournisseur";
+            return $"Affichage de {FirstDisplayedItem} à {LastDisplayedItem} sur {TotalItems} {unit}";
+        }
+    }
+
+    // ===================== PAGINATION =====================
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                UpdatePagedSuppliers();
+            }
+        }
+    }
+
+    public int ItemsPerPage
+    {
+        get => _itemsPerPage;
+        set
+        {
+            if (SetProperty(ref _itemsPerPage, value) && value > 0)
+            {
+                CalculateTotalPages();
+                if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+                UpdatePagedSuppliers();
+            }
+        }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        set => SetProperty(ref _totalPages, value);
+    }
+
+    public int TotalItems
+    {
+        get => _totalItems;
+        set
+        {
+            if (SetProperty(ref _totalItems, value))
+            {
+                CalculateTotalPages();
+                OnPropertyChanged(nameof(FirstDisplayedItem));
+                OnPropertyChanged(nameof(LastDisplayedItem));
+                OnPropertyChanged(nameof(PaginationText));
+            }
+        }
+    }
+
+    public int FirstDisplayedItem => TotalItems == 0 ? 0 : ((CurrentPage - 1) * ItemsPerPage) + 1;
+
+    public int LastDisplayedItem => Math.Min(CurrentPage * ItemsPerPage, TotalItems);
+
+    private void CalculateTotalPages()
+    {
+        TotalPages = (int)Math.Ceiling((double)_allFilteredSuppliers.Count / ItemsPerPage);
+        if (TotalPages < 1) TotalPages = 1;
+    }
+
+    private void UpdatePagedSuppliers()
+    {
+        Suppliers.Clear();
+        var start = (CurrentPage - 1) * ItemsPerPage;
+        foreach (var s in _allFilteredSuppliers.Skip(start).Take(ItemsPerPage))
+        {
+            Suppliers.Add(s);
+        }
+
+        OnPropertyChanged(nameof(FirstDisplayedItem));
+        OnPropertyChanged(nameof(LastDisplayedItem));
+        OnPropertyChanged(nameof(PaginationText));
+
+        // Notifie les commandes de pagination (états désactivés des boutons)
+        CommandManager.InvalidateRequerySuggested();
+    }
 
     public SupplierManagementViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
     {
@@ -49,6 +144,10 @@ public class SupplierManagementViewModel : BaseViewModel
         AddSupplierCommand = new RelayCommand(async _ => await OpenAddSupplierDialog());
         EditSupplierCommand = new RelayCommand(async _ => await OpenEditSupplierDialog(), _ => SelectedSupplier != null);
         RefreshCommand = new RelayCommand(async _ => await LoadSuppliers());
+        FirstPageCommand = new RelayCommand(_ => CurrentPage = 1, _ => CurrentPage > 1);
+        PreviousPageCommand = new RelayCommand(_ => { if (CurrentPage > 1) CurrentPage--; }, _ => CurrentPage > 1);
+        NextPageCommand = new RelayCommand(_ => { if (CurrentPage < TotalPages) CurrentPage++; }, _ => CurrentPage < TotalPages);
+        LastPageCommand = new RelayCommand(_ => CurrentPage = TotalPages, _ => CurrentPage < TotalPages);
 
         _ = LoadSuppliers();
     }
@@ -82,11 +181,13 @@ public class SupplierManagementViewModel : BaseViewModel
                 (s.City != null && s.City.ToLower().Contains(searchLower)));
         }
         
-        Suppliers.Clear();
-        foreach (var s in filtered)
-        {
-            Suppliers.Add(s);
-        }
+        var filteredList = filtered.ToList();
+        _allFilteredSuppliers = filteredList;
+
+        // Réinitialise la pagination (recalcul du total + retour page 1)
+        TotalItems = _allFilteredSuppliers.Count;
+        CurrentPage = 1;
+        UpdatePagedSuppliers();
     }
 
     private async Task OpenAddSupplierDialog()
