@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GesAchats.WPF.Views.Acheteur.Analyses"
+      xmlns:ctrls="clr-namespace:GesAchats.WPF.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="Historique des Achats">
@@ -33,6 +34,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="ARTICLES" FontWeight="Bold" Foreground="#666" Margin="5,0,0,10"/>
                     <TextBox Grid.Row="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
@@ -40,7 +42,8 @@
                              Tag="🔍 Rechercher un article..."/>
                     <ListBox Grid.Row="2" ItemsSource="{Binding Products}" 
                              SelectedItem="{Binding SelectedProduct}"
-                             Background="Transparent" BorderThickness="0">
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="5">
@@ -56,13 +59,21 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+                    <ctrls:PaginationBar Grid.Row="3" Margin="5,10,5,0"
+                                        PaginationText="{Binding PaginationText}"
+                                        CurrentPage="{Binding CurrentPage}"
+                                        TotalPages="{Binding TotalPages}"
+                                        FirstPageCommand="{Binding FirstPageCommand}"
+                                        PreviousPageCommand="{Binding PreviousPageCommand}"
+                                        NextPageCommand="{Binding NextPageCommand}"
+                                        LastPageCommand="{Binding LastPageCommand}"/>
                 </Grid>
             </Border>
 
             <!-- History Details -->
             <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
                 <Grid>
-                    <Grid Visibility="{Binding SelectedProduct, Converter={StaticResource NullToVisibilityConverter}}">
+                    <Grid Visibility="{Binding SelectedProductForHistory, Converter={StaticResource NullToVisibilityConverter}}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -74,8 +85,8 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="{Binding SelectedProduct.Product.Designation}" FontSize="22" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding SelectedProduct.Product.Category}" Foreground="Gray"/>
+                                <TextBlock Text="{Binding SelectedProductForHistory.Product.Designation}" FontSize="22" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding SelectedProductForHistory.Product.Category}" Foreground="Gray"/>
                             </StackPanel>
                             <Button Grid.Column="1" 
                                     Content="&#x1f4ca; Voir Stats" 
@@ -164,7 +175,7 @@
                     </Grid>
 
                     <TextBlock Text="Sélectionnez un article pour voir l'historique" 
-                               Visibility="{Binding SelectedProduct, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}"
+                               Visibility="{Binding SelectedProductForHistory, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}"
                                Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
